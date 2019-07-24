@@ -139,9 +139,11 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final Configuration configuration;
 
     public Backend(Configuration configuration) {
-        this.configuration = configuration;
+        this(configuration, getStorageManager(configuration));
+    }
 
-        KeyColumnValueStoreManager manager = getStorageManager(configuration);
+    public Backend(Configuration configuration, KeyColumnValueStoreManager manager){
+        this.configuration = configuration;
         if (configuration.get(BASIC_METRICS)) {
             storeManager = new MetricInstrumentedStoreManager(manager,METRICS_STOREMANAGER_NAME,configuration.get(METRICS_MERGE_STORES),METRICS_MERGED_STORE);
         } else {
@@ -186,8 +188,8 @@ public class Backend implements LockerProvider, AutoCloseable {
             lockerCreator = REGISTERED_LOCKERS.get(lockBackendName);
         } else {
             throw new JanusGraphConfigurationException("Unknown lock backend \"" +
-                    lockBackendName + "\".  Known lock backends: " +
-                    Joiner.on(", ").join(REGISTERED_LOCKERS.keySet()) + ".");
+                lockBackendName + "\".  Known lock backends: " +
+                Joiner.on(", ").join(REGISTERED_LOCKERS.keySet()) + ".");
         }
         // Never used for backends that have innate transaction support, but we
         // want to maintain the non-null invariant regardless; it will default

@@ -22,6 +22,7 @@ import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.StandardIndexProvider;
 import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.converter.ReadConfigurationConverter;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.graphdb.configuration.converter.RegisteredAttributeClassesConverter;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphDefaultSchemaMaker;
 import org.janusgraph.graphdb.tinkerpop.Tp3DefaultSchemaMaker;
@@ -1205,6 +1206,7 @@ public class GraphDatabaseConfiguration {
     public static final String USER_CONFIGURATION_IDENTIFIER = "userconfig";
 
     private final Configuration configuration;
+    private final KeyColumnValueStoreManager storeManager;
     private final ReadConfiguration configurationAtOpen;
     private String uniqueGraphId;
     private final ModifiableConfiguration localConfiguration;
@@ -1229,11 +1231,12 @@ public class GraphDatabaseConfiguration {
     private StoreFeatures storeFeatures = null;
 
     public GraphDatabaseConfiguration(ReadConfiguration configurationAtOpen, ModifiableConfiguration localConfiguration,
-                                      String uniqueGraphId, Configuration configuration) {
+                                      String uniqueGraphId, Configuration configuration, KeyColumnValueStoreManager storeManager) {
         this.configurationAtOpen = configurationAtOpen;
         this.localConfiguration = localConfiguration;
         this.uniqueGraphId = uniqueGraphId;
         this.configuration = configuration;
+        this.storeManager = storeManager;
         preLoadConfiguration();
     }
 
@@ -1349,7 +1352,7 @@ public class GraphDatabaseConfiguration {
     }
 
     public Backend getBackend() {
-        Backend backend = new Backend(configuration);
+        Backend backend = new Backend(configuration, storeManager);
         backend.initialize(configuration);
         storeFeatures = backend.getStoreFeatures();
         return backend;
