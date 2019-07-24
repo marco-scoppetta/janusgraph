@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.janusgraph</groupId>
         <artifactId>janusgraph-examples</artifactId>
-        <version>0.4.1-SNAPSHOT</version>
+        <version>0.4-e5e27a1be5797432575a6efa85987aed0e2ccf61</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>example-remotegraph</artifactId>
