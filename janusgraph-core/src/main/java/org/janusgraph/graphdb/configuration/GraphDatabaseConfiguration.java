@@ -1397,6 +1397,9 @@ public class GraphDatabaseConfiguration {
     public org.apache.commons.configuration.Configuration getConfigurationAtOpen() {
         return ReadConfigurationConverter.getInstance().convert(configurationAtOpen);
     }
+    public ReadConfiguration getReadConfigurationAtOpen(){
+        return configurationAtOpen;
+    }
 
     private void preLoadConfiguration() {
         readOnly = configuration.get(STORAGE_READONLY);

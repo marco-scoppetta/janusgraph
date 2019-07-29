@@ -24,6 +24,8 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.*;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
+import org.janusgraph.diskstorage.configuration.converter.ReadConfigurationConverter;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
 import org.janusgraph.graphdb.management.JanusGraphManager;
@@ -215,8 +217,10 @@ public class JanusGraphFactory {
         if (graph.isOpen()) {
             graph.close();
         }
-        final GraphDatabaseConfiguration config = g.getConfiguration();
-        final Backend backend = config.getBackend();
+        ReadConfiguration readConfigurationAtOpen = g.getConfiguration().getReadConfigurationAtOpen();
+        BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS, readConfigurationAtOpen, BasicConfiguration.Restriction.NONE);
+        KeyColumnValueStoreManager storeManager = Backend.getStorageManager(localBasicConfiguration);
+        Backend backend = GraphDatabaseConfigurationBuilder.build(readConfigurationAtOpen, localBasicConfiguration, storeManager).getBackend();
         try {
             backend.clearStorage();
         } finally {
