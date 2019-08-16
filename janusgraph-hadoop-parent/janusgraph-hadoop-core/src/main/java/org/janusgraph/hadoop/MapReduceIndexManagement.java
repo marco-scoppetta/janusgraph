@@ -17,6 +17,7 @@ package org.janusgraph.hadoop;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import org.apache.cassandra.dht.IPartitioner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Mapper;
