@@ -195,6 +195,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         Preconditions.checkNotNull(lockerCreator);
 
         scanner = new StandardScanner(storeManager);
+        initialize();
     }
 
 
@@ -218,10 +219,10 @@ public class Backend implements LockerProvider, AutoCloseable {
 
 
     /**
-     * Initializes this backend with the given configuration. Must be called before this Backend can be used
+     * Initializes this backend with the given configuration.
      *
      */
-    public void initialize() {
+    private void initialize() {
         try {
             //EdgeStore & VertexIndexStore
             KeyColumnValueStore idStore = storeManager.openDatabase(configuration.get(IDS_STORE_NAME));

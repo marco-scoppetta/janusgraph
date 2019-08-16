@@ -210,7 +210,6 @@ public class JanusGraphFactory {
         final GraphDatabaseConfiguration config = g.getConfiguration();
         org.janusgraph.diskstorage.configuration.Configuration backendConfiguration = g.getConfiguration().getConfiguration();
         Backend backend = new Backend(backendConfiguration);
-        backend.initialize();
         try {
             backend.clearStorage();
         } finally {
