@@ -250,3 +250,21 @@ CASSANDRA_VERSION=3.11.0 CASSANDRA_ENABLE_BOP=true docker-compose -f janusgraph-
 # wait for instance to start (see above)
 mvn clean install -Dtest.skip.tp=false -DskipTests=true -pl janusgraph-cassandra -fn -Dstorage.hostname=$STORAGE_HOSTNAME
 ```
+
+#### Hadoop Tests
+
+Hadoop tests with Cassandra 2:
+
+```bash
+CASSANDRA_VERSION=2.2.10 docker-compose -f janusgraph-cassandra/src/test/resources/docker-compose.yml up -d
+# wait for instance to start (see above)
+mvn clean install -pl :janusgraph-hadoop-2 -DskipHBase -Dstorage.hostname=$STORAGE_HOSTNAME
+```
+
+Hadoop tests with Cassandra 3 (note that default Cassandra 2 tests must be skipped):
+
+```bash
+CASSANDRA_VERSION=3.11.0 docker-compose -f janusgraph-cassandra/src/test/resources/docker-compose.yml up -d
+# wait for instance to start (see above)
+mvn clean install -pl :janusgraph-hadoop-2 -DskipHBase -DskipCassandra -DskipCassandra3=false -Dstorage.hostname=$STORAGE_HOSTNAME
+```
