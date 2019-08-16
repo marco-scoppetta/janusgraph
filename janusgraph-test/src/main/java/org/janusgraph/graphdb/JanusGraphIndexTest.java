@@ -1773,7 +1773,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         // writes and aborting a transaction.
         Backend b = null;
         try {
-            b = graph.getConfiguration().getBackend();
+            b = graph.getBackend();
             if (b.getStoreFeatures().hasTxIsolation()) {
                 log.info("Skipping " + getClass().getSimpleName() + "." + testInfo.getTestMethod().toString());
                 return;

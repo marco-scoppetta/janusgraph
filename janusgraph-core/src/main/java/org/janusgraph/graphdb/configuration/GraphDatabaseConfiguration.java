@@ -1350,7 +1350,7 @@ public class GraphDatabaseConfiguration {
 
     public Backend getBackend() {
         Backend backend = new Backend(configuration);
-        backend.initialize(configuration);
+        backend.initialize();
         storeFeatures = backend.getStoreFeatures();
         return backend;
     }
