@@ -18,21 +18,22 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.RelationType;
+import org.janusgraph.core.schema.Index;
+import org.janusgraph.core.schema.JanusGraphIndex;
+import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.core.schema.RelationTypeIndex;
 import org.janusgraph.core.schema.SchemaAction;
-import org.janusgraph.core.schema.JanusGraphIndex;
-import org.janusgraph.core.schema.Index;
-import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.cassandra.AbstractCassandraStoreManager;
 import org.janusgraph.diskstorage.cassandra.astyanax.AstyanaxStoreManager;
 import org.janusgraph.diskstorage.cassandra.embedded.CassandraEmbeddedStoreManager;
 import org.janusgraph.diskstorage.cassandra.thrift.CassandraThriftStoreManager;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
-import org.janusgraph.diskstorage.hbase.HBaseStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
@@ -40,17 +41,11 @@ import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.olap.job.IndexRemoveJob;
 import org.janusgraph.graphdb.olap.job.IndexRepairJob;
 import org.janusgraph.graphdb.olap.job.IndexUpdateJob;
-import org.janusgraph.hadoop.config.ModifiableHadoopConfiguration;
 import org.janusgraph.hadoop.config.JanusGraphHadoopConfiguration;
-import org.janusgraph.hadoop.formats.cassandra.CassandraBinaryInputFormat;
-import org.janusgraph.hadoop.formats.hbase.HBaseBinaryInputFormat;
+import org.janusgraph.hadoop.config.ModifiableHadoopConfiguration;
 import org.janusgraph.hadoop.scan.HadoopScanMapper;
 import org.janusgraph.hadoop.scan.HadoopScanRunner;
 import org.janusgraph.hadoop.scan.HadoopVertexScanMapper;
-import org.apache.cassandra.dht.IPartitioner;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +56,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
 
 public class MapReduceIndexManagement {
 
@@ -79,9 +72,6 @@ public class MapReduceIndexManagement {
     private static final Set<Class<? extends KeyColumnValueStoreManager>> CASSANDRA_STORE_MANAGER_CLASSES =
             ImmutableSet.of(CassandraEmbeddedStoreManager.class,
                     AstyanaxStoreManager.class, CassandraThriftStoreManager.class);
-
-    private static final Set<Class<? extends KeyColumnValueStoreManager>> HBASE_STORE_MANAGER_CLASSES =
-            ImmutableSet.of(HBaseStoreManager.class);
 
     public MapReduceIndexManagement(JanusGraph g) {
         this.graph = (StandardJanusGraph)g;
@@ -152,17 +142,15 @@ public class MapReduceIndexManagement {
         final Class<? extends InputFormat> inputFormat;
         final Class<? extends KeyColumnValueStoreManager> storeManagerClass =
                 graph.getBackend().getStoreManagerClass();
-        if (CASSANDRA_STORE_MANAGER_CLASSES.contains(storeManagerClass)) {
-            inputFormat = CassandraBinaryInputFormat.class;
-            // Set the partitioner
-            IPartitioner part =
-                    ((AbstractCassandraStoreManager)graph.getBackend().getStoreManager()).getCassandraPartitioner();
-            hadoopConf.set("cassandra.input.partitioner.class", part.getClass().getName());
-        } else if (HBASE_STORE_MANAGER_CLASSES.contains(storeManagerClass)) {
-            inputFormat = HBaseBinaryInputFormat.class;
-        } else {
-            throw new IllegalArgumentException("Store manager class " + storeManagerClass + "is not supported");
-        }
+//        if (CASSANDRA_STORE_MANAGER_CLASSES.contains(storeManagerClass)) {
+//            inputFormat = CassandraBinaryInputFormat.class;
+//            // Set the partitioner
+//            IPartitioner part =
+//                    ((AbstractCassandraStoreManager)graph.getBackend().getStoreManager()).getCassandraPartitioner();
+//            hadoopConf.set("cassandra.input.partitioner.class", part.getClass().getName());
+//        } else {
+//            throw new IllegalArgumentException("Store manager class " + storeManagerClass + "is not supported");
+//        }
 
         // The index name and relation type name (if the latter is applicable)
         final String indexName = index.name();
@@ -185,7 +173,8 @@ public class MapReduceIndexManagement {
         String jobName = HadoopScanMapper.class.getSimpleName() + "[" + indexJobClass.getSimpleName() + "]";
 
         try {
-            return new CompletedJobFuture(HadoopScanRunner.runJob(hadoopConf, inputFormat, jobName, mapperClass));
+            // remove null and uncomment code above when fixing this for CQL
+            return new CompletedJobFuture(HadoopScanRunner.runJob(hadoopConf, null, jobName, mapperClass));
         } catch (Exception e) {
             return new FailedJobFuture(e);
         }
