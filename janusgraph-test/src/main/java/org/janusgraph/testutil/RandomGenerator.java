@@ -14,12 +14,13 @@
 
 package org.janusgraph.testutil;
 
-import org.junit.Test;
+import com.google.common.base.Preconditions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RandomGenerator {
 
@@ -45,7 +46,7 @@ public class RandomGenerator {
     }
 
     public static String randomString(int lowerLen, int upperLen) {
-        assert lowerLen > 0 && upperLen >= lowerLen;
+        Preconditions.checkState(lowerLen > 0 && upperLen >= lowerLen);
         int length = randomInt(lowerLen, upperLen);
         StringBuilder s = new StringBuilder();
         for (int i = 0; i < length; i++) {
@@ -62,7 +63,7 @@ public class RandomGenerator {
      * @return the generated pseudorandom
      */
     public static int randomInt(int lower, int upper) {
-        assert upper > lower;
+        Preconditions.checkState(upper > lower);
         int interval = upper - lower;
         // Generate a random int on [lower, upper)
         double rand = Math.floor(Math.random() * interval) + lower;
@@ -81,7 +82,7 @@ public class RandomGenerator {
      * @return the generated pseudorandom
      */
     public static long randomLong(long lower, long upper) {
-        assert upper > lower;
+        Preconditions.checkState(upper > lower);
         long interval = upper - lower;
         // Generate a random int on [lower, upper)
         double rand = Math.floor(Math.random() * interval) + lower;

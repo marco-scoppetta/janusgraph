@@ -14,8 +14,8 @@
 
 package org.janusgraph.diskstorage.hbase;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -33,18 +33,19 @@ import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class HBaseStoreManagerConfigTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void startHBase() throws IOException, BackendException {
         HBaseStorageSetup.startHBase();
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopHBase() {
         // No op. HBase stopped by shutdown hook registered by startHBase().
 
@@ -76,7 +77,7 @@ public class HBaseStoreManagerConfigTest {
         store = manager.openDatabase(GraphDatabaseConfiguration.SYSTEM_PROPERTIES_STORE_NAME);
 
         // Verify we get WARN.
-        assertTrue(writer.toString(), writer.toString().startsWith("WARN: Configuration"));
+        assertTrue(writer.toString().startsWith("WARN: Configuration"), writer.toString());
         log.removeAppender(appender);
         log.setLevel(savedLevel);
 
@@ -93,7 +94,7 @@ public class HBaseStoreManagerConfigTest {
         // Set backend to hbase
         config.set(GraphDatabaseConfiguration.STORAGE_BACKEND, "hbase");
         // Instantiate a GraphDatabaseConfiguration based on the above
-        GraphDatabaseConfiguration graphConfig = new GraphDatabaseConfiguration(config.getConfiguration());
+        GraphDatabaseConfiguration graphConfig = new GraphDatabaseConfigurationBuilder().build(config.getConfiguration());
         // Check the TIMESTAMP_PROVIDER has been set to the hbase preferred MILLI
         TimestampProviders provider = graphConfig.getConfiguration().get(GraphDatabaseConfiguration.TIMESTAMP_PROVIDER);
         assertEquals(HBaseStoreManager.PREFERRED_TIMESTAMPS, provider);

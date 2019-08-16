@@ -24,6 +24,7 @@ import org.janusgraph.core.schema.ConsistencyModifier;
 import org.janusgraph.core.schema.SchemaStatus;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.diskstorage.*;
+import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.indexing.IndexEntry;
@@ -56,6 +57,7 @@ import org.janusgraph.graphdb.relations.EdgeDirection;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsGraph;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphFeatures;
 import org.janusgraph.graphdb.tinkerpop.optimize.AdjacentVertexFilterOptimizerStrategy;
+import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphIoRegistrationStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphStepStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphLocalQueryOptimizerStrategy;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
@@ -96,7 +98,9 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     static {
         TraversalStrategies graphStrategies = TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
-                .addStrategies(AdjacentVertexFilterOptimizerStrategy.instance(), JanusGraphLocalQueryOptimizerStrategy.instance(), JanusGraphStepStrategy.instance());
+                .addStrategies(AdjacentVertexFilterOptimizerStrategy.instance(),
+                    JanusGraphLocalQueryOptimizerStrategy.instance(), JanusGraphStepStrategy.instance(),
+                    JanusGraphIoRegistrationStrategy.instance());
 
         //Register with cache
         TraversalStrategies.GlobalCache.registerStrategies(StandardJanusGraph.class, graphStrategies);
@@ -158,7 +162,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
         //Register instance and ensure uniqueness
         String uniqueInstanceId = configuration.getUniqueGraphId();
-        ModifiableConfiguration globalConfig = GraphDatabaseConfiguration.getGlobalSystemConfig(backend);
+        ModifiableConfiguration globalConfig = getGlobalSystemConfig(backend);
         final boolean instanceExists = globalConfig.has(REGISTRATION_TIME, uniqueInstanceId);
         final boolean replaceExistingInstance = configuration.getConfiguration().get(REPLACE_INSTANCE_IF_EXISTS);
         if (instanceExists && !replaceExistingInstance) {
@@ -211,7 +215,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             String uniqueId = null;
             try {
                 uniqueId = config.getUniqueGraphId();
-                ModifiableConfiguration globalConfig = GraphDatabaseConfiguration.getGlobalSystemConfig(backend);
+                ModifiableConfiguration globalConfig = getGlobalSystemConfig(backend);
                 globalConfig.remove(REGISTRATION_TIME, uniqueId);
             } catch (Exception e) {
                 log.warn("Unable to remove graph instance uniqueid {}", uniqueId, e);
@@ -223,6 +227,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
              */
             for (StandardJanusGraphTx otx : openTransactions) {
                 try {
+                    otx.rollback();
                     otx.close();
                 } catch (RuntimeException e) {
                     // Catch and store these exceptions, but proceed wit the loop
@@ -449,6 +454,11 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         return resultList;
     }
 
+    private ModifiableConfiguration getGlobalSystemConfig(Backend backend) {
+
+        return new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,
+            backend.getGlobalSystemConfig(), BasicConfiguration.Restriction.GLOBAL);
+    }
 
     // ################### WRITE #########################
 
@@ -672,7 +682,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             if (logTransaction) {
                 //[FAILURE] Inability to log transaction fails the transaction by escalation since it's likely due to unavailability of primary
                 //storage backend.
-                Preconditions.checkState(txLog != null, "Transaction log is null");
+                Preconditions.checkNotNull(txLog, "Transaction log is null");
                 txLog.add(txLogHeader.serializeModifications(serializer, LogTxStatus.PRECOMMIT, tx, addedRelations, deletedRelations),txLogHeader.getLogKey());
             }
 

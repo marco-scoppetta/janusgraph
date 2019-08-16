@@ -16,14 +16,12 @@ package org.janusgraph.diskstorage.util;
 
 import com.google.common.primitives.Longs;
 import org.janusgraph.diskstorage.StaticBuffer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -44,13 +42,13 @@ public class BufferUtilTest {
             StaticBuffer b2 = BufferUtil.getLongBuffer(val2);
 
             //Compare
-            assertEquals(val1 + " : " + val2, Math.signum(Longs.compare(val1, val2)), Math.signum(b1.compareTo(b2)), 0.01);
+            assertEquals(Math.signum(Longs.compare(val1, val2)), Math.signum(b1.compareTo(b2)), 0.01, val1 + " : " + val2);
             assertEquals(Math.signum(Longs.compare(val2, val1)), Math.signum(b2.compareTo(b1)), 0.01);
             assertEquals(0, b1.compareTo(b1));
 
             ByteBuffer bb1 = of(val1);
             ByteBuffer bb2 = of(val2);
-            assertEquals(val1 + " : " + val2, Math.signum(Longs.compare(val1, val2)), Math.signum(ByteBufferUtil.compare(bb1,bb2)), 0.01);
+            assertEquals(Math.signum(Longs.compare(val1, val2)), Math.signum(ByteBufferUtil.compare(bb1,bb2)), 0.01, val1 + " : " + val2);
             assertEquals(Math.signum(Longs.compare(val2, val1)), Math.signum(ByteBufferUtil.compare(bb2, bb1)), 0.01);
             assertEquals(0, ByteBufferUtil.compare(bb1, bb1));
 
@@ -67,7 +65,7 @@ public class BufferUtilTest {
         int trials = 100000;
         for (int t = 0; t < trials; t++) {
             long val = random.nextLong()>>>1;
-            assert val>=0;
+            assertTrue(val>=0);
             StaticBuffer b = BufferUtil.getLongBuffer(val);
             assertEquals(val,b.getLong(0));
             StaticBuffer bn = BufferUtil.nextBiggerBuffer(b);
@@ -82,8 +80,8 @@ public class BufferUtilTest {
         } catch (IllegalArgumentException ignored) {}
         StaticBuffer b = BufferUtil.getLongBuffer(-1);
         StaticBuffer bn = BufferUtil.nextBiggerBufferAllowOverflow(b);
-        Assert.assertEquals(8,bn.length());
-        Assert.assertTrue(BufferUtil.zeroBuffer(8).equals(bn));
+        assertEquals(8,bn.length());
+        assertTrue(BufferUtil.zeroBuffer(8).equals(bn));
 
     }
 

@@ -28,7 +28,7 @@ import org.apache.tinkerpop.gremlin.spark.process.computer.SparkGraphComputer;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -38,9 +38,9 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class AbstractInputFormatIT extends JanusGraphBaseTest {
 
@@ -71,7 +71,7 @@ public abstract class AbstractInputFormatIT extends JanusGraphBaseTest {
         graph.tx().commit();
 
         assertEquals(numV, (long) graph.traversal().V().count().next());
-        Map<String, Object> propertiesOnVertex = graph.traversal().V().valueMap().next();
+        Map<Object, Object> propertiesOnVertex = graph.traversal().V().valueMap().next();
         List<?> valuesOnP = (List)propertiesOnVertex.values().iterator().next();
         assertEquals(numProps, valuesOnP.size());
         for (int i = 0; i < numProps; i++) {
@@ -84,7 +84,7 @@ public abstract class AbstractInputFormatIT extends JanusGraphBaseTest {
         final Set<?> observedValuesOnP = ImmutableSet.copyOf((List)propertiesOnVertex.values().iterator().next());
         assertEquals(numProps, observedValuesOnP.size());
         // order may not be preserved in multi-value properties
-        assertEquals("Unexpected values", ImmutableSet.copyOf(valuesOnP), observedValuesOnP);
+        assertEquals(ImmutableSet.copyOf(valuesOnP), observedValuesOnP, "Unexpected values");
     }
 
     @Test

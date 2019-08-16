@@ -56,7 +56,7 @@ public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaMan
 
     /**
      * Identical to {@link #buildEdgeIndex(org.janusgraph.core.EdgeLabel, String, org.apache.tinkerpop.gremlin.structure.Direction, org.apache.tinkerpop.gremlin.process.traversal.Order, org.janusgraph.core.PropertyKey...)}
-     * with default sort order {@link org.apache.tinkerpop.gremlin.process.traversal.Order#incr}.
+     * with default sort order {@link org.apache.tinkerpop.gremlin.process.traversal.Order#asc}.
      *
      * @param label
      * @param name
@@ -84,7 +84,7 @@ public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaMan
 
     /**
      * Identical to {@link #buildPropertyIndex(org.janusgraph.core.PropertyKey, String, org.apache.tinkerpop.gremlin.process.traversal.Order, org.janusgraph.core.PropertyKey...)}
-     * with default sort order {@link org.apache.tinkerpop.gremlin.process.traversal.Order#incr}.
+     * with default sort order {@link org.apache.tinkerpop.gremlin.process.traversal.Order#asc}.
      *
      * @param key
      * @param name
@@ -400,5 +400,44 @@ public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaMan
      * @see org.janusgraph.core.JanusGraphTransaction#rollback()
      */
     void rollback();
+
+    /*
+    ##################### PRINT SCHEMA ELEMENTS ##########################
+     */
+
+    /**
+     * Prints out schema information related to vertex and edge labels, indexes, and property keys.
+     *
+     * @return a collection of all the mgmt API schema printing methods
+     */
+    public String printSchema();
+
+    /**
+     * Prints out schema information related to vertex labels.
+     *
+     * @return String with vertex label schema information
+     */
+    public String printVertexLabels();
+
+    /**
+     * Prints out schema infomration related to edge labels.
+     *
+     * @return String with edge label schema information
+     */
+    public String printEdgeLabels();
+
+    /**
+     * Prints out schema information related to property keys.
+     *
+     * @return String with property key schema information
+     */
+    public String printPropertyKeys();
+
+    /**
+     * Prints out schema information related to indexes
+     *
+     * @return String with graph index information
+     */
+    public String printIndexes();
 
 }

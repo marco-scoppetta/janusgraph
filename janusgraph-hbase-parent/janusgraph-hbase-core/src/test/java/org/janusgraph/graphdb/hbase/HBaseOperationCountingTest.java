@@ -18,9 +18,7 @@ import org.janusgraph.HBaseStorageSetup;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphOperationCountingTest;
 
-import org.apache.hadoop.hbase.util.VersionInfo;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;
 
@@ -34,20 +32,13 @@ public class HBaseOperationCountingTest extends JanusGraphOperationCountingTest 
         return HBaseStorageSetup.getHBaseGraphConfiguration();
     }
 
-    @AfterClass
-    public static void stopHBase() {
-        // Workaround for https://issues.apache.org/jira/browse/HBASE-10312
-        if (VersionInfo.getVersion().startsWith("0.96"))
-            HBaseStorageSetup.killIfRunning();
-    }
-
-    @BeforeClass
+    @BeforeAll
     public static void startHBase() throws IOException {
         HBaseStorageSetup.startHBase();
     }
 
     @Override
-    public void testCacheConcurrency() throws InterruptedException {
+    public void testCacheConcurrency() {
         //Don't run this test;
     }
 

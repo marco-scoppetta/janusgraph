@@ -14,24 +14,22 @@
 
 package org.janusgraph.graphdb.cql;
 
+import org.janusgraph.JanusGraphCassandraContainer;
+import org.janusgraph.TestCategory;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphConcurrentTest;
-import org.janusgraph.testcategory.PerformanceTests;
-import org.junit.BeforeClass;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Category({PerformanceTests.class})
+@Tag(TestCategory.PERFORMANCE_TESTS)
+@Testcontainers
 public class CQLGraphConcurrentTest extends JanusGraphConcurrentTest {
+    @Container
+    public static final JanusGraphCassandraContainer cqlContainer = new JanusGraphCassandraContainer();
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
-    }
-
-
-    @BeforeClass
-    public static void beforeClass() {
-        CassandraStorageSetup.startCleanEmbedded();
+        return cqlContainer.getConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 }

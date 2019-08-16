@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
+import org.janusgraph.TestCategory;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.PropertyKey;
@@ -45,7 +46,6 @@ import org.janusgraph.core.util.ManagementUtil;
 import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
-import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.indexing.IndexFeatures;
 import org.janusgraph.diskstorage.indexing.IndexInformation;
@@ -58,28 +58,22 @@ import org.janusgraph.graphdb.database.management.ManagementSystem;
 import org.janusgraph.graphdb.internal.ElementCategory;
 import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.log.StandardTransactionLogProcessor;
-import org.janusgraph.graphdb.query.condition.Not;
 import org.janusgraph.graphdb.types.ParameterType;
 import org.janusgraph.graphdb.types.StandardEdgeLabelMaker;
-import org.janusgraph.testcategory.BrittleTests;
 import org.janusgraph.testutil.TestGraphConfigs;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.ElementValueComparator;
-import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalMetrics;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,9 +96,9 @@ import java.util.stream.Collectors;
 import static org.janusgraph.graphdb.JanusGraphTest.evaluateQuery;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
 import static org.janusgraph.testutil.JanusGraphAssert.*;
-import static org.apache.tinkerpop.gremlin.process.traversal.Order.decr;
-import static org.apache.tinkerpop.gremlin.process.traversal.Order.incr;
-import static org.junit.Assert.*;
+import static org.apache.tinkerpop.gremlin.process.traversal.Order.desc;
+import static org.apache.tinkerpop.gremlin.process.traversal.Order.asc;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 /**
@@ -113,10 +107,10 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
-    private static final ElementValueComparator ORDER_AGE_DECR = new ElementValueComparator("age", org.apache.tinkerpop.gremlin.process.traversal.Order.decr);
-    private static final ElementValueComparator ORDER_AGE_INCR = new ElementValueComparator("age", org.apache.tinkerpop.gremlin.process.traversal.Order.incr);
-    private static final ElementValueComparator ORDER_LENGTH_DECR = new ElementValueComparator("length", org.apache.tinkerpop.gremlin.process.traversal.Order.decr);
-    private static final ElementValueComparator ORDER_LENGTH_INCR = new ElementValueComparator("length", org.apache.tinkerpop.gremlin.process.traversal.Order.incr);
+    private static final ElementValueComparator ORDER_AGE_DESC = new ElementValueComparator("age", org.apache.tinkerpop.gremlin.process.traversal.Order.desc);
+    private static final ElementValueComparator ORDER_AGE_ASC = new ElementValueComparator("age", org.apache.tinkerpop.gremlin.process.traversal.Order.asc);
+    private static final ElementValueComparator ORDER_LENGTH_DESC = new ElementValueComparator("length", org.apache.tinkerpop.gremlin.process.traversal.Order.desc);
+    private static final ElementValueComparator ORDER_LENGTH_ASC = new ElementValueComparator("length", org.apache.tinkerpop.gremlin.process.traversal.Order.asc);
 
     public static final String INDEX = GraphOfTheGodsFactory.INDEX_NAME;
     public static final String VINDEX = "v" + INDEX;
@@ -174,9 +168,6 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         super.clopen(settings);
     }
 
-    @Rule
-    public TestName methodName = new TestName();
-
     /**
      * Tests the {@link org.janusgraph.example.GraphOfTheGodsFactory#load(org.janusgraph.core.JanusGraph)}
      * method used as the standard example that ships with JanusGraph.
@@ -217,9 +208,9 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
     private static void assertStorageExists(Backend backend, boolean exists) throws Exception {
         final String suffix = exists ? "should exist before clearing" : "should not exist after clearing";
-        assertTrue("graph " + suffix, backend.getStoreManager().exists() == exists);
+        assertTrue(backend.getStoreManager().exists() == exists, "graph " + suffix);
         for (final IndexInformation index : backend.getIndexInformation().values()) {
-            assertTrue("index " + suffix, ((IndexProvider) index).exists() == exists);
+            assertTrue(((IndexProvider) index).exists() == exists, "index " + suffix);
         }
     }
 
@@ -318,6 +309,38 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         }
     }
 
+    @Test
+    public void testListDeleteAddInOneTransaction() {
+        if (!indexFeatures.supportsCardinality(Cardinality.LIST)) {
+            return;
+        }
+        PropertyKey name = makeKey("name", String.class);
+        PropertyKey aliasKey = mgmt.makePropertyKey("alias")
+                .dataType(String.class)
+                .cardinality(Cardinality.LIST)
+                .make();
+        mgmt.buildIndex("namev", Vertex.class).addKey(name).addKey(aliasKey,
+                indexFeatures.supportsStringMapping(Mapping.TEXTSTRING) ? Mapping.TEXTSTRING.asParameter()
+                        : Mapping.DEFAULT.asParameter()).buildMixedIndex(INDEX);
+        finishSchema();
+
+        JanusGraphVertex v = tx.addVertex("name", "Marko Rodriguez");
+        clopen();
+
+        v = getOnlyVertex(tx.query().has("name", Text.CONTAINS, "Marko Rodriguez"));
+        v.property("alias", "Marko");
+        clopen();
+        assertCount(1, tx.query().has("alias", Text.CONTAINS, "Marko").vertices());
+
+        v = getOnlyVertex(tx.query().has("name", Text.CONTAINS, "Marko Rodriguez"));
+        v.property("alias").remove();
+        v.property("alias", "Marko1");
+        assertCount(1, tx.query().has("alias", Text.CONTAINS, "Marko1").vertices());
+        assertCount(0, tx.query().has("alias", Text.CONTAINS, "Marko").vertices());
+        clopen();
+        assertCount(1, tx.query().has("alias", Text.CONTAINS, "Marko1").vertices());
+        assertCount(0, tx.query().has("alias", Text.CONTAINS, "Marko").vertices());
+    }
 
     @Test
     public void testIndexing() throws InterruptedException {
@@ -443,8 +466,8 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             }
         }
 
-        assertCount(3, tx.query().has("group", 3).orderBy("time", incr).limit(3).vertices());
-        assertCount(3, tx.query().has("group", 3).orderBy("time", decr).limit(3).edges());
+        assertCount(3, tx.query().has("group", 3).orderBy("time", asc).limit(3).vertices());
+        assertCount(3, tx.query().has("group", 3).orderBy("time", desc).limit(3).edges());
 
         for (int i = 0; i < numV / 2; i += numV / 10) {
             assertCount(i, tx.query().has("time", Cmp.GREATER_THAN_EQUAL, i).has("time", Cmp.LESS_THAN, i + i).vertices());
@@ -580,7 +603,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             clopen();//Flush the index
             try {
                 assertEquals(v1, getOnlyVertex(graph.query().has("instant", Cmp.EQUAL, firstTimestamp)));
-                Assert.fail("Should have failed to update the index");
+                fail("Should have failed to update the index");
             } catch (final Exception ignored) {
 
             }
@@ -762,7 +785,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         final String[] stringsTwo = new String[strings.length];
         for (int i = 0; i < strings.length; i++) stringsTwo[i] = strings[i] + " " + strings[i];
         final int modulo = 5;
-        assert numV % (modulo * strings.length * 2) == 0;
+        assertTrue(numV % (modulo * strings.length * 2) == 0);
 
         for (int i = 0; i < numV; i++) {
             final JanusGraphVertex v = tx.addVertex(i % 2 == 0 ? "person" : "org");
@@ -774,11 +797,11 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         //########## QUERIES ################
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index2.name());
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", decr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", desc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.DESC, index2.name());
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[3]).has(LABEL_NAME, Cmp.EQUAL, "org"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index3.name());
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[1]).has(LABEL_NAME, Cmp.EQUAL, "org").orderBy("weight", decr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[1]).has(LABEL_NAME, Cmp.EQUAL, "org").orderBy("weight", desc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.DESC, index3.name());
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has("weight", Cmp.EQUAL, 2.5).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / (modulo * strings.length), new boolean[]{true, true}, index2.name());
@@ -790,12 +813,12 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 numV / strings.length, new boolean[]{true, true}, index1.name());
         evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[2]).has("text", Text.CONTAINS, strings[2]).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index1.name(), index2.name());
-        evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[0]).has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", incr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[0]).has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", asc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.ASC, index1.name(), index2.name());
 
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{false, true});
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).orderBy("weight", incr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).orderBy("weight", asc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{false, false}, weight, Order.ASC);
 
         clopen();
@@ -804,11 +827,11 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         //########## QUERIES (copied from above) ################
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index2.name());
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", decr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", desc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.DESC, index2.name());
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[3]).has(LABEL_NAME, Cmp.EQUAL, "org"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index3.name());
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[1]).has(LABEL_NAME, Cmp.EQUAL, "org").orderBy("weight", decr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[1]).has(LABEL_NAME, Cmp.EQUAL, "org").orderBy("weight", desc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.DESC, index3.name());
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).has("weight", Cmp.EQUAL, 2.5).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / (modulo * strings.length), new boolean[]{true, true}, index2.name());
@@ -820,12 +843,12 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 numV / strings.length, new boolean[]{true, true}, index1.name());
         evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[2]).has("text", Text.CONTAINS, strings[2]).has(LABEL_NAME, Cmp.EQUAL, "person"), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, index1.name(), index2.name());
-        evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[0]).has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", incr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("name", Cmp.EQUAL, strings[0]).has("text", Text.CONTAINS, strings[0]).has(LABEL_NAME, Cmp.EQUAL, "person").orderBy("weight", asc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{true, true}, weight, Order.ASC, index1.name(), index2.name());
 
         evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{false, true});
-        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).orderBy("weight", incr), ElementCategory.VERTEX,
+        evaluateQuery(tx.query().has("text", Text.CONTAINS, strings[0]).orderBy("weight", asc), ElementCategory.VERTEX,
                 numV / strings.length, new boolean[]{false, false}, weight, Order.ASC);
     }
 
@@ -1147,7 +1170,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 return; // Ignore for lucene
 
             default:
-                Assert.fail("Unknown index backend:" + backend);
+                fail("Unknown index backend:" + backend);
                 break;
         }
 
@@ -1234,7 +1257,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
     }
 
-    @Category({BrittleTests.class})
+    @Tag(TestCategory.BRITTLE_TESTS)
     @Test
     public void testIndexReplay() throws Exception {
         final TimestampProvider times = graph.getConfiguration().getTimestampProvider();
@@ -1543,7 +1566,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         final long time2 = time1 + 1;
         v2.property(VertexProperty.Cardinality.single, "time", time2);
 
-        evaluateQuery(tx.query().has("name", "first event").orderBy("time", decr),
+        evaluateQuery(tx.query().has("name", "first event").orderBy("time", desc),
                 ElementCategory.VERTEX, 1, new boolean[]{true, true}, tx.getPropertyKey("time"), Order.DESC, "index1");
         evaluateQuery(tx.query().has("text", Text.CONTAINS, "help").has(LABEL_NAME, "event"),
                 ElementCategory.VERTEX, 1, new boolean[]{true, true}, "index2");
@@ -1553,7 +1576,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         final Object v1Id = v1.id();
         final Object v2Id = v2.id();
 
-        evaluateQuery(tx.query().has("name", "first event").orderBy("time", decr),
+        evaluateQuery(tx.query().has("name", "first event").orderBy("time", desc),
                 ElementCategory.VERTEX, 1, new boolean[]{true, true}, tx.getPropertyKey("time"), Order.DESC, "index1");
         evaluateQuery(tx.query().has("text", Text.CONTAINS, "help").has(LABEL_NAME, "event"),
                 ElementCategory.VERTEX, 1, new boolean[]{true, true}, "index2");
@@ -1571,7 +1594,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
         evaluateQuery(tx.query().has("text", Text.CONTAINS, "help").has(LABEL_NAME, "event"),
                 ElementCategory.VERTEX, 0, new boolean[]{true, true}, "index2");
-        evaluateQuery(tx.query().has("name", "first event").orderBy("time", decr),
+        evaluateQuery(tx.query().has("name", "first event").orderBy("time", desc),
                 ElementCategory.VERTEX, 0, new boolean[]{true, true}, tx.getPropertyKey("time"), Order.DESC, "index1");
 
 
@@ -1621,7 +1644,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
         evaluateQuery(tx.query().has("text", Text.CONTAINS, "help").has(LABEL_NAME, "likes"),
                 ElementCategory.EDGE, 1, new boolean[]{true, true}, "index2");
-        evaluateQuery(tx.query().has("name", "v2 likes v3").orderBy("time", decr),
+        evaluateQuery(tx.query().has("name", "v2 likes v3").orderBy("time", desc),
                 ElementCategory.EDGE, 1, new boolean[]{true, true}, tx.getPropertyKey("time"), Order.DESC, "index1");
         v1 = getV(tx, v1.id());
         v2 = getV(tx, v2.id());
@@ -1643,7 +1666,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         // ...indexes have expired
         evaluateQuery(tx.query().has("text", Text.CONTAINS, "help").has(LABEL_NAME, "likes"),
                 ElementCategory.EDGE, 0, new boolean[]{true, true}, "index2");
-        evaluateQuery(tx.query().has("name", "v2 likes v3").orderBy("time", decr),
+        evaluateQuery(tx.query().has("name", "v2 likes v3").orderBy("time", desc),
                 ElementCategory.EDGE, 0, new boolean[]{true, true}, tx.getPropertyKey("time"), Order.DESC, "index1");
 
         v1 = getV(tx, v1.id());
@@ -1672,8 +1695,8 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
      * @throws BackendException
      */
     @Test
-    public void testDeleteVertexThenDeleteProperty() throws BackendException {
-        testNestedWrites("x", null);
+    public void testDeleteVertexThenDeleteProperty(TestInfo testInfo) throws BackendException {
+        testNestedWrites("x", null, testInfo);
     }
 
     /**
@@ -1683,8 +1706,8 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
      * @throws BackendException
      */
     @Test
-    public void testDeleteVertexThenAddProperty() throws BackendException {
-        testNestedWrites(null, "y");
+    public void testDeleteVertexThenAddProperty(TestInfo testInfo) throws BackendException {
+        testNestedWrites(null, "y", testInfo);
     }
 
     /**
@@ -1694,8 +1717,8 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
      * @throws BackendException
      */
     @Test
-    public void testDeleteVertexThenModifyProperty() throws BackendException {
-        testNestedWrites("x", "y");
+    public void testDeleteVertexThenModifyProperty(TestInfo testInfo) throws BackendException {
+        testNestedWrites("x", "y", testInfo);
     }
 
     @Test
@@ -1718,7 +1741,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             .map(JanusGraphIndexQuery.Result::getScore)
             .collect(Collectors.toSet());
 
-        Assert.assertEquals(3, scores.size());
+        assertEquals(3, scores.size());
     }
 
     @Test
@@ -1737,10 +1760,10 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         tx.commit();
 
         final JanusGraphVertex r = Iterables.get(graph.query().has("name", Text.CONTAINS, "hercules here").vertices(), 0);
-        Assert.assertEquals(r.property("name").value(), "hercules was here");
+        assertEquals(r.property("name").value(), "hercules was here");
     }
 
-    private void testNestedWrites(String initialValue, String updatedValue) throws BackendException {
+    private void testNestedWrites(String initialValue, String updatedValue, TestInfo testInfo) throws BackendException {
         // This method touches a single vertex with multiple transactions,
         // leading to deadlock under BDB and cascading test failures. Check for
         // the hasTxIsolation() store feature, which is currently true for BDB
@@ -1752,7 +1775,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         try {
             b = graph.getConfiguration().getBackend();
             if (b.getStoreFeatures().hasTxIsolation()) {
-                log.info("Skipping " + getClass().getSimpleName() + "." + methodName.getMethodName());
+                log.info("Skipping " + getClass().getSimpleName() + "." + testInfo.getTestMethod().toString());
                 return;
             }
         } finally {
@@ -1831,6 +1854,10 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 
     protected abstract boolean supportsCollections();
 
+    protected boolean supportsGeoCollections() {
+        return true;
+    }
+
     /**
      * Tests indexing sets
      */
@@ -1846,14 +1873,21 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             final PropertyKey intProperty = mgmt.makePropertyKey("age").dataType(Integer.class).cardinality(cardinality).make();
             final PropertyKey longProperty = mgmt.makePropertyKey("long").dataType(Long.class).cardinality(cardinality).make();
             final PropertyKey uuidProperty = mgmt.makePropertyKey("uuid").dataType(UUID.class).cardinality(cardinality).make();
-            final PropertyKey geopointProperty = mgmt.makePropertyKey("geopoint").dataType(Geoshape.class).cardinality(cardinality).make();
-            mgmt.buildIndex("collectionIndex", Vertex.class).addKey(stringProperty, getStringMapping()).addKey(intProperty).addKey(longProperty).addKey(uuidProperty).addKey(geopointProperty).buildMixedIndex(INDEX);
+            JanusGraphManagement.IndexBuilder indexBuilder =
+                mgmt.buildIndex("collectionIndex", Vertex.class).addKey(stringProperty, getStringMapping()).addKey(intProperty).addKey(longProperty).addKey(uuidProperty);
+            if (supportsGeoCollections()) {
+                final PropertyKey geopointProperty = mgmt.makePropertyKey("geopoint").dataType(Geoshape.class).cardinality(cardinality).make();
+                indexBuilder.addKey(geopointProperty);
+            }
+            indexBuilder.buildMixedIndex(INDEX);
 
             finishSchema();
             testCollection(cardinality, "name", "Totoro", "Hiro");
             testCollection(cardinality, "age", 1, 2);
             testCollection(cardinality, "long", 1L, 2L);
-            testCollection(cardinality, "geopoint", Geoshape.point(1.0, 1.0), Geoshape.point(2.0, 2.0));
+            if (supportsGeoCollections()) {
+                testCollection(cardinality, "geopoint", Geoshape.point(1.0, 1.0), Geoshape.point(2.0, 2.0));
+            }
             final String backend = readConfig.get(INDEX_BACKEND, INDEX);
             // Solr 6 has issues processing UUIDs with Multivalues
             // https://issues.apache.org/jira/browse/SOLR-11264
@@ -1865,7 +1899,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 final PropertyKey stringProperty = mgmt.makePropertyKey("name").dataType(String.class).cardinality(cardinality).make();
                 //This should throw an exception
                 mgmt.buildIndex("collectionIndex", Vertex.class).addKey(stringProperty, getStringMapping()).buildMixedIndex(INDEX);
-                Assert.fail("Should have thrown an exception");
+                fail("Should have thrown an exception");
             } catch (final JanusGraphException ignored) {
 
             }
@@ -1937,7 +1971,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         assertEquals(v1, getOnlyElement(graph.query().has(property, value2).vertices()));
 
         //If this is a geo test then try a within query
-        if (value1 instanceof Geoshape) {
+        if (value1 instanceof Geoshape && supportsGeoCollections()) {
             assertEquals(v1, getOnlyElement(graph.query().has(property, Geo.WITHIN, Geoshape.circle(1.0, 1.0, 0.1)).vertices()));
             assertEquals(v1, getOnlyElement(graph.query().has(property, Geo.WITHIN, Geoshape.circle(2.0, 2.0, 0.1)).vertices()));
         }
@@ -2035,7 +2069,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         try {
             ManagementSystem.awaitGraphIndexStatus(graph, "randomMixedIndex").status(SchemaStatus.REGISTERED, SchemaStatus.ENABLED).call();
         } catch (final Exception e) {
-            Assert.fail("Failed to awaitGraphIndexStatus on multiple statuses.");
+            fail("Failed to awaitGraphIndexStatus on multiple statuses.");
         }
     }
 
@@ -2136,32 +2170,32 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         assertTraversal(g.V().has("length", P.lte(100)).or(__.has("name", "Totoro"),__.has("age", P.gte(2))), hiro);
         assertTraversal(g.V().or(__.has("name", "Totoro"),__.has("age", P.gte(2))).has("length", P.lte(100)), hiro);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"),__.has("age", 2)).order().by(ORDER_AGE_DECR), hiro, totoro);
-        assertTraversal(g.V().or(__.has("name", "Totoro"),__.has("age", 2)).order().by(ORDER_AGE_INCR), totoro, hiro);
-        assertTraversal(g.V().or(__.has("name", "Hiro"),__.has("age", 2)).order().by(ORDER_AGE_INCR), hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"),__.has("age", 2)).order().by(ORDER_AGE_DESC), hiro, totoro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"),__.has("age", 2)).order().by(ORDER_AGE_ASC), totoro, hiro);
+        assertTraversal(g.V().or(__.has("name", "Hiro"),__.has("age", 2)).order().by(ORDER_AGE_ASC), hiro);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_DECR)), totoro, john, hiro);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_INCR)), totoro, hiro, john);
-        assertTraversal(g.V().or(__.has("name", "John"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_INCR)), john, hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_DESC)), totoro, john, hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_ASC)), totoro, hiro, john);
+        assertTraversal(g.V().or(__.has("name", "John"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_ASC)), john, hiro);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_AGE_DECR)), totoro, john, hiro);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_AGE_INCR)), totoro, hiro, john);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_AGE_DESC)), totoro, john, hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_AGE_ASC)), totoro, hiro, john);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_DECR)).order().by(ORDER_AGE_INCR), totoro, hiro, john);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_INCR)).order().by(ORDER_AGE_DECR), john, hiro, totoro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_DESC)).order().by(ORDER_AGE_ASC), totoro, hiro, john);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120)).order().by(ORDER_LENGTH_ASC)).order().by(ORDER_AGE_DESC), john, hiro, totoro);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120))).order().by(ORDER_AGE_INCR).limit(2), totoro, hiro);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120))).order().by(ORDER_AGE_INCR).range(2, 3), john);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120))).order().by(ORDER_AGE_ASC).limit(2), totoro, hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(120))).order().by(ORDER_AGE_ASC).range(2, 3), john);
 
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_INCR).limit(1)), totoro, hiro);
-        assertTraversal(g.V().or(__.has("name", "Hiro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_INCR).limit(1)), hiro);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_INCR).range(1, 2)), totoro, john);
-        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_INCR).range(1, 3)).limit(2), totoro, john);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_ASC).limit(1)), totoro, hiro);
+        assertTraversal(g.V().or(__.has("name", "Hiro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_ASC).limit(1)), hiro);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_ASC).range(1, 2)), totoro, john);
+        assertTraversal(g.V().or(__.has("name", "Totoro"), __.has("length", P.lte(130)).order().by(ORDER_LENGTH_ASC).range(1, 3)).limit(2), totoro, john);
 
-        assertTraversal(g.V().has("length", P.gte(130).or(P.lt(100))).order().by(ORDER_AGE_INCR), hiro, mike);
-        assertTraversal(g.V().has("length", P.gte(80).and(P.gte(130).or(P.lt(100)))).order().by(ORDER_AGE_INCR), hiro, mike);
+        assertTraversal(g.V().has("length", P.gte(130).or(P.lt(100))).order().by(ORDER_AGE_ASC), hiro, mike);
+        assertTraversal(g.V().has("length", P.gte(80).and(P.gte(130).or(P.lt(100)))).order().by(ORDER_AGE_ASC), hiro, mike);
         if (indexFeatures.supportNotQueryNormalForm()) {
-            assertTraversal(g.V().has("length", P.gte(80).and(P.gte(130)).or(P.gte(80).and(P.lt(100)))).order().by(ORDER_AGE_INCR), hiro, mike);
+            assertTraversal(g.V().has("length", P.gte(80).and(P.gte(130)).or(P.gte(80).and(P.lt(100)))).order().by(ORDER_AGE_ASC), hiro, mike);
         }
 
     }

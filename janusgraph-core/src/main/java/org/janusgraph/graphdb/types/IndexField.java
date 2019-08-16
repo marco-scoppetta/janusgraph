@@ -14,9 +14,9 @@
 
 package org.janusgraph.graphdb.types;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.janusgraph.core.PropertyKey;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -26,8 +26,7 @@ public class IndexField {
     private final PropertyKey key;
 
     IndexField(PropertyKey key) {
-        Preconditions.checkNotNull(key);
-        this.key = key;
+        this.key = Preconditions.checkNotNull(key);
     }
 
     public PropertyKey getFieldKey() {
@@ -40,7 +39,7 @@ public class IndexField {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(key).toHashCode();
+        return Objects.hashCode(key);
     }
 
     @Override

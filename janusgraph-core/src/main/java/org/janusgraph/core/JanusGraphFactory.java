@@ -24,6 +24,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.*;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
 import org.janusgraph.graphdb.management.JanusGraphManager;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
@@ -71,8 +72,8 @@ public class JanusGraphFactory {
      *
      * @param shortcutOrFile Configuration file name or configuration short-cut
      * @return JanusGraph graph database configured according to the provided configuration
-     * @see <a href="http://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
-     * @see <a href="http://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
+     * @see <a href="https://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
+     * @see <a href="https://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
      */
     public static JanusGraph open(String shortcutOrFile) {
         return open(getLocalConfiguration(shortcutOrFile));
@@ -92,8 +93,8 @@ public class JanusGraphFactory {
      * @param shortcutOrFile Configuration file name or configuration short-cut
      * @param backupName Backup name for graph
      * @return JanusGraph graph database configured according to the provided configuration
-     * @see <a href="http://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
-     * @see <a href="http://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
+     * @see <a href="https://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
+     * @see <a href="https://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
      */
     public static JanusGraph open(String shortcutOrFile, String backupName) {
         return open(getLocalConfiguration(shortcutOrFile), backupName);
@@ -104,8 +105,8 @@ public class JanusGraphFactory {
      *
      * @param configuration Configuration for the graph database
      * @return JanusGraph graph database
-     * @see <a href="http://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
-     * @see <a href="http://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
+     * @see <a href="https://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
+     * @see <a href="https://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
      */
     public static JanusGraph open(Configuration configuration) {
         return open(new CommonsConfiguration(configuration));
@@ -145,8 +146,8 @@ public class JanusGraphFactory {
         final String graphName = config.has(GRAPH_NAME) ? config.get(GRAPH_NAME) : backupName;
         final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
         if (null != graphName) {
-            Preconditions.checkState(jgm != null, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
-            return (JanusGraph) jgm.openGraph(graphName, gName -> new StandardJanusGraph(new GraphDatabaseConfiguration(configuration)));
+            Preconditions.checkNotNull(jgm, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
+            return (JanusGraph) jgm.openGraph(graphName, gName -> new StandardJanusGraph(new GraphDatabaseConfigurationBuilder().build(configuration)));
         } else {
             if (jgm != null) {
                 log.warn("You should supply \"graph.graphname\" in your .properties file configuration if you are opening " +
@@ -157,7 +158,7 @@ public class JanusGraphFactory {
                          "\"graph.graphname\" so these graphs should be accessed dynamically by supplying a .properties file here " +
                          "or by using the ConfiguredGraphFactory.");
             }
-            return new StandardJanusGraph(new GraphDatabaseConfiguration(configuration));
+            return new StandardJanusGraph(new GraphDatabaseConfigurationBuilder().build(configuration));
         }
     }
 
@@ -168,7 +169,7 @@ public class JanusGraphFactory {
      */
     public static Set<String> getGraphNames() {
        final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
-       Preconditions.checkState(jgm != null, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
+       Preconditions.checkNotNull(jgm, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
        return jgm.getGraphNames();
     }
 
