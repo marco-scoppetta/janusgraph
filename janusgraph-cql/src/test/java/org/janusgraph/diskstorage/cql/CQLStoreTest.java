@@ -71,12 +71,6 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     @Container
     public static final JanusGraphCassandraContainer cqlContainer = new JanusGraphCassandraContainer();
 
-    @Container
-    public static final JanusGraphCassandraContainer cqlContainer = new JanusGraphCassandraContainer();
-
-    @Container
-    public static final JanusGraphCassandraContainer cqlContainer = new JanusGraphCassandraContainer();
-
     public CQLStoreTest() throws BackendException {
     }
 
