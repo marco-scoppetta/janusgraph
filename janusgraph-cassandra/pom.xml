@@ -274,6 +274,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
                 <executions>
                     <execution>
                         <!-- Run by "mvn test" -->

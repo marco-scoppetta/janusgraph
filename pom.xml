@@ -337,6 +337,7 @@
                                 <value>file:${project.build.directory}/test-classes/log4j.properties</value>
                             </property>
                         </systemProperties>
+                        <useSystemClassLoader>false</useSystemClassLoader>
                     </configuration>
                     <executions>
                         <execution>
@@ -1589,6 +1590,9 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <useSystemClassLoader>false</useSystemClassLoader>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>memory-test</id>
@@ -1626,6 +1630,9 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <useSystemClassLoader>false</useSystemClassLoader>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>performance-test</id>
