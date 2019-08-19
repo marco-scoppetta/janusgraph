@@ -110,6 +110,7 @@ jobs:
             #- run: mvn integration-test fix RAT report exception before re-enabling this
             - run: mvn test '-Dtest=org.janusgraph.blueprints.cql.*Test'
 workflows:
+    version: 2
     grakn-janusgraph:
         jobs:
             - test-cql-diskstorage
