@@ -149,9 +149,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuraiton>
+                <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
-                </configuraiton>
+                </configuration>
                 <executions>
                     <execution>
                         <id>default-test</id>
