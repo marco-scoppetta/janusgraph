@@ -49,7 +49,7 @@ jobs:
 
             # run tests!
             #- run: mvn integration-test fix RAT report exception before re-enabling this
-            - run: mvn test '-Dtest=org.janusgraph.diskstorage.cql.*Test'
+            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.diskstorage.cql.*Test'
 
     test-cql-graphdb:
         docker:
@@ -78,7 +78,7 @@ jobs:
 
             # run tests!
             #- run: mvn integration-test fix RAT report exception before re-enabling this
-            - run: mvn test '-Dtest=org.janusgraph.graphdb.cql.*Test'
+            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.graphdb.cql.*Test'
 
     test-cql-blueprints:
         docker:
@@ -108,7 +108,7 @@ jobs:
 
             # run tests!
             #- run: mvn integration-test fix RAT report exception before re-enabling this
-            - run: mvn test '-Dtest=org.janusgraph.blueprints.cql.*Test'
+            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.blueprints.cql.*Test'
 workflows:
     version: 2
     grakn-janusgraph:
