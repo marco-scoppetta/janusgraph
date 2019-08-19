@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
-import org.janusgraph.JanusGraphCassandraContainer;
 import org.janusgraph.TestCategory;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
@@ -27,40 +26,47 @@ import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.janusgraph.diskstorage.cql.CQLConfigOptions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.CF_COMPACT_STORAGE;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.CF_COMPRESSION;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.CF_COMPRESSION_BLOCK_SIZE;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.CF_COMPRESSION_TYPE;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.USE_EXTERNAL_LOCKING;
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.getCQLConfiguration;
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.startCleanEmbedded;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Testcontainers
 public class CQLStoreTest extends KeyColumnValueStoreTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CQLStoreTest.class);
 
     private static final String TEST_CF_NAME = "testcf";
     private static final String DEFAULT_COMPRESSOR_PACKAGE = "org.apache.cassandra.io.compress";
-    private final String TEST_KEYSPACE_NAME = getClass().getSimpleName();
+    private static final String TEST_KEYSPACE_NAME = "test_keyspace";
 
     @Mock
     private CqlSession session;
@@ -68,14 +74,16 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     @InjectMocks
     private CQLStoreManager mockManager = new CQLStoreManager(getBaseStorageConfiguration());
 
-    @Container
-    public static final JanusGraphCassandraContainer cqlContainer = new JanusGraphCassandraContainer();
-
     public CQLStoreTest() throws BackendException {
     }
 
+    @BeforeAll
+    public static void startCassandra() {
+        startCleanEmbedded();
+    }
+
     protected ModifiableConfiguration getBaseStorageConfiguration() {
-        return cqlContainer.getConfiguration(TEST_KEYSPACE_NAME);
+        return getCQLConfiguration(TEST_KEYSPACE_NAME);
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
@@ -140,7 +148,6 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     }
 
     @Test
-    @EnabledIf("org.janusgraph.JanusGraphCassandraContainer.isCompactStorageSupported()")
     public void testUseCompactStorage() throws BackendException {
         final String cf = TEST_CF_NAME + "_usecompact";
         final ModifiableConfiguration config = getBaseStorageConfiguration();
