@@ -14,7 +14,7 @@
 
 version: 2
 jobs:
-    build:
+    test-cql-diskstorage:
         docker:
             # specify the version you desire here
             - image: circleci/openjdk:8-jdk
@@ -49,4 +49,70 @@ jobs:
 
             # run tests!
             #- run: mvn integration-test fix RAT report exception before re-enabling this
-            - run: mvn clean install -pl janusgraph-cql
+            - run: mvn test '-Dtest=org.janusgraph.diskstorage.cql.*Test'
+
+    test-cql-graphdb:
+        docker:
+            # specify the version you desire here
+            - image: circleci/openjdk:8-jdk
+        working_directory: ~/repo
+
+        environment:
+            # Customize the JVM maximum heap limit
+            MAVEN_OPTS: -Xmx3200m
+        steps:
+            - checkout
+
+        # Download and cache dependencies
+        - restore_cache:
+              keys:
+                  - v1-dependencies-{{ checksum "pom.xml" }}
+                  # fallback to using the latest cache if no exact match is found
+                  - v1-dependencies-
+
+        - run: mvn dependency:go-offline
+
+        - save_cache:
+              paths:
+                  - ~/.m2
+              key: v1-dependencies-{{ checksum "pom.xml" }}
+
+        # run tests!
+        #- run: mvn integration-test fix RAT report exception before re-enabling this
+        - run: mvn test '-Dtest=org.janusgraph.graphdb.cql.*Test'
+
+    test-cql-blueprints:
+        docker:
+            # specify the version you desire here
+            - image: circleci/openjdk:8-jdk
+        working_directory: ~/repo
+
+        environment:
+            # Customize the JVM maximum heap limit
+            MAVEN_OPTS: -Xmx3200m
+        steps:
+            - checkout
+
+            # Download and cache dependencies
+            - restore_cache:
+                  keys:
+                      - v1-dependencies-{{ checksum "pom.xml" }}
+                      # fallback to using the latest cache if no exact match is found
+                      - v1-dependencies-
+
+            - run: mvn dependency:go-offline
+
+            - save_cache:
+                  paths:
+                      - ~/.m2
+                  key: v1-dependencies-{{ checksum "pom.xml" }}
+
+            # run tests!
+            #- run: mvn integration-test fix RAT report exception before re-enabling this
+            - run: mvn test '-Dtest=org.janusgraph.blueprints.cql.*Test'
+workflows:
+    grakn-janusgraph:
+        jobs:
+            - test-cql-diskstorage
+            - test-cql-graphdb
+            - test-cql-blueprints
