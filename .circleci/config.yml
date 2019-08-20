@@ -104,8 +104,9 @@ jobs:
                       - ~/.m2
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
-            # run tests!
-            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.blueprints.cql.**'
+            # run blueprints tests ONLY inside CQL module, apparently they are special tests that require -Dtest.skip.tp=false in order for them to run
+            # we use -DskipTests so that all the other tests don't run, as they will already run on test-cql-diskstorage and test-cql-graphdb jobs
+            - run:  mvn test -pl janusgraph-cql -Dtest.skip.tp=false -DskipTests
 workflows:
     version: 2
     grakn-janusgraph:

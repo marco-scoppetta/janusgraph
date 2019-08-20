@@ -125,7 +125,6 @@
         <testcontainers.version>1.11.4</testcontainers.version>
     </properties>
     <modules>
-        <module>janusgraph-codepipelines-ci</module>
         <module>janusgraph-core</module>
         <module>janusgraph-server</module>
         <module>janusgraph-test</module>
@@ -138,7 +137,6 @@
         <module>janusgraph-dist</module>
         <module>janusgraph-doc</module>
         <module>janusgraph-solr</module>
-        <module>janusgraph-examples</module>
     </modules>
     <repositories>
         <repository>
