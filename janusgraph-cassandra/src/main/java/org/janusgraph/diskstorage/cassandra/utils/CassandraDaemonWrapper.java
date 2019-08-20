@@ -45,8 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CassandraDaemonWrapper {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(CassandraDaemonWrapper.class);
+    private static final Logger log = LoggerFactory.getLogger(CassandraDaemonWrapper.class);
 
     private static String activeConfig;
 
