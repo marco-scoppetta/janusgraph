@@ -29,19 +29,6 @@
         </dependency>
         <dependency>
             <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-berkeleyje</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-berkeleyje</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-cassandra</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -195,6 +182,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
                 <executions>
                     <execution>
                         <id>default-test</id>

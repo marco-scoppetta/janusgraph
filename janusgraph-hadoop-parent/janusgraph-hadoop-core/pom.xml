@@ -137,6 +137,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
                 <executions>
                     <!-- Tests are executed in the janusgraph-hadoop-1 and -2 modules -->
                     <execution>

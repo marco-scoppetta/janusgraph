@@ -216,6 +216,7 @@
                     <systemPropertyVariables>
                         <log4j.configuration>file:${project.build.testOutputDirectory}/log4j.properties</log4j.configuration>
                     </systemPropertyVariables>
+                    <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
                 <executions>
                     <execution>

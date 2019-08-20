@@ -244,7 +244,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         KeyspaceMetadata keyspaceMetadata = mock(KeyspaceMetadata.class);
         Optional<KeyspaceMetadata> keyspaceMetadataOptional = Optional.of(keyspaceMetadata);
         when(session.getMetadata()).thenReturn(metadata);
-        when(metadata.getKeyspace(TEST_KEYSPACE_NAME)).thenReturn(keyspaceMetadataOptional);
+        when(metadata.getKeyspace(mockManager.getKeyspaceName())).thenReturn(keyspaceMetadataOptional);
 
         mockManager.initializeKeyspace();
 
@@ -256,7 +256,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         Metadata metadata = mock(Metadata.class);
         Optional<KeyspaceMetadata> keyspaceMetadataOptional = Optional.empty();
         when(session.getMetadata()).thenReturn(metadata);
-        when(metadata.getKeyspace(TEST_KEYSPACE_NAME)).thenReturn(keyspaceMetadataOptional);
+        when(metadata.getKeyspace(mockManager.getKeyspaceName())).thenReturn(keyspaceMetadataOptional);
 
         mockManager.initializeKeyspace();
 

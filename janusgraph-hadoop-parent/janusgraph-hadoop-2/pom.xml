@@ -47,12 +47,6 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>janusgraph-hbase-core</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.mrunit</groupId>
             <artifactId>mrunit</artifactId>
             <version>${mrunit.version}</version>
@@ -87,6 +81,9 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                </configuration>
             </plugin>
         </plugins>
     </build>
