@@ -209,7 +209,7 @@
                 <configuration>
                     <argLine>${test.jvm.opts}</argLine>
                     <forkCount>2</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <reuseForks>false</reuseForks>
                     <parallel>none</parallel>
                     <perCoreThreadCount>false</perCoreThreadCount>
                     <threadCount>1</threadCount>
