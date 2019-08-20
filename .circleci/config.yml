@@ -17,7 +17,7 @@ jobs:
     test-cql-diskstorage:
         docker:
             # specify the version you desire here
-            - image: circleci/openjdk:8-jdk
+            - image: circleci/openjdk:8u222-jdk
 
             # Specify service dependencies here if necessary
             # CircleCI maintains a library of pre-built images
@@ -52,7 +52,7 @@ jobs:
 
     test-cql-graphdb:
         docker:
-            - image: circleci/openjdk:8-jdk
+            - image: circleci/openjdk:8u222-jdk
         working_directory: ~/repo
 
         environment:
@@ -81,7 +81,7 @@ jobs:
     test-cql-blueprints:
         docker:
             # specify the version you desire here
-            - image: circleci/openjdk:8-jdk
+            - image: circleci/openjdk:8u222-jdk
         working_directory: ~/repo
 
         environment:
