@@ -208,8 +208,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>${test.jvm.opts}</argLine>
-                    <forkCount>1</forkCount>
-                    <reuseForks>false</reuseForks>
+                    <forkCount>2</forkCount>
+                    <reuseForks>true</reuseForks>
                     <parallel>none</parallel>
                     <perCoreThreadCount>false</perCoreThreadCount>
                     <threadCount>1</threadCount>
