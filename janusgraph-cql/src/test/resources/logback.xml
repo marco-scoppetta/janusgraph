@@ -9,7 +9,7 @@
     <root level="INFO"/>
 
     <logger name="org.janusgraph" level="INFO">
-        <appender-ref ref="${jetty.log.appender:-MAIN}"/>
+        <appender-ref ref="MAIN"/>
     </logger>
 
 
