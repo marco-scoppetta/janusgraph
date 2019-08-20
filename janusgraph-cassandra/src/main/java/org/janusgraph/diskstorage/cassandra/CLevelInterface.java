@@ -20,5 +20,4 @@ public interface CLevelInterface {
 
     org.apache.cassandra.thrift.ConsistencyLevel getThrift();
 
-    com.netflix.astyanax.model.ConsistencyLevel  getAstyanax();
 }

@@ -37,12 +37,10 @@ public enum CLevel implements CLevelInterface { // One ring to rule them all
 
     private final org.apache.cassandra.db.ConsistencyLevel db;
     private final org.apache.cassandra.thrift.ConsistencyLevel thrift;
-    private final com.netflix.astyanax.model.ConsistencyLevel astyanax;
 
     CLevel() {
         db = org.apache.cassandra.db.ConsistencyLevel.valueOf(toString());
         thrift = org.apache.cassandra.thrift.ConsistencyLevel.valueOf(toString());
-        astyanax = com.netflix.astyanax.model.ConsistencyLevel.valueOf("CL_" + toString());
     }
 
     @Override
@@ -55,10 +53,6 @@ public enum CLevel implements CLevelInterface { // One ring to rule them all
         return thrift;
     }
 
-    @Override
-    public com.netflix.astyanax.model.ConsistencyLevel getAstyanax() {
-        return astyanax;
-    }
 
     public static CLevel parse(final String value) {
         Preconditions.checkArgument(value != null && !value.isEmpty());
