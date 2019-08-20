@@ -55,7 +55,7 @@ public class UniqueInstanceIdRetriever {
         String uid;
         if (!config.has(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID)) {
             uid = computeUniqueInstanceId(config);
-            log.info("Generated {}={}", GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID.getName(), uid);
+            log.debug("Generated {}={}", GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID.getName(), uid);
         } else {
             uid = config.get(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID);
         }

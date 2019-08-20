@@ -190,7 +190,7 @@ public class ManagementLogger implements MessageReader {
                     log.error("Could not execute trigger ["+trigger.toString()+"] for eviction ["+evictionId+"]",e);
                 }
             }
-            log.info("Received all acknowledgements for eviction [{}]",evictionId);
+            log.debug("Received all acknowledgements for eviction [{}]",evictionId);
             evictionTriggerMap.remove(evictionId,this);
         }
 

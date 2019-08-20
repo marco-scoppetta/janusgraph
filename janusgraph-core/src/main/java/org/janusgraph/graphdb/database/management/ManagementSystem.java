@@ -78,8 +78,7 @@ import java.util.stream.StreamSupport;
  */
 public class ManagementSystem implements JanusGraphManagement {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(ManagementSystem.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManagementSystem.class);
 
     private static final String CURRENT_INSTANCE_SUFFIX = "(current)";
 
@@ -1139,7 +1138,7 @@ public class ManagementSystem implements JanusGraphManagement {
                                 management.commit();
                             }
                         }
-                        LOGGER.info("Index update job successful for [{}]", IndexIdentifier.this.toString());
+                        LOGGER.debug("Index update job successful for [{}]", IndexIdentifier.this.toString());
                     } else {
                         LOGGER.error("Index update job unsuccessful for [{}]. Check logs", IndexIdentifier.this.toString());
                     }

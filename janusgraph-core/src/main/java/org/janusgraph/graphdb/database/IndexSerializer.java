@@ -84,7 +84,7 @@ public class IndexSerializer {
         this.configuration = config;
         this.mixedIndexes = indexes;
         this.hashKeys=hashKeys;
-        if (hashKeys) log.info("Hashing index keys");
+        if (hashKeys) log.debug("Hashing index keys");
     }
 
 

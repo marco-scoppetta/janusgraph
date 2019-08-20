@@ -176,7 +176,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         if (configuration.get(PARALLEL_BACKEND_OPS)) {
             int poolSize = Runtime.getRuntime().availableProcessors() * THREAD_POOL_SIZE_SCALE_FACTOR;
             threadPool = Executors.newFixedThreadPool(poolSize);
-            log.info("Initiated backend operations thread pool of size {}", poolSize);
+            log.debug("Initiated backend operations thread pool of size {}", poolSize);
         } else {
             threadPool = null;
         }
@@ -254,7 +254,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                     Preconditions.checkArgument(cacheSize>1000,"Cache size is too small: %s",cacheSize);
                     cacheSizeBytes = (long)cacheSize;
                 }
-                log.info("Configuring total store cache size: {}",cacheSizeBytes);
+                log.debug("Configuring total store cache size: {}",cacheSizeBytes);
                 long cleanWaitTime = configuration.get(DB_CACHE_CLEAN_WAIT);
                 Preconditions.checkArgument(EDGESTORE_CACHE_PERCENT + INDEXSTORE_CACHE_PERCENT == 1.0,"Cache percentages don't add up!");
                 long edgeStoreCacheSize = Math.round(cacheSizeBytes * EDGESTORE_CACHE_PERCENT);
@@ -423,7 +423,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         ImmutableMap.Builder<String, IndexProvider> builder = ImmutableMap.builder();
         for (String index : config.getContainedNamespaces(INDEX_NS)) {
             Preconditions.checkArgument(StringUtils.isNotBlank(index), "Invalid index name [%s]", index);
-            log.info("Configuring index [{}]", index);
+            log.debug("Configuring index [{}]", index);
             IndexProvider provider = getImplementationClass(config.restrictTo(index), config.get(INDEX_BACKEND,index),
                     StandardIndexProvider.getAllProviderClasses());
             Preconditions.checkNotNull(provider);

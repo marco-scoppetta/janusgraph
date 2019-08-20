@@ -146,15 +146,15 @@ public class ReadConfigurationBuilder {
             final TimestampProviders backendPreference;
             if (f.hasTimestamps() && null != (backendPreference = f.getPreferredTimestamps())) {
                 globalWrite.set(TIMESTAMP_PROVIDER, backendPreference);
-                log.info("Set timestamps to {} according to storage backend preference",
+                log.debug("Set timestamps to {} according to storage backend preference",
                     LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             } else {
                 globalWrite.set(TIMESTAMP_PROVIDER, TIMESTAMP_PROVIDER.getDefaultValue());
-                log.info("Set default timestamp provider {}",
+                log.debug("Set default timestamp provider {}",
                     LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             }
         } else {
-            log.info("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));
+            log.debug("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));
         }
     }
 
@@ -183,7 +183,7 @@ public class ReadConfigurationBuilder {
                                         KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite){
         if(globalWrite.get(INITIAL_JANUSGRAPH_VERSION) == null){
 
-            log.info("JanusGraph version has not been initialized");
+            log.debug("JanusGraph version has not been initialized");
 
             CompatibilityValidator.validateBackwardCompatibilityWithTitan(
                 globalWrite.get(TITAN_COMPATIBLE_VERSIONS), localBasicConfiguration.get(IDS_STORE_NAME));
