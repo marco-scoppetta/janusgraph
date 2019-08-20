@@ -112,7 +112,7 @@ public abstract class IndexUpdateJob {
                 index = managementSystem.getRelationIndex(indexRelationType,indexName);
             }
             Preconditions.checkArgument(index!=null,"Could not find index: %s [%s]",indexName,indexRelationTypeName);
-            log.info("Found index {}", indexName);
+            log.debug("Found index {}", indexName);
             validateIndexStatus();
 
             StandardTransactionBuilder txb = this.graph.buildTransaction();

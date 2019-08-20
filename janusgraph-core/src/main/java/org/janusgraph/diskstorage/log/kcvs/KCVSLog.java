@@ -750,11 +750,11 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
             if (!readMarker.hasIdentifier()) {
                 this.messageTimeStart = readMarker.getStartTime(times);
-                log.info("Loaded unidentified ReadMarker start time {} into {}", messageTimeStart, this);
+                log.debug("Loaded unidentified ReadMarker start time {} into {}", messageTimeStart, this);
             } else {
                 long savedTimestamp = readSetting(readMarker.getIdentifier(),getMarkerColumn(partitionId,bucketId),times.getTime(readMarker.getStartTime(times)));
                 this.messageTimeStart = times.getTime(savedTimestamp);
-                log.info("Loaded identified ReadMarker start time {} into {}", messageTimeStart, this);
+                log.debug("Loaded identified ReadMarker start time {} into {}", messageTimeStart, this);
             }
         }
 
