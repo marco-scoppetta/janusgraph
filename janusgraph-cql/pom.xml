@@ -66,11 +66,68 @@
             <artifactId>vavr</artifactId>
             <version>${vavr.version}</version>
         </dependency>
-        <!-- JNA is needed by Cassandra, but janusgraph-cassandra only defines it as an optional dependency. -->
+        <!--
+              JNA is not required to run Cassandra, but it improves
+              efficiency of certain of Cassandra's filesystem and memory
+              operations.  DataStax describes JNA as "required for
+              production installations":
+
+              https://www.datastax.com/docs/1.2/install/install_jre
+          -->
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>${jna.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-all</artifactId>
+            <!-- The version is controlled in <dependencyManagement> in the parent pom -->
+            <exclusions>
+                <!-- Use more recent version of jbcrypt from gremlin-groovy -->
+                <exclusion>
+                    <groupId>org.mindrot</groupId>
+                    <artifactId>jbcrypt</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-jvm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>log4j-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.ben-manes.caffeine</groupId>
+                    <artifactId>caffeine</artifactId>
+                </exclusion>
+                <!--                use most recent version from solr-test-framework-->
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.ben-manes.caffeine</groupId>
+                    <artifactId>caffeine</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
         <dependency>

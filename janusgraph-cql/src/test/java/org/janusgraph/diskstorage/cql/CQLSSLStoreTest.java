@@ -14,17 +14,16 @@
 
 package org.janusgraph.diskstorage.cql;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.*;
-
-import org.janusgraph.CassandraTestCategory;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.experimental.categories.Category;
-import org.junit.jupiter.api.Tag;
 
-@Tag(CassandraTestCategory.CASSANDRA_SSL_TESTS)
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.enableSSL;
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.getCQLConfiguration;
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.startCleanEmbedded;
+
+//@Tag("CASSANDRA_SSL_TESTS") // do we need this?
 public class CQLSSLStoreTest extends CQLStoreTest {
 
     public CQLSSLStoreTest() throws BackendException {

@@ -17,7 +17,7 @@ package org.janusgraph.diskstorage.cql;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
-import org.janusgraph.diskstorage.cassandra.utils.CassandraDaemonWrapper;
+import org.janusgraph.diskstorage.cql.utils.CassandraDaemonWrapper;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.slf4j.Logger;
