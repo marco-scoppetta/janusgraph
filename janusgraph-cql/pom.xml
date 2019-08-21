@@ -66,21 +66,6 @@
             <artifactId>vavr</artifactId>
             <version>${vavr.version}</version>
         </dependency>
-
-        <!-- Test Dependencies -->
-        <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
         <!-- JNA is needed by Cassandra, but janusgraph-cassandra only defines it as an optional dependency. -->
         <dependency>
             <groupId>net.java.dev.jna</groupId>

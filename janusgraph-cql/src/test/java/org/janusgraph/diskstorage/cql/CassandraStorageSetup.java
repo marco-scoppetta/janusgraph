@@ -14,6 +14,19 @@
 
 package org.janusgraph.diskstorage.cql;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import org.apache.commons.io.FileUtils;
+import org.janusgraph.diskstorage.cassandra.utils.CassandraDaemonWrapper;
+import org.janusgraph.diskstorage.configuration.ConfigElement;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
+
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_ENABLED;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_TRUSTSTORE_LOCATION;
@@ -25,25 +38,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ST
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_HOSTS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.time.Duration;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.io.FileUtils;
-import org.janusgraph.diskstorage.StandardStoreManager;
-import org.janusgraph.diskstorage.cassandra.utils.CassandraDaemonWrapper;
-import org.janusgraph.diskstorage.configuration.ConfigElement;
-import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-
 public class CassandraStorageSetup {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraStorageSetup.class);
@@ -51,11 +45,6 @@ public class CassandraStorageSetup {
     public static final String CONFDIR_SYSPROP = "test.cassandra.confdir";
     public static final String DATADIR_SYSPROP = "test.cassandra.datadir";
     public static final String HOSTNAME = System.getProperty(ConfigElement.getPath(STORAGE_HOSTS));
-
-    static {
-        setWrapperStoreManager();
-    }
-
     private static volatile Paths paths;
 
     /**
@@ -140,29 +129,6 @@ public class CassandraStorageSetup {
             return "strhash" + Math.abs(raw.hashCode());
         } else {
             return raw;
-        }
-    }
-
-    private static void setWrapperStoreManager() {
-        try {
-            final Field modifiersField = Field.class.getDeclaredField("modifiers");
-            modifiersField.setAccessible(true);
-
-            Field field = StandardStoreManager.class.getDeclaredField("managerClass");
-            field.setAccessible(true);
-            field.set(StandardStoreManager.CQL, CachingCQLStoreManager.class.getCanonicalName());
-
-            field = StandardStoreManager.class.getDeclaredField("ALL_SHORTHANDS");
-            field.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-            field.set(null, ImmutableList.copyOf(StandardStoreManager.CQL.getShorthands()));
-
-            field = StandardStoreManager.class.getDeclaredField("ALL_MANAGER_CLASSES");
-            field.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-            field.set(null, ImmutableMap.of(StandardStoreManager.CQL.getShorthands().get(0), StandardStoreManager.CQL.getManagerClass()));
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Unable to set wrapper CQL store manager", e);
         }
     }
 

@@ -31,7 +31,7 @@ public class CQLDistributedStoreManagerTest extends DistributedStoreManagerTest<
 
     @BeforeEach
     public void setUp() throws BackendException {
-        manager = new CachingCQLStoreManager(CassandraStorageSetup.getCQLConfiguration(this.getClass().getSimpleName()));
+        manager = new CQLStoreManager(CassandraStorageSetup.getCQLConfiguration(this.getClass().getSimpleName()));
         store = manager.openDatabase("distributedcf");
     }
 

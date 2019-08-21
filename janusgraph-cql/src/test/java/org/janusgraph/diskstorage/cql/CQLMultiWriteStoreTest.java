@@ -34,7 +34,7 @@ public class CQLMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CachingCQLStoreManager(c);
+        return new CQLStoreManager(c);
     }
 
     @Override

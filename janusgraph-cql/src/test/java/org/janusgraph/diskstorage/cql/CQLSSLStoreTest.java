@@ -41,7 +41,7 @@ public class CQLSSLStoreTest extends CQLStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CachingCQLStoreManager(c);
+        return new CQLStoreManager(c);
     }
 
     @Override
