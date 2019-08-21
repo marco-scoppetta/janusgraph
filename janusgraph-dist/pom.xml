@@ -127,13 +127,6 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <version>1.7</version>
@@ -462,11 +455,11 @@
                                     <configuration>
                                         <outputDirectory>${project.build.directory}/cassandra/conf/localhost-murmur</outputDirectory>
                                         <filters>
-                                            <filter>${top.level.basedir}/janusgraph-cassandra/config/cassandra-filters/localhost-murmur.properties</filter>
+                                            <filter>${top.level.basedir}/janusgraph-cql/config/cassandra-filters/localhost-murmur.properties</filter>
                                         </filters>
                                         <resources>
                                             <resource>
-                                                <directory>${top.level.basedir}/janusgraph-cassandra/config/cassandra</directory>
+                                                <directory>${top.level.basedir}/janusgraph-cql/config/cassandra</directory>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>
@@ -481,11 +474,11 @@
                                     <configuration>
                                         <outputDirectory>${project.build.directory}/cassandra/conf/localhost-bop</outputDirectory>
                                         <filters>
-                                            <filter>${top.level.basedir}/janusgraph-cassandra/config/cassandra-filters/localhost-bop.properties</filter>
+                                            <filter>${top.level.basedir}/janusgraph-cql/config/cassandra-filters/localhost-bop.properties</filter>
                                         </filters>
                                         <resources>
                                             <resource>
-                                                <directory>${top.level.basedir}/janusgraph-cassandra/config/cassandra</directory>
+                                                <directory>${top.level.basedir}/janusgraph-cql/config/cassandra</directory>
                                                 <filtering>true</filtering>
                                             </resource>
                                         </resources>

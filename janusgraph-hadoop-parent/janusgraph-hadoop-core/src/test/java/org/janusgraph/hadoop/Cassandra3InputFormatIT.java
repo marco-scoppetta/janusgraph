@@ -16,8 +16,8 @@ package org.janusgraph.hadoop;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.janusgraph.CassandraStorageSetup;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 
 import java.io.IOException;
 
@@ -33,6 +33,6 @@ public class Cassandra3InputFormatIT extends CassandraInputFormatIT {
     @Override
     public WriteConfiguration getConfiguration() {
         String className = CassandraInputFormatIT.class.getSimpleName();
-        return CassandraStorageSetup.getEmbeddedOrThriftConfiguration(className).getConfiguration();
+        return CassandraStorageSetup.getCQLConfiguration(className).getConfiguration();
     }
 }

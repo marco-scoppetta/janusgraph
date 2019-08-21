@@ -14,9 +14,9 @@
 
 package org.janusgraph.diskstorage.es;
 
-import org.janusgraph.CassandraStorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphIndexTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.junit.jupiter.api.BeforeAll;
@@ -24,7 +24,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-public class ThriftElasticsearchTest extends JanusGraphIndexTest {
+public class CQLElasticsearchTest extends JanusGraphIndexTest {
 
     @Container
     public static JanusGraphElasticsearchContainer esr = new JanusGraphElasticsearchContainer();
@@ -34,13 +34,13 @@ public class ThriftElasticsearchTest extends JanusGraphIndexTest {
         CassandraStorageSetup.startCleanEmbedded();
     }
 
-    public ThriftElasticsearchTest() {
+    public CQLElasticsearchTest() {
         super(true, true, true);
     }
 
     @Override
     public WriteConfiguration getConfiguration() {
-        ModifiableConfiguration config = CassandraStorageSetup.getCassandraThriftConfiguration(ThriftElasticsearchTest.class.getName());
+        ModifiableConfiguration config = CassandraStorageSetup.getCQLConfiguration(CQLElasticsearchTest.class.getName());
         return esr.setConfiguration(config, INDEX)
             .set(GraphDatabaseConfiguration.INDEX_MAX_RESULT_SET_SIZE, 3, INDEX)
             .getConfiguration();

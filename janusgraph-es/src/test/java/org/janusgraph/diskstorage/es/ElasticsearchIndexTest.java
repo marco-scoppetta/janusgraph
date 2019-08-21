@@ -18,13 +18,18 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
-
+import mjson.Json;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -33,21 +38,25 @@ import org.apache.http.util.EntityUtils;
 import org.apache.tinkerpop.shaded.jackson.databind.ObjectMapper;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.core.attribute.*;
+import org.janusgraph.core.attribute.Cmp;
+import org.janusgraph.core.attribute.Geo;
+import org.janusgraph.core.attribute.Geoshape;
+import org.janusgraph.core.attribute.Text;
+import org.janusgraph.core.schema.Mapping;
 import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
-import org.janusgraph.diskstorage.indexing.*;
-import org.janusgraph.core.schema.Mapping;
+import org.janusgraph.diskstorage.indexing.IndexProvider;
+import org.janusgraph.diskstorage.indexing.IndexProviderTest;
+import org.janusgraph.diskstorage.indexing.IndexQuery;
+import org.janusgraph.diskstorage.indexing.KeyInformation;
+import org.janusgraph.diskstorage.indexing.StandardKeyInformation;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.query.condition.PredicateCondition;
 import org.janusgraph.graphdb.types.ParameterType;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -59,13 +68,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -292,7 +304,7 @@ public class ElasticsearchIndexTest extends IndexProviderTest {
     }
 
     @Test
-    public void testCustomMappingProperty() throws BackendException, IOException, ParseException, URISyntaxException {
+    public void testCustomMappingProperty() throws BackendException, IOException, URISyntaxException {
 
         String mappingTypeName = "vertex";
         String indexPrefix = "janusgraph";
@@ -320,8 +332,7 @@ public class ElasticsearchIndexTest extends IndexProviderTest {
         }
 
         HttpEntity entity = response.getEntity();
-
-        JSONObject json = (JSONObject) new JSONParser().parse(EntityUtils.toString(entity));
+        Json json = Json.read(EntityUtils.toString(entity));
 
         String returnedProperty;
 
@@ -412,13 +423,13 @@ public class ElasticsearchIndexTest extends IndexProviderTest {
         return httpClient.execute(host, httpGet);
     }
 
-    private String retrieveValueFromJSON(JSONObject json, String ... hierarchy){
+    private String retrieveValueFromJSON(Json json, String ... hierarchy){
 
         for(int i=0; i<hierarchy.length; i++){
             if(i+1==hierarchy.length){
-                return json.get(hierarchy[i]).toString();
+                return json.at(hierarchy[i]).toString();
             }
-            json = (JSONObject) json.get(hierarchy[i]);
+            json = json.at(hierarchy[i]);
         }
 
         return null;

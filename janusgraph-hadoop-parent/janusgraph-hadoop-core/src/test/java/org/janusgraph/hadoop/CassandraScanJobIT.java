@@ -15,11 +15,11 @@
 package org.janusgraph.hadoop;
 
 
-import org.janusgraph.CassandraStorageSetup;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.diskstorage.*;
-import org.janusgraph.diskstorage.cassandra.thrift.CassandraThriftStoreManager;
 import org.janusgraph.diskstorage.configuration.*;
+import org.janusgraph.diskstorage.cql.CQLStoreManager;
+import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
@@ -29,6 +29,7 @@ import org.janusgraph.diskstorage.util.time.TimestampProviders;
 import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.hadoop.config.JanusGraphHadoopConfiguration;
+import org.janusgraph.hadoop.formats.cql.CqlInputFormat;
 import org.janusgraph.hadoop.scan.CassandraHadoopScanRunner;
 import org.janusgraph.hadoop.scan.HadoopScanMapper;
 import org.apache.hadoop.io.NullWritable;
@@ -62,7 +63,7 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
         }
         log.debug("Loading values: " + keys + "x" + cols);
 
-        KeyColumnValueStoreManager mgr = new CassandraThriftStoreManager(GraphDatabaseConfiguration.buildGraphConfiguration());
+        KeyColumnValueStoreManager mgr = new CQLStoreManager(GraphDatabaseConfiguration.buildGraphConfiguration());
         KeyColumnValueStore store = mgr.openDatabase("edgestore");
         StoreTransaction tx = mgr.beginTransaction(StandardBaseTransactionConfig.of(TimestampProviders.MICRO));
         KeyColumnValueStoreUtil.loadValues(store, tx, values);
@@ -149,27 +150,13 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
         job.setMapOutputValueClass(NullWritable.class);
         job.setNumReduceTasks(0);
         job.setOutputFormatClass(NullOutputFormat.class);
-       // job.setInputFormatClass(CassandraInputFormat.class); this class has been removed, update to use CQL
+        job.setInputFormatClass(CqlInputFormat.class);
 
         return job;
     }
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getEmbeddedOrThriftConfiguration(getClass().getSimpleName()).getConfiguration();
+        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
-
-//    public static class NoopScanJob implements ScanJob {
-//
-//        @Override
-//        public void process(StaticBuffer key, Map<SliceQuery, EntryList> entries, ScanMetrics metrics) {
-//            // do nothing
-//        }
-//
-//        @Override
-//        public List<SliceQuery> getQueries() {
-//            int len = 4;
-//            return ImmutableList.of(new SliceQuery(BufferUtil.zeroBuffer(len), BufferUtil.oneBuffer(len)));
-//        }
-//    }
 }

@@ -51,6 +51,7 @@ public class TestGraphConfigs {
         CommonsConfiguration o = null;
 
         if (null != overridesFile) {
+            System.out.println("!!!!!!!!!!! WE ARE ACTUALLY OVERRIDING CONFIGS !!!!!!!!!!!");
             if (!new File(overridesFile).isFile()) {
                 log.warn("Graph configuration overrides file {} does not exist or is not an ordinary file", overridesFile);
             } else {
@@ -97,57 +98,4 @@ public class TestGraphConfigs {
                 "Schema convergence time %d is too large to express as an integer in %s", sec, u);
         return l;
     }
-
-//
-//    public static WriteConfiguration applyOverrides(final WriteConfiguration base) {
-//
-//        return new WriteConfiguration() {
-//
-//            private final ReadConfiguration first = overrides;
-//            private final WriteConfiguration second = base;
-//
-//            @Override
-//            public Iterable<String> getKeys(String prefix) {
-//                ImmutableSet.Builder<String> b = ImmutableSet.builder();
-//                if (null != first)
-//                    b.addAll(first.getKeys(prefix));
-//                b.addAll(second.getKeys(prefix));
-//                return b.build();
-//            }
-//
-//            @Override
-//            public <O> O get(String key, Class<O> dataType) {
-//                Object o = null;
-//                if (null != first)
-//                    o = first.get(key, dataType);
-//
-//                if (null == o)
-//                    o = second.get(key, dataType);
-//
-//                return (O)o;
-//            }
-//
-//            @Override
-//            public void close() {
-//                if (null != first)
-//                    first.close();
-//                second.close();
-//            }
-//
-//            @Override
-//            public <O> void set(String key, O value) {
-//                second.set(key, value);
-//            }
-//
-//            @Override
-//            public void remove(String key) {
-//                second.remove(key);
-//            }
-//
-//            @Override
-//            public WriteConfiguration clone() {
-//                return second.clone();
-//            }
-//        };
-//    }
 }

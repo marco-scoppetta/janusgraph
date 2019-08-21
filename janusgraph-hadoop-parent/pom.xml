@@ -254,11 +254,11 @@
                             <configuration>
                                 <outputDirectory>${project.build.directory}/cassandra/conf/localhost-murmur</outputDirectory>
                                 <filters>
-                                    <filter>${top.level.basedir}/janusgraph-cassandra/config/cassandra-filters/localhost-murmur.properties</filter>
+                                    <filter>${top.level.basedir}/janusgraph-cql/config/cassandra-filters/localhost-murmur.properties</filter>
                                 </filters>
                                 <resources>
                                     <resource>
-                                        <directory>${top.level.basedir}/janusgraph-cassandra/config/cassandra</directory>
+                                        <directory>${top.level.basedir}/janusgraph-cql/config/cassandra</directory>
                                         <filtering>true</filtering>
                                     </resource>
                                 </resources>

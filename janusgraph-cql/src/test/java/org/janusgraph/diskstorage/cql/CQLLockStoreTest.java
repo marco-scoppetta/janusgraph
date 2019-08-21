@@ -14,13 +14,14 @@
 
 package org.janusgraph.diskstorage.cql;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.*;
-
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.LockKeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.junit.jupiter.api.BeforeAll;
+
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.getCQLConfiguration;
+import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.startCleanEmbedded;
 
 public class CQLLockStoreTest extends LockKeyColumnValueStoreTest {
 
@@ -34,7 +35,7 @@ public class CQLLockStoreTest extends LockKeyColumnValueStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CachingCQLStoreManager(c);
+        return new CQLStoreManager(c);
     }
 
     @Override

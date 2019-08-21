@@ -12,29 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.janusgraph.diskstorage.cassandra.utils;
-
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.stream.Collectors;
+package org.janusgraph.diskstorage.cql.utils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
+import org.apache.cassandra.dht.ByteOrderedPartitioner.BytesToken;
+import org.apache.cassandra.dht.Range;
+import org.apache.cassandra.dht.Token;
+import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
-import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.StaticArrayBuffer;
 import org.janusgraph.diskstorage.util.StaticArrayEntry;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
-import org.apache.cassandra.dht.ByteOrderedPartitioner.BytesToken;
-import org.apache.cassandra.dht.Range;
-import org.apache.cassandra.dht.Token;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CassandraHelper {
 

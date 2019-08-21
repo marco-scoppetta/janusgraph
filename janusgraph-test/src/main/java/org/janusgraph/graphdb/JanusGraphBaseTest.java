@@ -16,13 +16,35 @@ package org.janusgraph.graphdb;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import org.janusgraph.core.*;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphFactory;
+import org.janusgraph.core.JanusGraphQuery;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.JanusGraphVertexQuery;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.RelationType;
+import org.janusgraph.core.Transaction;
 import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.schema.JanusGraphManagement;
-import org.janusgraph.diskstorage.BackendException;
-
 import org.janusgraph.diskstorage.Backend;
-import org.janusgraph.diskstorage.configuration.*;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.configuration.BasicConfiguration;
+import org.janusgraph.diskstorage.configuration.ConfigElement;
+import org.janusgraph.diskstorage.configuration.ConfigOption;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.log.Log;
@@ -33,22 +55,27 @@ import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.types.StandardEdgeLabelMaker;
 import org.janusgraph.testutil.TestGraphConfigs;
-
-import org.apache.tinkerpop.gremlin.structure.T;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.rules.TestName;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_BACKEND;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.MANAGEMENT_LOG;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TRANSACTION_LOG;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USER_LOG;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -66,7 +93,7 @@ public abstract class JanusGraphBaseTest {
     public JanusGraphManagement mgmt;
     public TestInfo testInfo;
 
-    public Map<String,LogManager> logManagers;
+    public Map<String, LogManager> logManagers;
 
     public JanusGraphBaseTest() {
     }
@@ -82,26 +109,40 @@ public abstract class JanusGraphBaseTest {
     }
 
     public static Backend getBackend(WriteConfiguration config) {
-        ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config.copy(), BasicConfiguration.Restriction.NONE);
+        ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
         return new Backend(adjustedConfig);
     }
 
+    private void fancyPrintOut(TestInfo testInfo) {
+        int totLength = 140;
+        String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
+        int rightSpaceLength = totLength - centralText.length();
+        StringBuilder rightSpace = new StringBuilder();
+        for (int i = 0; i < rightSpaceLength; i++) {
+            rightSpace.append("=");
+        }
+        System.out.println("\n\n============ RUNNING: [ " + centralText + " ] " + rightSpace.toString());
+    }
+
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
+        fancyPrintOut(testInfo);
         this.testInfo = testInfo;
         this.config = getConfiguration();
         TestGraphConfigs.applyOverrides(config);
-        Preconditions.checkNotNull(config);
-        logManagers = new HashMap<>();
         clearGraph(config);
+        logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);
     }
 
     public void open(WriteConfiguration config) {
+        long s = System.currentTimeMillis();
         graph = JanusGraphFactory.open(config);
+        long e = System.currentTimeMillis();
+        System.out.println("Time to open a new Graph: " + (e - s));
         features = graph.getConfiguration().getStoreFeatures();
         tx = graph.newTransaction();
         mgmt = graph.openManagement();
@@ -114,15 +155,15 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void finishSchema() {
-        if (mgmt!=null && mgmt.isOpen())
+        if (mgmt != null && mgmt.isOpen())
             mgmt.commit();
-        mgmt=graph.openManagement();
+        mgmt = graph.openManagement();
         newTx();
         graph.tx().commit();
     }
 
     public void close() {
-        if (mgmt!=null && mgmt.isOpen()) mgmt.rollback();
+        if (mgmt != null && mgmt.isOpen()) mgmt.rollback();
         if (null != tx && tx.isOpen())
             tx.commit();
 
@@ -138,35 +179,35 @@ public abstract class JanusGraphBaseTest {
         tx = graph.newTransaction();
     }
 
-    public static Map<TestConfigOption,Object> validateConfigOptions(Object... settings) {
+    public static Map<TestConfigOption, Object> validateConfigOptions(Object... settings) {
         //Parse settings
-        Preconditions.checkArgument(settings.length%2==0, "Expected even number of settings: %s", settings);
-        final Map<TestConfigOption,Object> options = Maps.newHashMap();
-        for (int i=0;i<settings.length;i=i+2) {
+        Preconditions.checkArgument(settings.length % 2 == 0, "Expected even number of settings: %s", settings);
+        final Map<TestConfigOption, Object> options = Maps.newHashMap();
+        for (int i = 0; i < settings.length; i = i + 2) {
             Preconditions.checkArgument(settings[i] instanceof TestConfigOption, "Expected configuration option but got: %s", settings[i]);
-            Preconditions.checkNotNull(settings[i+1], "Null setting at position [%s]", i+1);
-            options.put((TestConfigOption)settings[i],settings[i+1]);
+            Preconditions.checkNotNull(settings[i + 1], "Null setting at position [%s]", i + 1);
+            options.put((TestConfigOption) settings[i], settings[i + 1]);
         }
         return options;
     }
 
     public void clopen(Object... settings) {
         config = getConfiguration();
-        if (mgmt!=null && mgmt.isOpen()) mgmt.rollback();
+        if (mgmt != null && mgmt.isOpen()) mgmt.rollback();
         if (null != tx && tx.isOpen()) tx.commit();
-        if (settings!=null && settings.length>0) {
-            final Map<TestConfigOption,Object> options = validateConfigOptions(settings);
+        if (settings != null && settings.length > 0) {
+            final Map<TestConfigOption, Object> options = validateConfigOptions(settings);
             JanusGraphManagement janusGraphManagement = null;
-            final ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config, BasicConfiguration.Restriction.LOCAL);
-            for (final Map.Entry<TestConfigOption,Object> option : options.entrySet()) {
+            final ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
+            for (final Map.Entry<TestConfigOption, Object> option : options.entrySet()) {
                 if (option.getKey().option.isLocal()) {
-                    modifiableConfiguration.set(option.getKey().option,option.getValue(),option.getKey().umbrella);
+                    modifiableConfiguration.set(option.getKey().option, option.getValue(), option.getKey().umbrella);
                 } else {
-                    if (janusGraphManagement==null) janusGraphManagement = graph.openManagement();
-                    janusGraphManagement.set(ConfigElement.getPath(option.getKey().option,option.getKey().umbrella),option.getValue());
+                    if (janusGraphManagement == null) janusGraphManagement = graph.openManagement();
+                    janusGraphManagement.set(ConfigElement.getPath(option.getKey().option, option.getKey().umbrella), option.getValue());
                 }
             }
-            if (janusGraphManagement!=null) janusGraphManagement.commit();
+            if (janusGraphManagement != null) janusGraphManagement.commit();
             modifiableConfiguration.close();
         }
         if (null != graph && null != graph.tx() && graph.tx().isOpen())
@@ -179,7 +220,7 @@ public abstract class JanusGraphBaseTest {
 
 
     public static TestConfigOption option(ConfigOption option, String... umbrella) {
-        return new TestConfigOption(option,umbrella);
+        return new TestConfigOption(option, umbrella);
     }
 
     public static final class TestConfigOption {
@@ -190,7 +231,7 @@ public abstract class JanusGraphBaseTest {
         public TestConfigOption(ConfigOption option, String... umbrella) {
             Preconditions.checkNotNull(option);
             this.option = option;
-            if (umbrella==null) umbrella=new String[0];
+            if (umbrella == null) umbrella = new String[0];
             this.umbrella = umbrella;
         }
     }
@@ -205,9 +246,9 @@ public abstract class JanusGraphBaseTest {
         try {
             for (final LogManager lm : logManagers.values()) lm.close();
             logManagers.clear();
-            if (logStoreManager!=null) {
+            if (logStoreManager != null) {
                 logStoreManager.close();
-                logStoreManager=null;
+                logStoreManager = null;
             }
         } catch (final BackendException e) {
             throw new JanusGraphException(e);
@@ -219,13 +260,13 @@ public abstract class JanusGraphBaseTest {
             try {
                 logManagers.remove(logManagerName).close();
             } catch (final BackendException e) {
-                throw new JanusGraphException("Could not close log manager " + logManagerName,e);
+                throw new JanusGraphException("Could not close log manager " + logManagerName, e);
             }
         }
     }
 
     public Log openUserLog(String identifier) {
-        return openLog(USER_LOG, GraphDatabaseConfiguration.USER_LOG_PREFIX +identifier);
+        return openLog(USER_LOG, GraphDatabaseConfiguration.USER_LOG_PREFIX + identifier);
     }
 
     public Log openTxLog() {
@@ -234,29 +275,29 @@ public abstract class JanusGraphBaseTest {
 
     private Log openLog(String logManagerName, String logName) {
         try {
-            final ModifiableConfiguration configuration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config.copy(), BasicConfiguration.Restriction.NONE);
+            final ModifiableConfiguration configuration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
             configuration.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "reader");
             configuration.set(GraphDatabaseConfiguration.LOG_READ_INTERVAL, Duration.ofMillis(500L), logManagerName);
-            if (logStoreManager==null) {
+            if (logStoreManager == null) {
                 logStoreManager = Backend.getStorageManager(configuration);
             }
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();
             if (part) {
-                for (final String partitionedLogName : new String[]{USER_LOG,TRANSACTION_LOG,MANAGEMENT_LOG})
-                configuration.set(KCVSLogManager.LOG_MAX_PARTITIONS,8,partitionedLogName);
+                for (final String partitionedLogName : new String[]{USER_LOG, TRANSACTION_LOG, MANAGEMENT_LOG})
+                    configuration.set(KCVSLogManager.LOG_MAX_PARTITIONS, 8, partitionedLogName);
             }
             Preconditions.checkNotNull(logStoreManager);
             if (!logManagers.containsKey(logManagerName)) {
                 //Open log manager - only supports KCVSLog
                 final Configuration logConfig = configuration.restrictTo(logManagerName);
                 Preconditions.checkState(logConfig.get(LOG_BACKEND).equals(LOG_BACKEND.getDefaultValue()));
-                logManagers.put(logManagerName,new KCVSLogManager(logStoreManager,logConfig));
+                logManagers.put(logManagerName, new KCVSLogManager(logStoreManager, logConfig));
             }
             Preconditions.checkState(logManagers.containsKey(logManagerName));
             return logManagers.get(logManagerName).openLog(logName);
         } catch (final BackendException e) {
-            throw new JanusGraphException("Could not open log: "+ logName,e);
+            throw new JanusGraphException("Could not open log: " + logName, e);
         }
     }
 
@@ -266,22 +307,22 @@ public abstract class JanusGraphBaseTest {
 
     public PropertyKey makeVertexIndexedKey(String name, Class dataType) {
         final PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
-        mgmt.buildIndex(name,Vertex.class).addKey(key).buildCompositeIndex();
+        mgmt.buildIndex(name, Vertex.class).addKey(key).buildCompositeIndex();
         return key;
     }
 
     public PropertyKey makeVertexIndexedUniqueKey(String name, Class dataType) {
         final PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
-        mgmt.buildIndex(name,Vertex.class).addKey(key).unique().buildCompositeIndex();
+        mgmt.buildIndex(name, Vertex.class).addKey(key).unique().buildCompositeIndex();
         return key;
     }
 
     public void createExternalVertexIndex(PropertyKey key, String backingIndex) {
-        createExternalIndex(key,Vertex.class,backingIndex);
+        createExternalIndex(key, Vertex.class, backingIndex);
     }
 
     public void createExternalEdgeIndex(PropertyKey key, String backingIndex) {
-        createExternalIndex(key,Edge.class,backingIndex);
+        createExternalIndex(key, Edge.class, backingIndex);
     }
 
     public JanusGraphIndex getExternalIndex(Class<? extends Element> clazz, String backingIndex) {
@@ -291,16 +332,16 @@ public abstract class JanusGraphBaseTest {
         else if (JanusGraphVertexProperty.class.isAssignableFrom(clazz)) prefix = "p";
         else throw new AssertionError(clazz.toString());
 
-        final String indexName = prefix+backingIndex;
+        final String indexName = prefix + backingIndex;
         JanusGraphIndex index = mgmt.getGraphIndex(indexName);
-        if (index==null) {
-            index = mgmt.buildIndex(indexName,clazz).buildMixedIndex(backingIndex);
+        if (index == null) {
+            index = mgmt.buildIndex(indexName, clazz).buildMixedIndex(backingIndex);
         }
         return index;
     }
 
     private void createExternalIndex(PropertyKey key, Class<? extends Element> clazz, String backingIndex) {
-        mgmt.addIndexKey(getExternalIndex(clazz,backingIndex),key);
+        mgmt.addIndexKey(getExternalIndex(clazz, backingIndex), key);
     }
 
     public PropertyKey makeKey(String name, Class dataType) {
@@ -336,15 +377,15 @@ public abstract class JanusGraphBaseTest {
     }
 
     public JanusGraphVertex getVertex(String key, Object value) {
-        return getVertex(tx,key,value);
+        return getVertex(tx, key, value);
     }
 
     public JanusGraphVertex getVertex(PropertyKey key, Object value) {
-        return getVertex(tx,key,value);
+        return getVertex(tx, key, value);
     }
 
     public static JanusGraphVertex getVertex(JanusGraphTransaction tx, String key, Object value) {
-        return getOnlyElement(tx.query().has(key,value).vertices(),null);
+        return getOnlyElement(tx.query().has(key, value).vertices(), null);
     }
 
     public static JanusGraphVertex getVertex(JanusGraphTransaction tx, PropertyKey key, Object value) {
@@ -352,7 +393,7 @@ public abstract class JanusGraphBaseTest {
     }
 
     public static double round(double d) {
-        return Math.round(d*1000.0)/1000.0;
+        return Math.round(d * 1000.0) / 1000.0;
     }
 
     public static JanusGraphVertex getOnlyVertex(JanusGraphQuery<?> query) {
@@ -363,23 +404,24 @@ public abstract class JanusGraphBaseTest {
         return getOnlyElement(query.edges());
     }
 
-    public static<E> E getOnlyElement(Iterable<E> traversal) {
+    public static <E> E getOnlyElement(Iterable<E> traversal) {
         return getOnlyElement(traversal.iterator());
     }
 
-    public static<E> E getOnlyElement(Iterator<E> traversal) {
+    public static <E> E getOnlyElement(Iterator<E> traversal) {
         if (!traversal.hasNext()) throw new NoSuchElementException();
-        return getOnlyElement(traversal,null);
+        return getOnlyElement(traversal, null);
     }
 
-    public static<E> E getOnlyElement(Iterable<E> traversal, E defaultElement) {
-        return getOnlyElement(traversal.iterator(),defaultElement);
+    public static <E> E getOnlyElement(Iterable<E> traversal, E defaultElement) {
+        return getOnlyElement(traversal.iterator(), defaultElement);
     }
 
-    public static<E> E getOnlyElement(Iterator<E> traversal, E defaultElement) {
+    public static <E> E getOnlyElement(Iterator<E> traversal, E defaultElement) {
         if (!traversal.hasNext()) return defaultElement;
         final E result = traversal.next();
-        if (traversal.hasNext()) throw new IllegalArgumentException("Traversal contains more than 1 element: " + result + ", " + traversal.next());
+        if (traversal.hasNext())
+            throw new IllegalArgumentException("Traversal contains more than 1 element: " + result + ", " + traversal.next());
         return result;
     }
 
@@ -401,21 +443,21 @@ public abstract class JanusGraphBaseTest {
 
     public static JanusGraphVertex getV(Transaction g, Object vid) {
         if (!g.vertices(vid).hasNext()) return null;
-        return (JanusGraphVertex)g.vertices(vid).next();
+        return (JanusGraphVertex) g.vertices(vid).next();
     }
 
     public static JanusGraphEdge getE(Transaction g, Object eid) {
         if (!g.edges(eid).hasNext()) return null;
-        return (JanusGraphEdge)g.edges(eid).next();
+        return (JanusGraphEdge) g.edges(eid).next();
     }
 
     public static String n(Object obj) {
-        if (obj instanceof RelationType) return ((RelationType)obj).name();
+        if (obj instanceof RelationType) return ((RelationType) obj).name();
         else return obj.toString();
     }
 
     public static long getId(Element e) {
-        return ((JanusGraphElement)e).longId();
+        return ((JanusGraphElement) e).longId();
     }
 
     public static void verifyElementOrder(Iterable<? extends Element> elements, String key, Order order, int expectedCount) {
@@ -431,7 +473,7 @@ public abstract class JanusGraphBaseTest {
             if (previous != null) {
                 final int cmp = previous.compareTo(current);
                 assertTrue(order == Order.ASC ? cmp <= 0 : cmp >= 0,
-                    previous + " <> " + current + " @ " + count);
+                        previous + " <> " + current + " @ " + count);
             }
             previous = current;
             count++;
@@ -441,7 +483,7 @@ public abstract class JanusGraphBaseTest {
 
     public static <T> Stream<T> asStream(final Iterator<T> source) {
         final Iterable<T> iterable = () -> source;
-        return StreamSupport.stream(iterable.spliterator(),false);
+        return StreamSupport.stream(iterable.spliterator(), false);
     }
 
     public JanusGraph getForceIndexGraph() throws BackendException {
