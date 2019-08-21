@@ -163,13 +163,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Gremlin-Plugin-Dependencies>org.janusgraph:janusgraph-cassandra:${project.version};org.janusgraph:janusgraph-hadoop:${project.version}</Gremlin-Plugin-Dependencies>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
+<!--                Not sure why the following is needed, commenting out to see if everything still works without it-->
+<!--                <configuration>-->
+<!--                    <archive>-->
+<!--                        <manifestEntries>-->
+<!--                            <Gremlin-Plugin-Dependencies>org.janusgraph:janusgraph-cassandra:${project.version};org.janusgraph:janusgraph-hadoop:${project.version}</Gremlin-Plugin-Dependencies>-->
+<!--                        </manifestEntries>-->
+<!--                    </archive>-->
+<!--                </configuration>-->
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>

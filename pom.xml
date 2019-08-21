@@ -129,7 +129,6 @@
         <module>janusgraph-server</module>
         <module>janusgraph-test</module>
         <module>janusgraph-cql</module>
-        <module>janusgraph-cassandra</module>
         <module>janusgraph-hadoop-parent</module>
         <module>janusgraph-es</module>
         <module>janusgraph-lucene</module>

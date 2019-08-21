@@ -123,10 +123,6 @@
                     <groupId>org.ow2.asm</groupId>
                     <artifactId>asm</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.github.ben-manes.caffeine</groupId>
-                    <artifactId>caffeine</artifactId>
-                </exclusion>
             </exclusions>
             <scope>test</scope>
         </dependency>

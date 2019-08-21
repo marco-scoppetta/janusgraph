@@ -46,27 +46,45 @@
             <!-- <scope>test</scope> -->
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
-            <!-- TODO this should be scoped test -->
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-all</artifactId>
+            <exclusions>
+                <!-- Use more recent version of jbcrypt from gremlin-groovy -->
+                <exclusion>
+                    <groupId>org.mindrot</groupId>
+                    <artifactId>jbcrypt</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>log4j-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.ben-manes.caffeine</groupId>
+                    <artifactId>caffeine</artifactId>
+                </exclusion>
+                <!--                use most recent version from solr-test-framework-->
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
         </dependency>
+<!--        This is needed because we implement InputReader (CQL) used by Hadoop-->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <!-- TODO this should be scoped test -->
-        </dependency>
-        <!-- JNA is needed by Cassandra, but janusgraph-cassandra only defines it as an optional dependency. -->
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>${jna.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-cql</artifactId>
             <version>${project.version}</version>
         </dependency>

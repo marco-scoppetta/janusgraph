@@ -14,13 +14,13 @@
 
 package org.janusgraph.hadoop;
 
-import org.janusgraph.CassandraStorageSetup;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 
 public class CassandraIndexManagementIT extends AbstractIndexManagementIT {
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getEmbeddedOrThriftConfiguration(getClass().getSimpleName()).getConfiguration();
+        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 }

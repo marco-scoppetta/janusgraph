@@ -32,15 +32,15 @@
         </dependency>
         <dependency>
             <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
+            <artifactId>janusgraph-cql</artifactId>
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.janusgraph</groupId>
-            <artifactId>janusgraph-cassandra</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.sharegov</groupId>
+            <artifactId>mjson</artifactId>
+            <version>1.4.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -56,20 +56,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
-        <!-- End logging backends. -->
-
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <!-- JNA is needed by Cassandra, but janusgraph-cassandra only defines it as an optional dependency. -->
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>${jna.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -126,11 +117,11 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/cassandra/conf/localhost-murmur</outputDirectory>
                             <filters>
-                                <filter>${top.level.basedir}/janusgraph-cassandra/config/cassandra-filters/localhost-murmur.properties</filter>
+                                <filter>${top.level.basedir}/janusgraph-cql/config/cassandra-filters/localhost-murmur.properties</filter>
                             </filters>
                             <resources>
                                 <resource>
-                                    <directory>${top.level.basedir}/janusgraph-cassandra/config/cassandra</directory>
+                                    <directory>${top.level.basedir}/janusgraph-cql/config/cassandra</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>

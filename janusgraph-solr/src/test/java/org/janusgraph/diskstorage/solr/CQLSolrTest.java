@@ -15,21 +15,21 @@
 package org.janusgraph.diskstorage.solr;
 
 import com.google.common.base.Joiner;
-import org.janusgraph.CassandraStorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.junit.jupiter.api.BeforeAll;
 import java.io.File;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_BACKEND;
 
-public class ThriftSolrTest extends SolrJanusGraphIndexTest {
+public class CQLSolrTest extends SolrJanusGraphIndexTest {
 
     @Override
     public WriteConfiguration getConfiguration() {
         ModifiableConfiguration config =
-                CassandraStorageSetup.getCassandraThriftConfiguration(ThriftSolrTest.class.getName());
+                CassandraStorageSetup.getCQLConfiguration(CQLSolrTest.class.getName());
         //Add index
         config.set(SolrIndex.ZOOKEEPER_URL, SolrRunner.getZookeeperUrls(), INDEX);
         config.set(SolrIndex.WAIT_SEARCHER, true, INDEX);
