@@ -52,7 +52,7 @@ jobs:
             # run tests!
             - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.diskstorage.cql.*Test'
 
-    test-cql-graphdb:
+    test-cql-graphdb-I:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
@@ -71,7 +71,28 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.graphdb.cql.*Test'
+            - run: mvn test -pl janusgraph-cql '-Dtest=CQLGraphCacheTest,CQLEventualGraphTest,CQLGraphConcurrentTest,CQLOperationCountingTest,CQLPartitionGraphTest'
+
+    test-cql-graphdb-II:
+        docker:
+            - image: circleci/openjdk:8u222-jdk-stretch
+        working_directory: ~/repo
+        steps:
+            - checkout
+            - restore_cache:
+                  keys:
+                      - v1-dependencies-{{ checksum "pom.xml" }}
+                      # fallback to using the latest cache if no exact match is found
+                      - v1-dependencies-
+
+            - run: mvn install -DskipTests
+            - save_cache:
+                  paths:
+                      - ~/.m2
+                  key: v1-dependencies-{{ checksum "pom.xml" }}
+
+            # run tests!
+            - run: mvn test -pl janusgraph-cql '-Dtest=CQLGraphIterativeTest,CQLGraphPerformanceMemoryTest,CQLGraphTest,CQLOLAPTest'
 
     test-cql-blueprints:
         docker:
@@ -99,6 +120,7 @@ workflows:
     grakn-janusgraph:
         jobs:
             - test-cql-diskstorage
-            - test-cql-graphdb
+            - test-cql-graphdb-I
+            - test-cql-graphdb-II
 #            - test-cql-blueprints Running these means running > 2400 tests - they fail after 2:50 hours - investigate
             - build-dist
