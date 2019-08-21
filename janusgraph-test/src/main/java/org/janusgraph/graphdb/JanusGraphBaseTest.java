@@ -132,6 +132,7 @@ public abstract class JanusGraphBaseTest {
         this.testInfo = testInfo;
         this.config = getConfiguration();
         TestGraphConfigs.applyOverrides(config);
+        clearGraph(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);
