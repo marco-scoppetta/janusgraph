@@ -123,7 +123,7 @@ public abstract class JanusGraphBaseTest {
         for (int i = 0; i < rightSpaceLength; i++) {
             rightSpace.append("=");
         }
-        System.out.println("========== RUNNING: [ " + centralText + " ] " + rightSpace.toString());
+        System.out.println("\n\n============ RUNNING: [ " + centralText + " ] " + rightSpace.toString());
     }
 
     @BeforeEach
