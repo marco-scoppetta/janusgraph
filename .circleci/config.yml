@@ -50,7 +50,7 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn test -pl janusgraph-cql '-Dtest=org.janusgraph.diskstorage.cql.*Test'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=org.janusgraph.diskstorage.cql.*Test'
 
     test-cql-graphdb-I:
         docker:
@@ -71,7 +71,7 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn test -pl janusgraph-cql '-Dtest=CQLGraphCacheTest,CQLEventualGraphTest,CQLGraphConcurrentTest,CQLOperationCountingTest,CQLPartitionGraphTest'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLGraphCacheTest,CQLEventualGraphTest,CQLGraphConcurrentTest,CQLOperationCountingTest,CQLPartitionGraphTest'
 
     test-cql-graphdb-II:
         docker:
@@ -92,7 +92,7 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn test -pl janusgraph-cql '-Dtest=CQLGraphIterativeTest,CQLGraphPerformanceMemoryTest,CQLGraphTest,CQLOLAPTest'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLGraphIterativeTest,CQLGraphPerformanceMemoryTest,CQLGraphTest,CQLOLAPTest'
 
     test-cql-blueprints:
         docker:
@@ -114,7 +114,7 @@ jobs:
 
             # run blueprints tests ONLY inside CQL module, apparently they are special tests that require -Dtest.skip.tp=false in order for them to run
             # we use -DskipTests so that all the other tests don't run, as they will already run on test-cql-diskstorage and test-cql-graphdb jobs
-            - run:  mvn test -pl janusgraph-cql -Dtest.skip.tp=false -DskipTests
+            - run:  mvn -q test -pl janusgraph-cql -Dtest.skip.tp=false -DskipTests
 workflows:
     version: 2
     grakn-janusgraph:

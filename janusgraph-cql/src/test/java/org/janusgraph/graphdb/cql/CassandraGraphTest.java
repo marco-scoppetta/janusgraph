@@ -41,7 +41,9 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
 
     @BeforeAll
     public static void startCassandra() {
+        System.out.println("Starting cassandra...");
         CassandraStorageSetup.startCleanEmbedded();
+        System.out.println("Cassandra Started!");
     }
 
     @Test

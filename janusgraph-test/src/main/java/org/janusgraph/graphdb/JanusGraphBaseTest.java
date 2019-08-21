@@ -55,9 +55,11 @@ import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.types.StandardEdgeLabelMaker;
 import org.janusgraph.testutil.TestGraphConfigs;
+import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.rules.TestName;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -113,12 +115,23 @@ public abstract class JanusGraphBaseTest {
         return new Backend(adjustedConfig);
     }
 
+    private void fancyPrintOut(TestInfo testInfo) {
+        int totLength = 140;
+        String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
+        int rightSpaceLength = totLength - centralText.length();
+        StringBuilder rightSpace = new StringBuilder();
+        for (int i = 0; i < rightSpaceLength; i++) {
+            rightSpace.append("=");
+        }
+        System.out.println("========== RUNNING: [ " + centralText + " ] " + rightSpace.toString());
+    }
+
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
+        fancyPrintOut(testInfo);
         this.testInfo = testInfo;
         this.config = getConfiguration();
         TestGraphConfigs.applyOverrides(config);
-        Preconditions.checkNotNull(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);
