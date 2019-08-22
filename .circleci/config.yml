@@ -78,7 +78,7 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLMultiWriteStoreTest,CQLResultSetKeyIteratorTest,CQLSSLStoreTest,CQLStoreTest'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLMultiWriteStoreTest,CQLResultSetKeyIteratorTest,CQLStoreTest' #temporarily disabled CQLSSLStoreTest
 
     test-cql-graphdb-I:
         docker:
