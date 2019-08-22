@@ -17,7 +17,7 @@ package org.janusgraph.graphdb.cql;
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.JanusGraphConstants;

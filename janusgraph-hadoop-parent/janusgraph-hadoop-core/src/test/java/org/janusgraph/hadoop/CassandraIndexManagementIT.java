@@ -15,7 +15,7 @@
 package org.janusgraph.hadoop;
 
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 
 public class CassandraIndexManagementIT extends AbstractIndexManagementIT {
 

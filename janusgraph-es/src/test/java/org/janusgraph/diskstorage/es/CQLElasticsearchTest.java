@@ -16,7 +16,7 @@ package org.janusgraph.diskstorage.es;
 
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphIndexTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.junit.jupiter.api.BeforeAll;

@@ -14,7 +14,7 @@
 
 package org.janusgraph.diskstorage.cql;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.*;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.*;
 
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;

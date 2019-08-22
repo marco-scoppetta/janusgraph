@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.JanusGraphConstants;
 import org.janusgraph.graphdb.database.StandardJanusGraph;

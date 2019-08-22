@@ -19,7 +19,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.util.GraphFactory;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 
 import java.io.IOException;
 import java.nio.file.Files;

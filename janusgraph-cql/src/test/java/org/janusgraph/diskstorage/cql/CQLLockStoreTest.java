@@ -20,8 +20,8 @@ import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.junit.jupiter.api.BeforeAll;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.getCQLConfiguration;
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.startCleanEmbedded;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.getCQLConfiguration;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.startCleanEmbedded;
 
 public class CQLLockStoreTest extends LockKeyColumnValueStoreTest {
 
