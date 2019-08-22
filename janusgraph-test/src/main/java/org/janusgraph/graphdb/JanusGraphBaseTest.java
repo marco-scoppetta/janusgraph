@@ -144,11 +144,8 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void open(WriteConfiguration config) {
-        ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
-        adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
-        adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
         long s = System.currentTimeMillis();
-        graph = JanusGraphFactory.open(adjustedConfig);
+        graph = JanusGraphFactory.open(config);
         long e = System.currentTimeMillis();
         System.out.println("Time to open a new Graph: " + (e - s));
         features = graph.getConfiguration().getStoreFeatures();
