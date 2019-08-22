@@ -25,6 +25,7 @@ import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.idmanagement.ConflictAvoidanceMode;
 import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
 import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
@@ -37,6 +38,8 @@ import org.janusgraph.graphdb.idmanagement.UniqueInstanceIdRetriever;
 import org.janusgraph.testutil.TestGraphConfigs;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -64,6 +67,16 @@ public abstract class IDAuthorityTest {
     private static final int MAX_NUM_PARTITIONS = 4;
 
     public static final Duration GET_ID_BLOCK_TIMEOUT = Duration.ofMillis(300000L);
+
+    @BeforeEach
+    public void print(TestInfo testInfo){
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        close();
+    }
 
     public static Stream<Arguments> configs() {
         final List<Arguments> configurations = new ArrayList<>();
@@ -153,10 +166,7 @@ public abstract class IDAuthorityTest {
         }
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        close();
-    }
+
 
     public void close() throws BackendException {
         for (int i = 0; i < CONCURRENCY; i++) {
@@ -196,25 +206,6 @@ public abstract class IDAuthorityTest {
             fail();
         } catch (ArrayIndexOutOfBoundsException ignored) {}
     }
-
-//    private void checkIdList(List<Long> ids) {
-//        Collections.sort(ids);
-//        for (int i=1;i<ids.size();i++) {
-//            long current = ids.get(i);
-//            long previous = ids.get(i-1);
-//            Assert.assertTrue(current>0);
-//            Assert.assertTrue(previous>0);
-//            Assert.assertTrue("ID block allocated twice: blockstart=" + current + ", indices=(" + i + ", " + (i-1) + ")", current!=previous);
-//            Assert.assertTrue("ID blocks allocated in non-increasing order: " + previous + " then " + current, current>previous);
-//            Assert.assertTrue(previous+blockSize<=current);
-//
-//            if (hasFixedUid) {
-//                Assert.assertTrue(current + " vs " + previous, 0 == (current - previous) % blockSize);
-//                final long skipped = (current - previous) / blockSize;
-//                Assert.assertTrue(0 <= skipped);
-//            }
-//        }
-//    }
 
     @ParameterizedTest
     @MethodSource("configs")

@@ -26,9 +26,11 @@ import org.janusgraph.diskstorage.keycolumnvalue.cache.NoKCVSCache;
 import org.janusgraph.diskstorage.util.StaticArrayBuffer;
 import org.janusgraph.diskstorage.util.StaticArrayEntry;
 
+import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +59,8 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     private final Random rand = new Random(10);
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp(TestInfo testInfo) throws Exception {
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
         StoreManager m = openStorageManager();
         m.clearStorage();
         m.close();

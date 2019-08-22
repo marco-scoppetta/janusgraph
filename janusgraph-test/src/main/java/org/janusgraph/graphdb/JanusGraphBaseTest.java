@@ -117,7 +117,7 @@ public abstract class JanusGraphBaseTest {
         return new Backend(adjustedConfig, storeManagerFactory);
     }
 
-    private void fancyPrintOut(TestInfo testInfo) {
+    public static void fancyPrintOut(TestInfo testInfo) {
         // Don't print anything if tests started from within IntelliJ
         // TODO add system property when invoking tests from CircleCI
         if(System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
@@ -137,7 +137,7 @@ public abstract class JanusGraphBaseTest {
         this.testInfo = testInfo;
         this.config = getConfiguration();
         TestGraphConfigs.applyOverrides(config);
-//        clearGraph(config);
+        clearGraph(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);

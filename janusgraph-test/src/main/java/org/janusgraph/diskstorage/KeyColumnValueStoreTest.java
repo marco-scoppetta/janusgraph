@@ -28,6 +28,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.scan.StandardScanner;
 import org.janusgraph.diskstorage.keycolumnvalue.ttl.TTLKCVSManager;
 import org.janusgraph.diskstorage.util.*;
 
+import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.janusgraph.testutil.TestGraphConfigs;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -56,7 +57,8 @@ public abstract class KeyColumnValueStoreTest extends AbstractKCVSTest {
     public KeyColumnValueStore store;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp(TestInfo testInfo) throws Exception {
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
         StoreManager m = openStorageManager();
         m.clearStorage();
         m.close();

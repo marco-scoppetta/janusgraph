@@ -21,6 +21,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLogManager;
 
+import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,7 @@ public abstract class KCVSLogTest extends LogTest {
     @Override
     @BeforeEach
     public void setup(TestInfo testInfo) throws Exception {
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
         StoreManager m = openStorageManager();
         m.clearStorage();
         m.close();
