@@ -137,9 +137,11 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final ConcurrentHashMap<String, Locker> lockers = new ConcurrentHashMap<>();
 
     private final Configuration configuration;
+    private final StoreManagerFactory storeManagerFactory;
 
     public Backend(Configuration configuration, StoreManagerFactory storeManagerFactory) {
         this.configuration = configuration;
+        this.storeManagerFactory = storeManagerFactory;
 
         KeyColumnValueStoreManager manager = storeManagerFactory.getManager(configuration);
         if (configuration.get(BASIC_METRICS)) {
@@ -512,6 +514,7 @@ public class Backend implements LockerProvider, AutoCloseable {
             if (systemConfig != null) systemConfig.close();
             if (userConfig != null) userConfig.close();
             storeManager.close();
+            storeManagerFactory.close();
             if (threadPool != null) {
                 threadPool.shutdown();
             }

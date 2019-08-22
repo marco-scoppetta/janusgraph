@@ -231,7 +231,7 @@ public class ConsistentKeyIDAuthority extends AbstractIDAuthority implements Bac
             try {
                 long nextStart = getCurrentID(partitionKey);
                 if (idBlockUpperBound - blockSize <= nextStart) {
-                    log.info("ID overflow detected on partition({})-namespace({}) with uniqueid {}. Current id {}, block size {}, and upper bound {} for bit width {}.",
+                    log.debug("ID overflow detected on partition({})-namespace({}) with uniqueid {}. Current id {}, block size {}, and upper bound {} for bit width {}.",
                             partition, idNamespace, uniquePID, nextStart, blockSize, idBlockUpperBound, uniqueIdBitWidth);
                     if (randomizeUniqueId) {
                         exhaustedUniquePIDs.add(uniquePID);

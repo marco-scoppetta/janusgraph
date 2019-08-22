@@ -59,6 +59,11 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
         return new CQLStoreManager(session, configuration);
     }
 
+    @Override
+    public void close() {
+        session.closeAsync();
+    }
+
     private CqlSession initializeSession() throws PermanentBackendException {
         List<InetSocketAddress> contactPoints;
         //TODO the following 2 variables are duplicated in DistributedStoreManager
