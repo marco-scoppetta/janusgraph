@@ -138,10 +138,10 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     private final Configuration configuration;
 
-    public Backend(Configuration configuration) {
+    public Backend(Configuration configuration, StoreManagerFactory storeManagerFactory) {
         this.configuration = configuration;
 
-        KeyColumnValueStoreManager manager = getStorageManager(configuration);
+        KeyColumnValueStoreManager manager = storeManagerFactory.getManager(configuration);
         if (configuration.get(BASIC_METRICS)) {
             storeManager = new MetricInstrumentedStoreManager(manager, METRICS_STOREMANAGER_NAME, configuration.get(METRICS_MERGE_STORES), METRICS_MERGED_STORE);
         } else {
@@ -315,10 +315,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         copy.putAll(indexes);
         return copy.build();
     }
-//
-//    public IndexProvider getIndexProvider(String name) {
-//        return indexes.get(name);
-//    }
 
     public KCVSLog getSystemTxLog() {
         try {
@@ -414,7 +410,6 @@ public class Backend implements LockerProvider, AutoCloseable {
                     ImmutableMap.of(EDGESTORE_NAME, 8, EDGESTORE_NAME + LOCK_STORE_SUFFIX, 8,
                             storageConfig.get(IDS_STORE_NAME), 8));
         }
-        Preconditions.checkArgument(manager instanceof KeyColumnValueStoreManager, "Invalid storage manager: %s", manager.getClass());
         return (KeyColumnValueStoreManager) manager;
     }
 
@@ -573,11 +568,11 @@ public class Backend implements LockerProvider, AutoCloseable {
     static {
         final Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
 
-        m.put(StandardStoreManager.BDB_JE, STORAGE_DIRECTORY);
-        m.put(StandardStoreManager.CASSANDRA_ASTYANAX, STORAGE_HOSTS);
-        m.put(StandardStoreManager.CASSANDRA_EMBEDDED, STORAGE_CONF_FILE);
-        m.put(StandardStoreManager.CASSANDRA_THRIFT, STORAGE_HOSTS);
-        m.put(StandardStoreManager.HBASE, STORAGE_HOSTS);
+//        m.put(StandardStoreManager.BDB_JE, STORAGE_DIRECTORY);
+//        m.put(StandardStoreManager.CASSANDRA_ASTYANAX, STORAGE_HOSTS);
+//        m.put(StandardStoreManager.CASSANDRA_EMBEDDED, STORAGE_CONF_FILE);
+//        m.put(StandardStoreManager.CASSANDRA_THRIFT, STORAGE_HOSTS);
+//        m.put(StandardStoreManager.HBASE, STORAGE_HOSTS);
         //m.put(StandardStorageBackend.IN_MEMORY, null);
 
         //STORE_SHORTHAND_OPTIONS = Maps.immutableEnumMap(m);

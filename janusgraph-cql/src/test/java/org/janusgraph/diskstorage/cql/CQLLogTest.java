@@ -37,7 +37,7 @@ public class CQLLogTest extends KCVSLogTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManager(c);
+        return new CQLStoreManagerFactory(c).getManager(c);
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.diskstorage.*;
 import org.janusgraph.diskstorage.configuration.*;
 import org.janusgraph.diskstorage.cql.CQLStoreManager;
+import org.janusgraph.diskstorage.cql.CQLStoreManagerFactory;
 import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
@@ -62,8 +63,8 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
             if (i%2==0) values[i]= Arrays.copyOf(values[i], cols / 2);
         }
         log.debug("Loading values: " + keys + "x" + cols);
-
-        KeyColumnValueStoreManager mgr = new CQLStoreManager(GraphDatabaseConfiguration.buildGraphConfiguration());
+        ModifiableConfiguration configuration = GraphDatabaseConfiguration.buildGraphConfiguration();
+        KeyColumnValueStoreManager mgr = new CQLStoreManagerFactory(configuration).getManager(configuration);
         KeyColumnValueStore store = mgr.openDatabase("edgestore");
         StoreTransaction tx = mgr.beginTransaction(StandardBaseTransactionConfig.of(TimestampProviders.MICRO));
         KeyColumnValueStoreUtil.loadValues(store, tx, values);

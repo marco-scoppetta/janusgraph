@@ -16,39 +16,53 @@ package org.janusgraph.core;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
-
-import org.janusgraph.core.log.LogProcessorFramework;
-import org.janusgraph.core.log.TransactionRecovery;
-import org.janusgraph.diskstorage.Backend;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.StandardStoreManager;
-import org.janusgraph.diskstorage.configuration.*;
-import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
-import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
-import org.janusgraph.graphdb.management.JanusGraphManager;
-import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-import static org.janusgraph.util.system.LoggerUtil.sanitizeAndLaunder;
-import static org.janusgraph.graphdb.management.JanusGraphManager.JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG;
-
-import org.janusgraph.graphdb.database.StandardJanusGraph;
-import org.janusgraph.graphdb.log.StandardLogProcessorFramework;
-import org.janusgraph.graphdb.log.StandardTransactionLogProcessor;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
-import org.janusgraph.util.system.IOUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
-
+import org.janusgraph.core.log.LogProcessorFramework;
+import org.janusgraph.core.log.TransactionRecovery;
+import org.janusgraph.diskstorage.Backend;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.StandardStoreManager;
+import org.janusgraph.diskstorage.configuration.BasicConfiguration;
+import org.janusgraph.diskstorage.configuration.ConfigOption;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.configuration.ReadConfiguration;
+import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
+import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
+import org.janusgraph.graphdb.log.StandardLogProcessorFramework;
+import org.janusgraph.graphdb.log.StandardTransactionLogProcessor;
+import org.janusgraph.graphdb.management.JanusGraphManager;
+import org.janusgraph.util.system.ConfigurationUtil;
+import org.janusgraph.util.system.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.GRAPH_NAME;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_CONF_FILE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_DIRECTORY;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_CONF_FILE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_DIRECTORY;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_HOSTS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_NS;
+import static org.janusgraph.graphdb.management.JanusGraphManager.JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG;
+import static org.janusgraph.util.system.LoggerUtil.sanitizeAndLaunder;
 
 /**
  * JanusGraphFactory is used to open or instantiate a JanusGraph graph database.
@@ -141,13 +155,15 @@ public class JanusGraphFactory {
      * @param backupName Backup name for graph
      * @return JanusGraph graph database
      */
-    public static StandardJanusGraph open(ReadConfiguration configuration, String backupName) {
-        final ModifiableConfiguration config = new ModifiableConfiguration(ROOT_NS, (WriteConfiguration) configuration, BasicConfiguration.Restriction.NONE);
-        final String graphName = config.has(GRAPH_NAME) ? config.get(GRAPH_NAME) : backupName;
-        final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
+    private static StandardJanusGraph open(ReadConfiguration configuration, String backupName) {
+        ModifiableConfiguration config = new ModifiableConfiguration(ROOT_NS, (WriteConfiguration) configuration, BasicConfiguration.Restriction.NONE);
+        String graphName = config.has(GRAPH_NAME) ? config.get(GRAPH_NAME) : backupName;
+        JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
+        BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS,configuration, BasicConfiguration.Restriction.NONE);
+        StoreManagerFactory storeManagerFactory = getFactory(localBasicConfiguration);
 
-        GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(configuration);
-        Backend backend = new Backend(dbConfig.getConfiguration());
+        GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(configuration, storeManagerFactory);
+        Backend backend = new Backend(dbConfig.getConfiguration(), storeManagerFactory);
 
         if (null != graphName) {
             Preconditions.checkNotNull(jgm, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
@@ -211,9 +227,9 @@ public class JanusGraphFactory {
         if (graph.isOpen()) {
             graph.close();
         }
-        final GraphDatabaseConfiguration config = g.getConfiguration();
         org.janusgraph.diskstorage.configuration.Configuration backendConfiguration = g.getConfiguration().getConfiguration();
-        Backend backend = new Backend(backendConfiguration);
+        StoreManagerFactory storeManagerFactory = getFactory(backendConfiguration);
+        Backend backend = new Backend(backendConfiguration, storeManagerFactory);
         try {
             backend.clearStorage();
         } finally {
@@ -295,6 +311,13 @@ public class JanusGraphFactory {
     //###################################
     //          HELPER METHODS
     //###################################
+
+
+    //This is temporarily public because needed in tests, to be made private once we fix tingz around
+    public static StoreManagerFactory getFactory(org.janusgraph.diskstorage.configuration.Configuration configuration){
+        String className = "org.janusgraph.diskstorage.cql.CQLStoreManagerFactory";
+        return ConfigurationUtil.instantiate(className, new Object[]{configuration}, new Class[]{org.janusgraph.diskstorage.configuration.Configuration.class});
+    }
 
     private static ReadConfiguration getLocalConfiguration(String shortcutOrFile) {
         File file = new File(shortcutOrFile);

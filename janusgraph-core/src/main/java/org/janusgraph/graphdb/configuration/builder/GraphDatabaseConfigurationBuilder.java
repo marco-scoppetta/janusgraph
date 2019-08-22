@@ -24,6 +24,7 @@ import org.janusgraph.diskstorage.configuration.builder.ModifiableConfigurationB
 import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.keycolumnvalue.ttl.TTLKCVSManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLog;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLogManager;
@@ -40,14 +41,14 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
  */
 public class GraphDatabaseConfigurationBuilder {
 
-    public static GraphDatabaseConfiguration build(ReadConfiguration localConfig){
+    public static GraphDatabaseConfiguration build(ReadConfiguration localConfig, StoreManagerFactory storeManagerFactory){
 
         Preconditions.checkNotNull(localConfig);
 
         BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS,localConfig, BasicConfiguration.Restriction.NONE);
         ModifiableConfiguration overwrite = new ModifiableConfiguration(ROOT_NS,new CommonsConfiguration(), BasicConfiguration.Restriction.NONE);
 
-        final KeyColumnValueStoreManager storeManager = Backend.getStorageManager(localBasicConfiguration);
+        final KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
         final StoreFeatures storeFeatures = storeManager.getFeatures();
 
         final ReadConfiguration globalConfig = new ReadConfigurationBuilder().buildGlobalConfiguration(

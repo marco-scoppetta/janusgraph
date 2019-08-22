@@ -35,7 +35,7 @@ public class CQLLockStoreTest extends LockKeyColumnValueStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManager(c);
+        return new CQLStoreManagerFactory(c).getManager(c);
     }
 
     @Override

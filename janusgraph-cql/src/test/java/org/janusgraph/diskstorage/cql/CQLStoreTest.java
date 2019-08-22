@@ -72,7 +72,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     private CqlSession session;
 
     @InjectMocks
-    private CQLStoreManager mockManager = new CQLStoreManager(getBaseStorageConfiguration());
+    private CQLStoreManager mockManager = new CQLStoreManagerFactory(getBaseStorageConfiguration()).getManager(getBaseStorageConfiguration());
 
     public CQLStoreTest() throws BackendException {
     }
@@ -87,7 +87,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManager(c);
+        return new CQLStoreManagerFactory(c).getManager(c);
     }
 
     @Override
@@ -100,10 +100,10 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     public void testUnorderedConfiguration(TestInfo testInfo) {
         if (!this.manager.getFeatures().hasUnorderedScan()) {
             LOGGER.warn(
-                "Can't test key-unordered features on incompatible store.  "
-                    + "This warning could indicate reduced test coverage and "
-                    + "a broken JUnit configuration.  Skipping test {}.",
-                testInfo.getDisplayName());
+                    "Can't test key-unordered features on incompatible store.  "
+                            + "This warning could indicate reduced test coverage and "
+                            + "a broken JUnit configuration.  Skipping test {}.",
+                    testInfo.getDisplayName());
             return;
         }
 
@@ -117,10 +117,10 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     public void testOrderedConfiguration(TestInfo testInfo) {
         if (!this.manager.getFeatures().hasOrderedScan()) {
             LOGGER.warn(
-                "Can't test key-ordered features on incompatible store.  "
-                    + "This warning could indicate reduced test coverage and "
-                    + "a broken JUnit configuration.  Skipping test {}.",
-                testInfo.getDisplayName());
+                    "Can't test key-ordered features on incompatible store.  "
+                            + "This warning could indicate reduced test coverage and "
+                            + "a broken JUnit configuration.  Skipping test {}.",
+                    testInfo.getDisplayName());
             return;
         }
 
@@ -136,18 +136,6 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     }
 
     @Test
-    public void testDefaultCompactStorage() throws BackendException {
-        final String cf = TEST_CF_NAME + "_defaultcompact";
-
-        final CQLStoreManager cqlStoreManager = openStorageManager();
-        cqlStoreManager.openDatabase(cf);
-
-        // COMPACT STORAGE is allowed on Cassandra 2 or earlier
-        // when COMPACT STORAGE is allowed, the default is to enable it
-        assertTrue(cqlStoreManager.isCompactStorageAllowed() == cqlStoreManager.getTableMetadata(cf).isCompactStorage());
-    }
-
-    @Test
     public void testUseCompactStorage() throws BackendException {
         final String cf = TEST_CF_NAME + "_usecompact";
         final ModifiableConfiguration config = getBaseStorageConfiguration();
@@ -156,11 +144,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         final CQLStoreManager cqlStoreManager = openStorageManager(config);
         cqlStoreManager.openDatabase(cf);
 
-        if (cqlStoreManager.isCompactStorageAllowed()) {
-            assertTrue(cqlStoreManager.getTableMetadata(cf).isCompactStorage());
-        } else {
-            assertFalse(cqlStoreManager.getTableMetadata(cf).isCompactStorage());
-        }
+        assertFalse(cqlStoreManager.getTableMetadata(cf).isCompactStorage());
     }
 
     @Test

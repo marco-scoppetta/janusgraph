@@ -47,6 +47,7 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.log.Log;
 import org.janusgraph.diskstorage.log.LogManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLogManager;
@@ -112,10 +113,14 @@ public abstract class JanusGraphBaseTest {
         ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
-        return new Backend(adjustedConfig);
+        StoreManagerFactory storeManagerFactory = JanusGraphFactory.getFactory(adjustedConfig);
+        return new Backend(adjustedConfig, storeManagerFactory);
     }
 
     private void fancyPrintOut(TestInfo testInfo) {
+        // Don't print anything if tests started from within IntelliJ
+        // TODO add system property when invoking tests from CircleCI
+        if(System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
         int totLength = 140;
         String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
         int rightSpaceLength = totLength - centralText.length();
@@ -123,7 +128,7 @@ public abstract class JanusGraphBaseTest {
         for (int i = 0; i < rightSpaceLength; i++) {
             rightSpace.append("=");
         }
-        System.out.println("\n\n============ RUNNING: [ " + centralText + " ] " + rightSpace.toString());
+        System.out.println("\n\n  RUNNING: [ " + centralText + " ] " + rightSpace.toString());
     }
 
     @BeforeEach
@@ -132,15 +137,18 @@ public abstract class JanusGraphBaseTest {
         this.testInfo = testInfo;
         this.config = getConfiguration();
         TestGraphConfigs.applyOverrides(config);
-        clearGraph(config);
+//        clearGraph(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);
     }
 
     public void open(WriteConfiguration config) {
+        ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
+        adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
+        adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
         long s = System.currentTimeMillis();
-        graph = JanusGraphFactory.open(config);
+        graph = JanusGraphFactory.open(adjustedConfig);
         long e = System.currentTimeMillis();
         System.out.println("Time to open a new Graph: " + (e - s));
         features = graph.getConfiguration().getStoreFeatures();
