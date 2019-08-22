@@ -23,11 +23,12 @@ public class CQLPartitionGraphTest extends JanusGraphPartitionGraphTest {
 
     @BeforeAll
     public static void beforeClass() {
+        System.out.println(Runtime.getRuntime().maxMemory()/1000000 + "MB available");
         CassandraStorageSetup.startCleanEmbedded();
     }
 
     @Override
-    public WriteConfiguration getBaseConfiguration() {
+    public WriteConfiguration getBaseConfiguration() {s
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 
