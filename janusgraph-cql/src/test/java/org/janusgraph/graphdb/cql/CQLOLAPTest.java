@@ -29,6 +29,7 @@ public class CQLOLAPTest extends OLAPTest {
 
     @BeforeAll
     public static void beforeClass() {
+        System.out.println(Runtime.getRuntime().maxMemory()/1000000 + "MB available");
         CassandraStorageSetup.startCleanEmbedded();
     }
 }
