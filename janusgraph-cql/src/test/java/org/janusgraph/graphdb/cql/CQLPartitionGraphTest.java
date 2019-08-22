@@ -28,7 +28,7 @@ public class CQLPartitionGraphTest extends JanusGraphPartitionGraphTest {
     }
 
     @Override
-    public WriteConfiguration getBaseConfiguration() {s
+    public WriteConfiguration getBaseConfiguration() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 
