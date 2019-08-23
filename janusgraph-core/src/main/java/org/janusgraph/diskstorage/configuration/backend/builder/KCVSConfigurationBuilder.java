@@ -38,16 +38,16 @@ public class KCVSConfigurationBuilder {
             return buildGlobalConfiguration(new BackendOperation.TransactionalProvider() {
                 @Override
                 public StoreTransaction openTx() throws BackendException {
-                    return manager.beginTransaction(StandardBaseTransactionConfig.of(config.get(TIMESTAMP_PROVIDER),features.getKeyConsistentTxConfig()));
+                    return manager.beginTransaction(StandardBaseTransactionConfig.of(config.get(TIMESTAMP_PROVIDER), features.getKeyConsistentTxConfig()));
                 }
 
                 @Override
                 public void close() throws BackendException {
                     manager.close();
                 }
-            },manager.openDatabase(SYSTEM_PROPERTIES_STORE_NAME),config);
+            }, manager.openDatabase(SYSTEM_PROPERTIES_STORE_NAME), config);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not open global configuration",e);
+            throw new JanusGraphException("Could not open global configuration", e);
         }
     }
 
@@ -56,11 +56,11 @@ public class KCVSConfigurationBuilder {
                                                 final Configuration config) {
         try {
             KCVSConfiguration keyColumnValueStoreConfiguration =
-                new KCVSConfiguration(txProvider,config,store,identifier);
+                    new KCVSConfiguration(txProvider, config, store, identifier);
             keyColumnValueStoreConfiguration.setMaxOperationWaitTime(config.get(SETUP_WAITTIME));
             return keyColumnValueStoreConfiguration;
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not open global configuration",e);
+            throw new JanusGraphException("Could not open global configuration", e);
         }
     }
 

@@ -27,7 +27,6 @@ public class CQLIDAuthorityTest extends IDAuthorityTest {
 
     @BeforeAll
     public static void startCassandra() {
-        System.out.println(Runtime.getRuntime().maxMemory()/1000000 + "MB available");
         startCleanEmbedded();
     }
 

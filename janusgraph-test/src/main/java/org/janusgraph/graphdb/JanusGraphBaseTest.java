@@ -284,7 +284,7 @@ public abstract class JanusGraphBaseTest {
             configuration.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "reader");
             configuration.set(GraphDatabaseConfiguration.LOG_READ_INTERVAL, Duration.ofMillis(500L), logManagerName);
             if (logStoreManager == null) {
-                logStoreManager = Backend.getStorageManager(configuration);
+                logStoreManager = JanusGraphFactory.getFactory(configuration).getManager(configuration);
             }
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();

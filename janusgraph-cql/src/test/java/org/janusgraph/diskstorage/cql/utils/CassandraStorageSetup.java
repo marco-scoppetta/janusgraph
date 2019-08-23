@@ -63,7 +63,9 @@ public class CassandraStorageSetup {
                     throw new RuntimeException(e);
                 }
             }
+            System.out.println("Starting cassandra...");
             CassandraDaemonWrapper.start(p.yamlPath);
+            System.out.println("Cassandra Started!");
         }
     }
 
