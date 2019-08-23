@@ -33,6 +33,10 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
+import org.janusgraph.diskstorage.configuration.builder.ModifiableConfigurationBuilder;
+import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
@@ -162,8 +166,14 @@ public class JanusGraphFactory {
         JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
         BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS, configuration, BasicConfiguration.Restriction.NONE);
         StoreManagerFactory storeManagerFactory = getFactory(localBasicConfiguration);
+        // Used to connect to 'system_properties' to read global configuration
+        KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
+        // Configurations read from system_properties -> Global for every graph existing in the current DB
+        ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new ModifiableConfigurationBuilder(), new KCVSConfigurationBuilder());
+        BasicConfiguration globalBasicConfig = new BasicConfiguration(ROOT_NS, globalConfig, BasicConfiguration.Restriction.NONE);
 
-        GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(configuration, storeManagerFactory);
+
+        GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(localBasicConfiguration, globalBasicConfig, storeManager);
         Backend backend = new Backend(dbConfig.getConfiguration(), storeManagerFactory);
 
         if (null != graphName) {

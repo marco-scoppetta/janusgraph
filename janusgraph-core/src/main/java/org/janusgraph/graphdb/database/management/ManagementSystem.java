@@ -112,8 +112,7 @@ public class ManagementSystem implements JanusGraphManagement {
         this.managementLogger = managementLogger;
         this.schemaCache = schemaCache;
         this.transactionalConfig = new TransactionalConfiguration(config);
-        this.modifyConfig = new ModifiableConfiguration(ROOT_NS,
-                transactionalConfig, BasicConfiguration.Restriction.GLOBAL);
+        this.modifyConfig = new ModifiableConfiguration(ROOT_NS, transactionalConfig, BasicConfiguration.Restriction.GLOBAL);
         this.userConfig = new UserModifiableConfiguration(modifyConfig, configVerifier);
 
         this.updatedTypes = new HashSet<>();

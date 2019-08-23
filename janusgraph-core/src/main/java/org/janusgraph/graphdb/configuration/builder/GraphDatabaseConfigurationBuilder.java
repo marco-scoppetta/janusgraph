@@ -15,13 +15,9 @@
 package org.janusgraph.graphdb.configuration.builder;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
-import org.janusgraph.diskstorage.configuration.ConfigElement;
-import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.MergedConfiguration;
-import org.janusgraph.diskstorage.configuration.MixedConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
@@ -30,6 +26,7 @@ import org.janusgraph.diskstorage.configuration.builder.ModifiableConfigurationB
 import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.keycolumnvalue.ttl.TTLKCVSManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLog;
@@ -38,8 +35,8 @@ import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.idmanagement.UniqueInstanceIdRetriever;
 
 import java.time.Duration;
-import java.util.Map;
 
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_SEND_DELAY;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_STORE_TTL;
@@ -54,24 +51,17 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.UN
  */
 public class GraphDatabaseConfigurationBuilder {
 
-    public static GraphDatabaseConfiguration build(ReadConfiguration localConfig, StoreManagerFactory storeManagerFactory) {
-
-        // These are local configurations, configuration set by the user using a config file or by building a config Map
-        // these config only apply to the current graph that is about to be built
-        BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS, localConfig, BasicConfiguration.Restriction.NONE);
-
-        // Used to connect to 'system_properties' to read global configuration
-        KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
-
-        // Configurations read from system_properties -> Global for every graph existing in the current DB
-        ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration, storeManager, new ModifiableConfigurationBuilder(), new KCVSConfigurationBuilder());
-
-        Configuration combinedConfig = new MixedConfiguration(ROOT_NS, globalConfig, localConfig);
+    public static GraphDatabaseConfiguration build(BasicConfiguration localBasicConfiguration, BasicConfiguration globalBasicConfig, StoreManager storeManager) {
+        Configuration combinedConfig = new MergedConfiguration(localBasicConfiguration, globalBasicConfig);
 
         //Compute unique instance id
         ModifiableConfiguration overwrite = new ModifiableConfiguration(ROOT_NS, new CommonsConfiguration(), BasicConfiguration.Restriction.NONE);
         String uniqueGraphId = UniqueInstanceIdRetriever.getInstance().getOrGenerateUniqueInstanceId(combinedConfig);
         overwrite.set(UNIQUE_INSTANCE_ID, uniqueGraphId);
+        // If lock prefix is unspecified, specify it now
+        if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {
+            overwrite.set(LOCK_LOCAL_MEDIATOR_GROUP, storeManager.getName());
+        }
 
 
         StoreFeatures storeFeatures = storeManager.getFeatures();
@@ -80,7 +70,7 @@ public class GraphDatabaseConfigurationBuilder {
 
         MergedConfiguration configuration = new MergedConfiguration(overwrite, combinedConfig);
 
-        return new GraphDatabaseConfiguration(localConfig, uniqueGraphId, configuration, storeFeatures);
+        return new GraphDatabaseConfiguration(localBasicConfiguration.getConfiguration(), uniqueGraphId, configuration, storeFeatures);
     }
 
 

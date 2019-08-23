@@ -54,11 +54,10 @@ public class ReadConfigurationBuilder {
     static final String BACKLEVEL_STORAGE_VERSION_EXCEPTION = "The storage version on the client or server is lower than the storage version of the graph: graph storage version %s vs. client storage version %s when opening graph %s.";
     static final String INCOMPATIBLE_STORAGE_VERSION_EXCEPTION = "Storage version is incompatible with current client: graph storage version %s vs. client storage version %s when opening graph %s.";
 
-    public static ReadConfiguration buildGlobalConfiguration(ReadConfiguration localConfig,
-                                                      BasicConfiguration localBasicConfiguration,
-                                                      KeyColumnValueStoreManager storeManager,
-                                                      ModifiableConfigurationBuilder modifiableConfigurationBuilder,
-                                                      KCVSConfigurationBuilder kcvsConfigurationBuilder) {
+    public static ReadConfiguration buildGlobalConfiguration(BasicConfiguration localBasicConfiguration,
+                                                             KeyColumnValueStoreManager storeManager,
+                                                             ModifiableConfigurationBuilder modifiableConfigurationBuilder,
+                                                             KCVSConfigurationBuilder kcvsConfigurationBuilder) {
 
 
         BackendOperation.TransactionalProvider transactionalProvider = new BackendOperation.TransactionalProvider() {
@@ -82,11 +81,6 @@ public class ReadConfigurationBuilder {
         //Read  Global Configuration (from 'system_properties' store, everything associated to 'configuration' key)
         try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildGlobalConfiguration(transactionalProvider, systemPropertiesStore, localBasicConfiguration)) {
 
-            // If lock prefix is unspecified, specify it now
-//            if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {
-//                overwrite.set(LOCK_LOCAL_MEDIATOR_GROUP, storeManager.getName());
-//            }
-
             //Freeze global configuration if not already frozen!
             ModifiableConfiguration globalWrite = modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration);
 
@@ -100,7 +94,7 @@ public class ReadConfigurationBuilder {
 
                 globalWrite.freezeConfiguration();
             } else {
-                String graphName = localConfig.get(GRAPH_NAME.toStringWithoutRoot(), String.class);
+                String graphName = localBasicConfiguration.getConfiguration().get(GRAPH_NAME.toStringWithoutRoot(), String.class);
                 final boolean upgradeAllowed = isUpgradeAllowed(globalWrite, localBasicConfiguration);
 
                 if (upgradeAllowed) {
@@ -157,7 +151,7 @@ public class ReadConfigurationBuilder {
     }
 
     private static void setupTimestampProvider(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                        KeyColumnValueStoreManager storeManager) {
+                                               KeyColumnValueStoreManager storeManager) {
         /* If the configuration does not explicitly set a timestamp provider and
          * the storage backend both supports timestamps and has a preference for
          * a specific timestamp provider, then apply the backend's preference.

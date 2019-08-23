@@ -20,6 +20,10 @@ import java.util.Set;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * Read-only configuration which provides a logical union of two Configuration objects
+ */
+
 public class MergedConfiguration implements Configuration {
 
     private final Configuration first;
@@ -54,8 +58,7 @@ public class MergedConfiguration implements Configuration {
         return b.build();
     }
     @Override
-    public Map<String, Object> getSubset(ConfigNamespace umbrella,
-            String... umbrellaElements) {
+    public Map<String, Object> getSubset(ConfigNamespace umbrella, String... umbrellaElements) {
         ImmutableMap.Builder<String, Object> b = ImmutableMap.builder();
         Map<String, Object> fm = first.getSubset(umbrella, umbrellaElements);
         Map<String, Object> sm = second.getSubset(umbrella, umbrellaElements);
