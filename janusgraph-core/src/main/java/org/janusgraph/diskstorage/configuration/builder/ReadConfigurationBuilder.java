@@ -56,7 +56,6 @@ public class ReadConfigurationBuilder {
 
     public static ReadConfiguration buildGlobalConfiguration(ReadConfiguration localConfig,
                                                       BasicConfiguration localBasicConfiguration,
-                                                      ModifiableConfiguration overwrite,
                                                       KeyColumnValueStoreManager storeManager,
                                                       ModifiableConfigurationBuilder modifiableConfigurationBuilder,
                                                       KCVSConfigurationBuilder kcvsConfigurationBuilder) {
@@ -84,9 +83,9 @@ public class ReadConfigurationBuilder {
         try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildGlobalConfiguration(transactionalProvider, systemPropertiesStore, localBasicConfiguration)) {
 
             // If lock prefix is unspecified, specify it now
-            if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {
-                overwrite.set(LOCK_LOCAL_MEDIATOR_GROUP, storeManager.getName());
-            }
+//            if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {
+//                overwrite.set(LOCK_LOCAL_MEDIATOR_GROUP, storeManager.getName());
+//            }
 
             //Freeze global configuration if not already frozen!
             ModifiableConfiguration globalWrite = modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration);
@@ -110,8 +109,7 @@ public class ReadConfigurationBuilder {
                     checkJanusGraphStorageVersionEquality(globalWrite, graphName);
                 }
 
-                checkJanusGraphVersion(globalWrite, localBasicConfiguration, keyColumnValueStoreConfiguration, overwrite);
-                checkOptionsWithDiscrepancies(globalWrite, localBasicConfiguration, overwrite);
+//                checkOptionsWithDiscrepancies(globalWrite, localBasicConfiguration, overwrite);
             }
             return keyColumnValueStoreConfiguration.asReadConfiguration();
         }
@@ -202,27 +200,6 @@ public class ReadConfigurationBuilder {
         }
     }
 
-    private static void checkJanusGraphVersion(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                        KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite) {
-        if (globalWrite.get(INITIAL_JANUSGRAPH_VERSION) == null) {
-
-            log.debug("JanusGraph version has not been initialized");
-
-            CompatibilityValidator.validateBackwardCompatibilityWithTitan(
-                    globalWrite.get(TITAN_COMPATIBLE_VERSIONS), localBasicConfiguration.get(IDS_STORE_NAME));
-
-            setTitanIDStoreNameIfKeystoreNotExists(keyColumnValueStoreConfiguration, overwrite);
-        }
-    }
-
-    private static void setTitanIDStoreNameIfKeystoreNotExists(KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite) {
-        boolean keyStoreExists = keyColumnValueStoreConfiguration.get(IDS_STORE_NAME.getName(), IDS_STORE_NAME.getDatatype()) != null;
-        if (!keyStoreExists) {
-            log.info("Setting {} to {} for Titan compatibility", IDS_STORE_NAME.getName(), JanusGraphConstants.TITAN_ID_STORE_NAME);
-            overwrite.set(IDS_STORE_NAME, JanusGraphConstants.TITAN_ID_STORE_NAME);
-        }
-    }
-
     private static boolean isUpgradeAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration) {
         if (localBasicConfiguration.has(ALLOW_UPGRADE)) {
             return localBasicConfiguration.get(ALLOW_UPGRADE);
@@ -232,67 +209,67 @@ public class ReadConfigurationBuilder {
         return ALLOW_UPGRADE.getDefaultValue();
     }
 
-    private static void checkOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                               ModifiableConfiguration overwrite) {
-        final boolean managedOverridesAllowed = isManagedOverwritesAllowed(globalWrite, localBasicConfiguration);
-        Set<String> optionsWithDiscrepancies = getOptionsWithDiscrepancies(globalWrite, localBasicConfiguration, overwrite, managedOverridesAllowed);
+//    private static void checkOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+//                                               ModifiableConfiguration overwrite) {
+//        final boolean managedOverridesAllowed = isManagedOverwritesAllowed(globalWrite, localBasicConfiguration);
+//        Set<String> optionsWithDiscrepancies = getOptionsWithDiscrepancies(globalWrite, localBasicConfiguration, overwrite, managedOverridesAllowed);
+//
+//        if (optionsWithDiscrepancies.size() > 0 && !managedOverridesAllowed) {
+//            final String template = "Local settings present for one or more globally managed options: [%s].  These options are controlled through the %s interface; local settings have no effect.";
+//            throw new JanusGraphConfigurationException(String.format(template, Joiner.on(", ").join(optionsWithDiscrepancies), ManagementSystem.class.getSimpleName()));
+//        }
+//    }
+//
+//    private static boolean isManagedOverwritesAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration) {
+//        if (localBasicConfiguration.has(ALLOW_STALE_CONFIG)) {
+//            return localBasicConfiguration.get(ALLOW_STALE_CONFIG);
+//        } else if (globalWrite.has(ALLOW_STALE_CONFIG)) {
+//            return globalWrite.get(ALLOW_STALE_CONFIG);
+//        }
+//        return ALLOW_STALE_CONFIG.getDefaultValue();
+//    }
 
-        if (optionsWithDiscrepancies.size() > 0 && !managedOverridesAllowed) {
-            final String template = "Local settings present for one or more globally managed options: [%s].  These options are controlled through the %s interface; local settings have no effect.";
-            throw new JanusGraphConfigurationException(String.format(template, Joiner.on(", ").join(optionsWithDiscrepancies), ManagementSystem.class.getSimpleName()));
-        }
-    }
-
-    private static boolean isManagedOverwritesAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration) {
-        if (localBasicConfiguration.has(ALLOW_STALE_CONFIG)) {
-            return localBasicConfiguration.get(ALLOW_STALE_CONFIG);
-        } else if (globalWrite.has(ALLOW_STALE_CONFIG)) {
-            return globalWrite.get(ALLOW_STALE_CONFIG);
-        }
-        return ALLOW_STALE_CONFIG.getDefaultValue();
-    }
-
-    /**
-     * Check for disagreement between local and backend values for GLOBAL(_OFFLINE) and FIXED options
-     * The point of this check is to find edits to the local config which have no effect (and therefore likely indicate misconfiguration)
-     *
-     * @return Options with discrepancies
-     */
-    private static Set<String> getOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                                    ModifiableConfiguration overwrite, boolean managedOverridesAllowed) {
-        Set<String> optionsWithDiscrepancies = Sets.newHashSet();
-
-        for (Map.Entry<ConfigElement.PathIdentifier, Object> entry : getManagedSubset(localBasicConfiguration.getAll()).entrySet()) {
-            ConfigElement.PathIdentifier pathId = entry.getKey();
-            assert pathId.element.isOption();
-            ConfigOption<?> configOption = (ConfigOption<?>) pathId.element;
-            Object localValue = entry.getValue();
-
-            // Get the storage backend's setting and compare with localValue
-            Object storeValue = globalWrite.get(configOption, pathId.umbrellaElements);
-
-            // Check if the value is to be overwritten
-            if (overwrite.has(configOption, pathId.umbrellaElements)) {
-                storeValue = overwrite.get(configOption, pathId.umbrellaElements);
-            }
-
-            // Most validation predicate implementations disallow null, but we can't assume that here
-            final boolean match = Objects.equals(localValue, storeValue);
-
-            // Log each option with value disagreement between local and backend configs
-            if (!match) {
-                final String fullOptionName = ConfigElement.getPath(pathId.element, pathId.umbrellaElements);
-                final String template = "Local setting {}={} (Type: {}) is overridden by globally managed value ({}).  Use the {} interface instead of the local configuration to control this setting.";
-                Object[] replacements = new Object[]{fullOptionName, localValue, configOption.getType(), storeValue, ManagementSystem.class.getSimpleName()};
-                if (managedOverridesAllowed) { // Lower log severity when this is enabled
-                    log.warn(template, replacements);
-                } else {
-                    log.error(template, replacements);
-                }
-                optionsWithDiscrepancies.add(fullOptionName);
-            }
-        }
-        return optionsWithDiscrepancies;
-    }
+//    /**
+//     * Check for disagreement between local and backend values for GLOBAL(_OFFLINE) and FIXED options
+//     * The point of this check is to find edits to the local config which have no effect (and therefore likely indicate misconfiguration)
+//     *
+//     * @return Options with discrepancies
+//     */
+//    private static Set<String> getOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+//                                                    ModifiableConfiguration overwrite, boolean managedOverridesAllowed) {
+//        Set<String> optionsWithDiscrepancies = Sets.newHashSet();
+//
+//        for (Map.Entry<ConfigElement.PathIdentifier, Object> entry : getManagedSubset(localBasicConfiguration.getAll()).entrySet()) {
+//            ConfigElement.PathIdentifier pathId = entry.getKey();
+//            assert pathId.element.isOption();
+//            ConfigOption<?> configOption = (ConfigOption<?>) pathId.element;
+//            Object localValue = entry.getValue();
+//
+//            // Get the storage backend's setting and compare with localValue
+//            Object storeValue = globalWrite.get(configOption, pathId.umbrellaElements);
+//
+//            // Check if the value is to be overwritten
+//            if (overwrite.has(configOption, pathId.umbrellaElements)) {
+//                storeValue = overwrite.get(configOption, pathId.umbrellaElements);
+//            }
+//
+//            // Most validation predicate implementations disallow null, but we can't assume that here
+//            final boolean match = Objects.equals(localValue, storeValue);
+//
+//            // Log each option with value disagreement between local and backend configs
+//            if (!match) {
+//                final String fullOptionName = ConfigElement.getPath(pathId.element, pathId.umbrellaElements);
+//                final String template = "Local setting {}={} (Type: {}) is overridden by globally managed value ({}).  Use the {} interface instead of the local configuration to control this setting.";
+//                Object[] replacements = new Object[]{fullOptionName, localValue, configOption.getType(), storeValue, ManagementSystem.class.getSimpleName()};
+//                if (managedOverridesAllowed) { // Lower log severity when this is enabled
+//                    log.warn(template, replacements);
+//                } else {
+//                    log.error(template, replacements);
+//                }
+//                optionsWithDiscrepancies.add(fullOptionName);
+//            }
+//        }
+//        return optionsWithDiscrepancies;
+//    }
 
 }

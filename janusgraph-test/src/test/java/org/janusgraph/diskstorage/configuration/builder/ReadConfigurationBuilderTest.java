@@ -327,8 +327,7 @@ public class ReadConfigurationBuilderTest {
     }
 
     private ReadConfiguration buildConfiguration(){
-        return ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration,
-            overwrite, storeManager, modifiableConfigurationBuilder, kcvsConfigurationBuilder);
+        return ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration, storeManager, modifiableConfigurationBuilder, kcvsConfigurationBuilder);
     }
 
     private void frozenGlobalWriteWithAllowUpgradeMock(boolean upgradeAllowed){
