@@ -56,8 +56,7 @@ public class ReadConfigurationBuilder {
                                                       ModifiableConfigurationBuilder modifiableConfigurationBuilder,
                                                       KCVSConfigurationBuilder kcvsConfigurationBuilder){
         //Read out global configuration
-        try (KCVSConfiguration keyColumnValueStoreConfiguration =
-                 kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration)){
+        try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration)){
 
             // If lock prefix is unspecified, specify it now
             if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {

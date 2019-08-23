@@ -424,21 +424,13 @@ public class Backend implements LockerProvider, AutoCloseable {
     }
 
     public LogManager getLogManager(String logName) {
-        return getLogManager(configuration, logName, storeManager);
-    }
-
-    private static LogManager getLogManager(Configuration config, String logName, KeyColumnValueStoreManager sm) {
-        Configuration logConfig = config.restrictTo(logName);
+        Configuration logConfig = configuration.restrictTo(logName);
         String backend = logConfig.get(LOG_BACKEND);
         if (backend.equalsIgnoreCase(LOG_BACKEND.getDefaultValue())) {
-            return new KCVSLogManager(sm, logConfig);
+            return new KCVSLogManager(storeManager, logConfig);
         } else {
-            Preconditions.checkArgument(config != null);
-            LogManager lm = getImplementationClass(logConfig, logConfig.get(LOG_BACKEND), REGISTERED_LOG_MANAGERS);
-            Preconditions.checkNotNull(lm);
-            return lm;
+            return getImplementationClass(logConfig, logConfig.get(LOG_BACKEND), REGISTERED_LOG_MANAGERS);
         }
-
     }
 
     private static Map<String, IndexProvider> getIndexes(Configuration config) {

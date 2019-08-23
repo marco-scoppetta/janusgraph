@@ -24,7 +24,6 @@ import io.vavr.Tuple;
 import io.vavr.collection.Array;
 import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 
 import java.net.InetSocketAddress;
