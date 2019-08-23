@@ -16,13 +16,11 @@ package org.janusgraph.diskstorage.util;
 
 import com.google.common.base.Preconditions;
 import org.janusgraph.core.JanusGraphException;
-
-import org.janusgraph.diskstorage.util.time.TimestampProvider;
-import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.TemporaryBackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
-
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,27 +38,26 @@ public class BackendOperation {
             LoggerFactory.getLogger(BackendOperation.class);
     private static final Random random = new Random();
 
-    private static final Duration BASE_REATTEMPT_TIME= Duration.ofMillis(50);
+    private static final Duration BASE_REATTEMPT_TIME = Duration.ofMillis(50);
     private static final double PERTURBATION_PERCENTAGE = 0.2;
 
     private static Duration pertubTime(Duration duration) {
-        Duration newDuration = duration.dividedBy((int)(2.0 / (1 + (random.nextDouble() * 2 - 1.0) * PERTURBATION_PERCENTAGE)));
+        Duration newDuration = duration.dividedBy((int) (2.0 / (1 + (random.nextDouble() * 2 - 1.0) * PERTURBATION_PERCENTAGE)));
         assert !duration.isZero() : duration;
         return newDuration;
     }
 
     public static <V> V execute(Callable<V> exe, Duration totalWaitTime) throws JanusGraphException {
         try {
-            return executeDirect(exe,totalWaitTime);
+            return executeDirect(exe, totalWaitTime);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not execute operation due to backend exception",e);
+            throw new JanusGraphException("Could not execute operation due to backend exception", e);
         }
     }
 
-
     public static <V> V executeDirect(Callable<V> exe, Duration totalWaitTime) throws BackendException {
-        Preconditions.checkArgument(!totalWaitTime.isZero(),"Need to specify a positive waitTime: %s",totalWaitTime);
-        long maxTime = System.currentTimeMillis()+totalWaitTime.toMillis();
+        Preconditions.checkArgument(!totalWaitTime.isZero(), "Need to specify a positive waitTime: %s", totalWaitTime);
+        long maxTime = System.currentTimeMillis() + totalWaitTime.toMillis();
         Duration waitTime = pertubTime(BASE_REATTEMPT_TIME);
         BackendException lastException;
         while (true) {
@@ -71,20 +68,22 @@ public class BackendOperation {
                 Throwable ex = e;
                 BackendException storeEx = null;
                 do {
-                    if (ex instanceof BackendException) storeEx = (BackendException)ex;
-                } while ((ex=ex.getCause())!=null);
-                if (storeEx!=null && storeEx instanceof TemporaryBackendException) {
-                    lastException = storeEx;
+                    if (ex instanceof BackendException) storeEx = (BackendException) ex;
+                } while ((ex = ex.getCause()) != null);
+
+
+                if (storeEx != null && storeEx instanceof TemporaryBackendException) {
+                    lastException = storeEx; // if this is a temporary exception, don't throw immediately but retry for a totalWaitTime time before throwing
                 } else if (e instanceof BackendException) {
-                    throw (BackendException)e;
+                    throw (BackendException) e;
                 } else {
-                    throw new PermanentBackendException("Permanent exception while executing backend operation "+exe.toString(),e);
+                    throw new PermanentBackendException("Permanent exception while executing backend operation " + exe.toString(), e);
                 }
             }
             //Wait and retry
-            assert lastException!=null;
-            if (System.currentTimeMillis()+waitTime.toMillis()<maxTime) {
-                log.info("Temporary exception during backend operation ["+exe.toString()+"]. Attempting backoff retry.",lastException);
+            assert lastException != null;
+            if (System.currentTimeMillis() + waitTime.toMillis() < maxTime) {
+                log.info("Temporary exception during backend operation [" + exe.toString() + "]. Attempting backoff retry.", lastException);
                 try {
                     Thread.sleep(waitTime.toMillis());
                 } catch (InterruptedException r) {
@@ -97,81 +96,51 @@ public class BackendOperation {
             }
             waitTime = pertubTime(waitTime.multipliedBy(2));
         }
-        throw new TemporaryBackendException("Could not successfully complete backend operation due to repeated temporary exceptions after "+totalWaitTime,lastException);
+        throw new TemporaryBackendException("Could not successfully complete backend operation due to repeated temporary exceptions after " + totalWaitTime, lastException);
     }
 
-//    private static final double WAITTIME_PERTURBATION_PERCENTAGE = 0.5;
-//    private static final double WAITTIME_PERTURBATION_PERCENTAGE_HALF = WAITTIME_PERTURBATION_PERCENTAGE/2;
-//
-//    public static final<V> V execute(Callable<V> exe, int maxRetryAttempts, Duration waitBetweenRetries) throws JanusGraphException {
-//        long retryWaittime = waitBetweenRetries.getLength(TimeUnit.MILLISECONDS);
-//        Preconditions.checkArgument(maxRetryAttempts>0,"Retry attempts must be positive");
-//        Preconditions.checkArgument(retryWaittime>=0,"Retry wait time must be non-negative");
-//        int retryAttempts = 0;
-//        StorageException lastException = null;
-//        do {
-//            try {
-//                return exe.call();
-//            } catch (StorageException e) {
-//                if (e instanceof TemporaryStorageException) {
-//                    lastException = e;
-//                    log.debug("Temporary exception during backend operation", e);
-//                } else {
-//                    throw new JanusGraphException("Permanent exception during backend operation",e); //Its permanent
-//                }
-//            } catch (Throwable e) {
-//                throw new JanusGraphException("Unexpected exception during backend operation",e);
-//            }
-//            //Wait and retry
-//            retryAttempts++;
-//            Preconditions.checkNotNull(lastException);
-//            if (retryAttempts<maxRetryAttempts) {
-//                long waitTime = Math.round(retryWaittime+((Math.random()*WAITTIME_PERTURBATION_PERCENTAGE-WAITTIME_PERTURBATION_PERCENTAGE_HALF)*retryWaittime));
-//                Preconditions.checkArgument(waitTime>=0,"Invalid wait time: %s",waitTime);
-//                log.info("Temporary storage exception during backend operation [{}]. Attempting incremental retry",exe.toString(),lastException);
-//                try {
-//                    Thread.sleep(waitTime);
-//                } catch (InterruptedException r) {
-//                    throw new JanusGraphException("Interrupted while waiting to retry failed backend operation", r);
-//                }
-//            }
-//        } while (retryAttempts<maxRetryAttempts);
-//        throw new JanusGraphException("Could not successfully complete backend operation due to repeated temporary exceptions after "+maxRetryAttempts+" attempts",lastException);
-//    }
-
-    public static<R> R execute(Transactional<R> exe, TransactionalProvider provider, TimestampProvider times) throws BackendException {
+    public static <R> R execute(Transactional<R> exe, TransactionalProvider provider, TimestampProvider times) throws BackendException {
         StoreTransaction txh = null;
         try {
             txh = provider.openTx();
             if (!txh.getConfiguration().hasCommitTime()) txh.getConfiguration().setCommitTime(times.getTime());
             return exe.call(txh);
         } catch (BackendException e) {
-            if (txh!=null) txh.rollback();
-            txh=null;
+            if (txh != null) txh.rollback();
+            txh = null;
             throw e;
         } finally {
-            if (txh!=null) txh.commit();
+            if (txh != null) txh.commit();
         }
     }
 
-    public static<R> R execute(final Transactional<R> exe, final TransactionalProvider provider, final TimestampProvider times, Duration maxTime) throws JanusGraphException {
+    /**
+     * Method used by KCVSLog and KCVSConfiguration to run transactional operations on DB
+     * @param exe Transactional operation on the Database that needs to happen inside a transaction
+     * @param provider Transactions provider, will provide transaction on which execute the above operation
+     * @param times Provider of timestamp, it is used to get the Time (Timestamp) to set on the transaction which will execute the operation
+     * @param maxTime maxTime for which an operation will be retried, this is because sometimes the Database might need some time to startup or reply to havy workload
+     * @param <R>
+     * @return
+     * @throws JanusGraphException if the operation fails
+     */
+    public static <R> R execute( Transactional<R> exe, TransactionalProvider provider, TimestampProvider times, Duration maxTime) throws JanusGraphException {
         return execute(new Callable<R>() {
             @Override
             public R call() throws Exception {
-                return execute(exe,provider,times);
+                return execute(exe, provider, times);
             }
+
             @Override
             public String toString() {
                 return exe.toString();
             }
-        },maxTime);
+        }, maxTime);
     }
 
 
     public interface Transactional<R> {
-
         R call(StoreTransaction txh) throws BackendException;
-
     }
 
     public interface TransactionalProvider {

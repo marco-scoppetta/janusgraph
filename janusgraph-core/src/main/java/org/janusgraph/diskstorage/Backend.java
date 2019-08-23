@@ -98,7 +98,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ST
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.SYSTEM_PROPERTIES_STORE_NAME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TIMESTAMP_PROVIDER;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TRANSACTION_LOG;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USER_CONFIGURATION_IDENTIFIER;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USER_LOG;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USER_LOG_PREFIX;
 
@@ -327,17 +326,17 @@ public class Backend implements LockerProvider, AutoCloseable {
                     //Do nothing, storeManager is closed explicitly by Backend
                 }
             }, systemConfigStore, configuration);
-            userConfig = kcvsConfigurationBuilder.buildConfiguration(new BackendOperation.TransactionalProvider() {
+            userConfig = kcvsConfigurationBuilder.buildUserConfiguration(new BackendOperation.TransactionalProvider() {
                 @Override
                 public StoreTransaction openTx() throws BackendException {
                     return storeManagerLocking.beginTransaction(StandardBaseTransactionConfig.of(configuration.get(TIMESTAMP_PROVIDER)));
                 }
 
                 @Override
-                public void close() throws BackendException {
+                public void close() {
                     //Do nothing, storeManager is closed explicitly by Backend
                 }
-            }, systemConfigStore, USER_CONFIGURATION_IDENTIFIER, configuration);
+            }, systemConfigStore, configuration);
 
         } catch (BackendException e) {
             throw new JanusGraphException("Could not initialize backend", e);

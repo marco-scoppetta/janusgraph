@@ -43,17 +43,12 @@ public class GraphDatabaseConfigurationBuilder {
 
     public static GraphDatabaseConfiguration build(ReadConfiguration localConfig, StoreManagerFactory storeManagerFactory){
 
-        Preconditions.checkNotNull(localConfig);
-
         BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS,localConfig, BasicConfiguration.Restriction.NONE);
         ModifiableConfiguration overwrite = new ModifiableConfiguration(ROOT_NS,new CommonsConfiguration(), BasicConfiguration.Restriction.NONE);
 
-        final KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
-        final StoreFeatures storeFeatures = storeManager.getFeatures();
+        KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
 
-        final ReadConfiguration globalConfig = new ReadConfigurationBuilder().buildGlobalConfiguration(
-            localConfig, localBasicConfiguration, overwrite, storeManager,
-            new ModifiableConfigurationBuilder(), new KCVSConfigurationBuilder());
+        ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration, overwrite, storeManager, new ModifiableConfigurationBuilder(), new KCVSConfigurationBuilder());
 
         //Copy over local config options
         ModifiableConfiguration localConfiguration = new ModifiableConfiguration(ROOT_NS, new CommonsConfiguration(), BasicConfiguration.Restriction.LOCAL);
@@ -64,6 +59,9 @@ public class GraphDatabaseConfigurationBuilder {
         //Compute unique instance id
         String uniqueGraphId = UniqueInstanceIdRetriever.getInstance().getOrGenerateUniqueInstanceId(combinedConfig);
         overwrite.set(UNIQUE_INSTANCE_ID, uniqueGraphId);
+
+
+        StoreFeatures storeFeatures = storeManager.getFeatures();
 
         checkAndOverwriteTransactionLogConfiguration(combinedConfig, overwrite, storeFeatures);
         checkAndOverwriteSystemManagementLogConfiguration(combinedConfig, overwrite);

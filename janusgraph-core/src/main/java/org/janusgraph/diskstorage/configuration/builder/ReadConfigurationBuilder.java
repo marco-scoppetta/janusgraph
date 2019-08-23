@@ -20,11 +20,16 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.janusgraph.core.JanusGraphConfigurationException;
 import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.*;
 import org.janusgraph.diskstorage.configuration.backend.KCVSConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
+import org.janusgraph.diskstorage.util.BackendOperation;
+import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
 import org.janusgraph.graphdb.configuration.JanusGraphConstants;
 import org.janusgraph.graphdb.configuration.validator.CompatibilityValidator;
@@ -49,14 +54,34 @@ public class ReadConfigurationBuilder {
     static final String BACKLEVEL_STORAGE_VERSION_EXCEPTION = "The storage version on the client or server is lower than the storage version of the graph: graph storage version %s vs. client storage version %s when opening graph %s.";
     static final String INCOMPATIBLE_STORAGE_VERSION_EXCEPTION = "Storage version is incompatible with current client: graph storage version %s vs. client storage version %s when opening graph %s.";
 
-    public ReadConfiguration buildGlobalConfiguration(ReadConfiguration localConfig,
+    public static ReadConfiguration buildGlobalConfiguration(ReadConfiguration localConfig,
                                                       BasicConfiguration localBasicConfiguration,
                                                       ModifiableConfiguration overwrite,
                                                       KeyColumnValueStoreManager storeManager,
                                                       ModifiableConfigurationBuilder modifiableConfigurationBuilder,
-                                                      KCVSConfigurationBuilder kcvsConfigurationBuilder){
-        //Read out global configuration
-        try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration)){
+                                                      KCVSConfigurationBuilder kcvsConfigurationBuilder) {
+
+
+        BackendOperation.TransactionalProvider transactionalProvider = new BackendOperation.TransactionalProvider() {
+            @Override
+            public StoreTransaction openTx() throws BackendException {
+                return storeManager.beginTransaction(StandardBaseTransactionConfig.of(localBasicConfiguration.get(TIMESTAMP_PROVIDER), storeManager.getFeatures().getKeyConsistentTxConfig()));
+            }
+
+            @Override
+            public void close() throws BackendException {
+                storeManager.close();
+            }
+        };
+        KeyColumnValueStore systemPropertiesStore;
+        try {
+            systemPropertiesStore = storeManager.openDatabase(SYSTEM_PROPERTIES_STORE_NAME);
+        } catch (BackendException e) {
+            throw new JanusGraphException("Could not open 'system_properties' store: ", e);
+        }
+
+        //Read  Global Configuration (from 'system_properties' store, everything associated to 'configuration' key)
+        try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildGlobalConfiguration(transactionalProvider, systemPropertiesStore, localBasicConfiguration)) {
 
             // If lock prefix is unspecified, specify it now
             if (!localBasicConfiguration.has(LOCK_LOCAL_MEDIATOR_GROUP)) {
@@ -76,7 +101,6 @@ public class ReadConfigurationBuilder {
 
                 globalWrite.freezeConfiguration();
             } else {
-
                 String graphName = localConfig.get(GRAPH_NAME.toStringWithoutRoot(), String.class);
                 final boolean upgradeAllowed = isUpgradeAllowed(globalWrite, localBasicConfiguration);
 
@@ -93,12 +117,12 @@ public class ReadConfigurationBuilder {
         }
     }
 
-    private void setupUpgradeConfiguration(String graphName, ModifiableConfiguration globalWrite){
+    private static void setupUpgradeConfiguration(String graphName, ModifiableConfiguration globalWrite) {
         // If the graph doesn't have a storage version set it and update version
         if (!globalWrite.has(INITIAL_STORAGE_VERSION)) {
             janusGraphVersionsWithDisallowedUpgrade(globalWrite);
             log.info("graph.storage-version has been upgraded from 1 to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
-                JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
+                    JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
             return;
         }
         int storageVersion = Integer.parseInt(JanusGraphConstants.STORAGE_VERSION);
@@ -111,31 +135,31 @@ public class ReadConfigurationBuilder {
         if (initialStorageVersion < storageVersion) {
             janusGraphVersionsWithDisallowedUpgrade(globalWrite);
             log.info("graph.storage-version has been upgraded from {} to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
-                globalWrite.get(INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
+                    globalWrite.get(INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
         } else {
             log.warn("Warning graph.allow-upgrade is currently set to true on graph {}. Please set graph.allow-upgrade to false in your properties file.", graphName);
         }
     }
 
-    private void janusGraphVersionsWithDisallowedUpgrade(ModifiableConfiguration globalWrite){
+    private static void janusGraphVersionsWithDisallowedUpgrade(ModifiableConfiguration globalWrite) {
         globalWrite.set(INITIAL_JANUSGRAPH_VERSION, JanusGraphConstants.VERSION);
         globalWrite.set(TITAN_COMPATIBLE_VERSIONS, JanusGraphConstants.VERSION);
         globalWrite.set(INITIAL_STORAGE_VERSION, JanusGraphConstants.STORAGE_VERSION);
         globalWrite.set(ALLOW_UPGRADE, false);
     }
 
-    private void setupJanusGraphVersion(ModifiableConfiguration globalWrite){
+    private static void setupJanusGraphVersion(ModifiableConfiguration globalWrite) {
         Preconditions.checkArgument(!globalWrite.has(INITIAL_JANUSGRAPH_VERSION), "Database has already been initialized but not frozen");
         globalWrite.set(INITIAL_JANUSGRAPH_VERSION, JanusGraphConstants.VERSION);
     }
 
-    private void setupStorageVersion(ModifiableConfiguration globalWrite){
-        Preconditions.checkArgument(!globalWrite.has(INITIAL_STORAGE_VERSION),"Database has already been initialized but not frozen");
-        globalWrite.set(INITIAL_STORAGE_VERSION,JanusGraphConstants.STORAGE_VERSION);
+    private static void setupStorageVersion(ModifiableConfiguration globalWrite) {
+        Preconditions.checkArgument(!globalWrite.has(INITIAL_STORAGE_VERSION), "Database has already been initialized but not frozen");
+        globalWrite.set(INITIAL_STORAGE_VERSION, JanusGraphConstants.STORAGE_VERSION);
     }
 
-    private void setupTimestampProvider(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                        KeyColumnValueStoreManager storeManager){
+    private static void setupTimestampProvider(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+                                        KeyColumnValueStoreManager storeManager) {
         /* If the configuration does not explicitly set a timestamp provider and
          * the storage backend both supports timestamps and has a preference for
          * a specific timestamp provider, then apply the backend's preference.
@@ -146,52 +170,52 @@ public class ReadConfigurationBuilder {
             if (f.hasTimestamps() && null != (backendPreference = f.getPreferredTimestamps())) {
                 globalWrite.set(TIMESTAMP_PROVIDER, backendPreference);
                 log.debug("Set timestamps to {} according to storage backend preference",
-                    LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
+                        LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             } else {
                 globalWrite.set(TIMESTAMP_PROVIDER, TIMESTAMP_PROVIDER.getDefaultValue());
                 log.debug("Set default timestamp provider {}",
-                    LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
+                        LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             }
         } else {
             log.debug("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));
         }
     }
 
-    private Map<ConfigElement.PathIdentifier, Object> getGlobalSubset(Map<ConfigElement.PathIdentifier, Object> m) {
+    private static Map<ConfigElement.PathIdentifier, Object> getGlobalSubset(Map<ConfigElement.PathIdentifier, Object> m) {
         return Maps.filterEntries(m, entry -> {
             assert entry.getKey().element.isOption();
-            return ((ConfigOption)entry.getKey().element).isGlobal();
+            return ((ConfigOption) entry.getKey().element).isGlobal();
         });
     }
 
-    private Map<ConfigElement.PathIdentifier, Object> getManagedSubset(Map<ConfigElement.PathIdentifier, Object> m) {
+    private static Map<ConfigElement.PathIdentifier, Object> getManagedSubset(Map<ConfigElement.PathIdentifier, Object> m) {
         return Maps.filterEntries(m, entry -> {
             assert entry.getKey().element.isOption();
-            return ((ConfigOption)entry.getKey().element).isManaged();
+            return ((ConfigOption) entry.getKey().element).isManaged();
         });
     }
 
-    private void checkJanusGraphStorageVersionEquality(ModifiableConfiguration globalWrite, String graphName){
+    private static void checkJanusGraphStorageVersionEquality(ModifiableConfiguration globalWrite, String graphName) {
         if (!Objects.equals(globalWrite.get(INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION)) {
             String storageVersion = (globalWrite.has(INITIAL_STORAGE_VERSION)) ? globalWrite.get(INITIAL_STORAGE_VERSION) : "1";
             throw new JanusGraphException(String.format(INCOMPATIBLE_STORAGE_VERSION_EXCEPTION, storageVersion, JanusGraphConstants.STORAGE_VERSION, graphName));
         }
     }
 
-    private void checkJanusGraphVersion(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                        KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite){
-        if(globalWrite.get(INITIAL_JANUSGRAPH_VERSION) == null){
+    private static void checkJanusGraphVersion(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+                                        KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite) {
+        if (globalWrite.get(INITIAL_JANUSGRAPH_VERSION) == null) {
 
             log.debug("JanusGraph version has not been initialized");
 
             CompatibilityValidator.validateBackwardCompatibilityWithTitan(
-                globalWrite.get(TITAN_COMPATIBLE_VERSIONS), localBasicConfiguration.get(IDS_STORE_NAME));
+                    globalWrite.get(TITAN_COMPATIBLE_VERSIONS), localBasicConfiguration.get(IDS_STORE_NAME));
 
             setTitanIDStoreNameIfKeystoreNotExists(keyColumnValueStoreConfiguration, overwrite);
         }
     }
 
-    private void setTitanIDStoreNameIfKeystoreNotExists(KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite){
+    private static void setTitanIDStoreNameIfKeystoreNotExists(KCVSConfiguration keyColumnValueStoreConfiguration, ModifiableConfiguration overwrite) {
         boolean keyStoreExists = keyColumnValueStoreConfiguration.get(IDS_STORE_NAME.getName(), IDS_STORE_NAME.getDatatype()) != null;
         if (!keyStoreExists) {
             log.info("Setting {} to {} for Titan compatibility", IDS_STORE_NAME.getName(), JanusGraphConstants.TITAN_ID_STORE_NAME);
@@ -199,7 +223,7 @@ public class ReadConfigurationBuilder {
         }
     }
 
-    private boolean isUpgradeAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration){
+    private static boolean isUpgradeAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration) {
         if (localBasicConfiguration.has(ALLOW_UPGRADE)) {
             return localBasicConfiguration.get(ALLOW_UPGRADE);
         } else if (globalWrite.has(ALLOW_UPGRADE)) {
@@ -208,8 +232,8 @@ public class ReadConfigurationBuilder {
         return ALLOW_UPGRADE.getDefaultValue();
     }
 
-    private void checkOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                               ModifiableConfiguration overwrite){
+    private static void checkOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+                                               ModifiableConfiguration overwrite) {
         final boolean managedOverridesAllowed = isManagedOverwritesAllowed(globalWrite, localBasicConfiguration);
         Set<String> optionsWithDiscrepancies = getOptionsWithDiscrepancies(globalWrite, localBasicConfiguration, overwrite, managedOverridesAllowed);
 
@@ -219,7 +243,7 @@ public class ReadConfigurationBuilder {
         }
     }
 
-    private boolean isManagedOverwritesAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration){
+    private static boolean isManagedOverwritesAllowed(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration) {
         if (localBasicConfiguration.has(ALLOW_STALE_CONFIG)) {
             return localBasicConfiguration.get(ALLOW_STALE_CONFIG);
         } else if (globalWrite.has(ALLOW_STALE_CONFIG)) {
@@ -234,27 +258,26 @@ public class ReadConfigurationBuilder {
      *
      * @return Options with discrepancies
      */
-    private Set<String> getOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                                    ModifiableConfiguration overwrite, boolean managedOverridesAllowed){
+    private static Set<String> getOptionsWithDiscrepancies(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
+                                                    ModifiableConfiguration overwrite, boolean managedOverridesAllowed) {
         Set<String> optionsWithDiscrepancies = Sets.newHashSet();
 
         for (Map.Entry<ConfigElement.PathIdentifier, Object> entry : getManagedSubset(localBasicConfiguration.getAll()).entrySet()) {
             ConfigElement.PathIdentifier pathId = entry.getKey();
             assert pathId.element.isOption();
-            ConfigOption<?> configOption = (ConfigOption<?>)pathId.element;
+            ConfigOption<?> configOption = (ConfigOption<?>) pathId.element;
             Object localValue = entry.getValue();
 
             // Get the storage backend's setting and compare with localValue
             Object storeValue = globalWrite.get(configOption, pathId.umbrellaElements);
 
             // Check if the value is to be overwritten
-            if (overwrite.has(configOption, pathId.umbrellaElements))
-            {
+            if (overwrite.has(configOption, pathId.umbrellaElements)) {
                 storeValue = overwrite.get(configOption, pathId.umbrellaElements);
             }
 
             // Most validation predicate implementations disallow null, but we can't assume that here
-            final boolean match = Objects.equals(localValue , storeValue);
+            final boolean match = Objects.equals(localValue, storeValue);
 
             // Log each option with value disagreement between local and backend configs
             if (!match) {

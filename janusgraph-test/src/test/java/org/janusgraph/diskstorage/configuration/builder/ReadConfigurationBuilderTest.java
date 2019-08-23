@@ -83,8 +83,6 @@ public class ReadConfigurationBuilderTest {
     @Mock
     private TimestampProviders timestampProviders;
 
-    private final ReadConfigurationBuilder readConfigurationBuilder = new ReadConfigurationBuilder();
-
     public static Stream<ConfigOption.Type> managedConfigOptionTypes() {
         return ImmutableSet.of(
             ConfigOption.Type.FIXED,
@@ -100,8 +98,9 @@ public class ReadConfigurationBuilderTest {
 
     @BeforeEach
     public void setUp() {
-        when(kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration))
-            .thenReturn(keyColumnValueStoreConfiguration);
+//        when(kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration))
+//            .thenReturn(keyColumnValueStoreConfiguration); recently remove method buildStandAloneGlobalConfiguration, to be fixed this mocking
+
         when(modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration))
             .thenReturn(globalWrite);
     }
@@ -328,7 +327,7 @@ public class ReadConfigurationBuilderTest {
     }
 
     private ReadConfiguration buildConfiguration(){
-        return readConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration,
+        return ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration,
             overwrite, storeManager, modifiableConfigurationBuilder, kcvsConfigurationBuilder);
     }
 
