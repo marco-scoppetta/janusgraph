@@ -19,8 +19,11 @@ import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.MergedConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
 import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.ttl.TTLKCVSManager;
@@ -44,18 +47,17 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.UN
 /**
  * Builder for {@link GraphDatabaseConfiguration}
  */
-public class GraphDatabaseConfigurationBuilder {
+public class MergedConfigurationBuilder {
 
     /**
      * This methods merges the 3 configurations into 1 and provides a wrapper configuration: GraphDatabase config
      *
      * We create an 'overwrite' config in order to set and force parameters that were not explicitly set by the user in local config.
      * @param localBasicConfiguration local configurations provided by user
-     * @param globalBasicConfig global configuration, read from system_properties store (these configs apply to all graphs)
      * @param storeManager
      * @return Configuration that contains both local and global bits, to bed fed to the new Graph
      */
-    public static GraphDatabaseConfiguration build(BasicConfiguration localBasicConfiguration, BasicConfiguration globalBasicConfig, StoreManager storeManager) {
+    public static MergedConfiguration build(BasicConfiguration localBasicConfiguration, BasicConfiguration globalBasicConfig, KeyColumnValueStoreManager storeManager) {
         Configuration combinedConfig = new MergedConfiguration(localBasicConfiguration, globalBasicConfig);
 
         //Compute unique instance id
@@ -71,9 +73,7 @@ public class GraphDatabaseConfigurationBuilder {
         checkAndOverwriteTransactionLogConfiguration(combinedConfig, overwrite, storeFeatures);
         checkAndOverwriteSystemManagementLogConfiguration(combinedConfig, overwrite);
 
-        MergedConfiguration configuration = new MergedConfiguration(overwrite, combinedConfig);
-
-        return new GraphDatabaseConfiguration(localBasicConfiguration.getConfiguration(), uniqueGraphId, configuration, storeFeatures);
+        return new MergedConfiguration(overwrite, combinedConfig);
     }
 
 

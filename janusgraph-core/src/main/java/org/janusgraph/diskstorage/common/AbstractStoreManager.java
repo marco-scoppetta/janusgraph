@@ -40,8 +40,8 @@ public abstract class AbstractStoreManager implements StoreManager {
     protected final Configuration storageConfig;
 
     public AbstractStoreManager(Configuration storageConfig) {
-        batchLoading = storageConfig.get(STORAGE_BATCH);
-        boolean transactional = storageConfig.get(STORAGE_TRANSACTIONAL);
+        batchLoading = storageConfig.get(STORAGE_BATCH); // read from local config
+        boolean transactional = storageConfig.get(STORAGE_TRANSACTIONAL); // check both in global and local
         if (batchLoading) {
             transactional = false;
         }
@@ -49,7 +49,7 @@ public abstract class AbstractStoreManager implements StoreManager {
         this.storageConfig = storageConfig;
     }
 
-    public Configuration getStorageConfig() {
+    protected Configuration getStorageConfig() {
         return storageConfig;
     }
 

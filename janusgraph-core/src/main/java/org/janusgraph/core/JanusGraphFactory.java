@@ -29,6 +29,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
+import org.janusgraph.diskstorage.configuration.MergedConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
@@ -38,7 +39,7 @@ import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
+import org.janusgraph.graphdb.configuration.builder.MergedConfigurationBuilder;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.log.StandardLogProcessorFramework;
 import org.janusgraph.graphdb.log.StandardTransactionLogProcessor;
@@ -166,15 +167,18 @@ public class JanusGraphFactory {
         StoreManagerFactory storeManagerFactory = getFactory(localBasicConfiguration);
         // Initialise Store Manager used to connect to 'system_properties' to read global configuration
         KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
+
         // Configurations read from system_properties -> Global for every graph existing in the current DB
         ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new KCVSConfigurationBuilder());
         // Create BasicConfiguration out of ReadConfiguration for global configuration
         BasicConfiguration globalBasicConfig = new BasicConfiguration(ROOT_NS, globalConfig, BasicConfiguration.Restriction.NONE);
 
-        // Merge and sanitise local and global configuration to get final Graph configuration which incorporates all necessary configs.
-        GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(localBasicConfiguration, globalBasicConfig, storeManager);
+        // Merge and sanitise local and global configuration to get Merged configuration which incorporates all necessary configs.
+        MergedConfiguration mergedConfig = MergedConfigurationBuilder.build(localBasicConfiguration, globalBasicConfig, storeManager);
 
-        Backend backend = new Backend(dbConfig.getConfiguration(), storeManagerFactory);
+        // Initialise the 2 components needed by StandardJanusGraph
+        Backend backend = new Backend(mergedConfig, storeManagerFactory);
+        GraphDatabaseConfiguration dbConfig = new GraphDatabaseConfiguration(configuration, mergedConfig, storeManager.getFeatures());
 
 
         // When user specifies graphname property is because he wishes to register the graph with the GraphManager

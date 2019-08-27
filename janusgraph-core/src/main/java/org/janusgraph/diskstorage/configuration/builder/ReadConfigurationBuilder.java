@@ -143,8 +143,7 @@ public class ReadConfigurationBuilder {
         globalWrite.set(INITIAL_STORAGE_VERSION, JanusGraphConstants.STORAGE_VERSION);
     }
 
-    private static void setupTimestampProvider(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration,
-                                               KeyColumnValueStoreManager storeManager) {
+    private static void setupTimestampProvider(ModifiableConfiguration globalWrite, BasicConfiguration localBasicConfiguration, KeyColumnValueStoreManager storeManager) {
         /* If the configuration does not explicitly set a timestamp provider and
          * the storage backend both supports timestamps and has a preference for
          * a specific timestamp provider, then apply the backend's preference.
@@ -158,8 +157,7 @@ public class ReadConfigurationBuilder {
                         LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             } else {
                 globalWrite.set(TIMESTAMP_PROVIDER, TIMESTAMP_PROVIDER.getDefaultValue());
-                LOG.debug("Set default timestamp provider {}",
-                        LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
+                LOG.debug("Set default timestamp provider {}", LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             }
         } else {
             LOG.debug("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));

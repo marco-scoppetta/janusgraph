@@ -132,21 +132,21 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         this.session = session;
         initializeKeyspace();
 
-        final Configuration global = buildGraphConfiguration()
+        Configuration global = buildGraphConfiguration()
                 .set(READ_CONSISTENCY, CONSISTENCY_QUORUM)
                 .set(WRITE_CONSISTENCY, CONSISTENCY_QUORUM)
                 .set(METRICS_PREFIX, METRICS_SYSTEM_PREFIX_DEFAULT);
 
-        final Configuration local = buildGraphConfiguration()
+        Configuration local = buildGraphConfiguration()
                 .set(READ_CONSISTENCY, CONSISTENCY_LOCAL_QUORUM)
                 .set(WRITE_CONSISTENCY, CONSISTENCY_LOCAL_QUORUM)
                 .set(METRICS_PREFIX, METRICS_SYSTEM_PREFIX_DEFAULT);
 
-        final Boolean onlyUseLocalConsistency = configuration.get(ONLY_USE_LOCAL_CONSISTENCY_FOR_SYSTEM_OPERATIONS);
+        Boolean onlyUseLocalConsistency = configuration.get(ONLY_USE_LOCAL_CONSISTENCY_FOR_SYSTEM_OPERATIONS);
 
-        final Boolean useExternalLocking = configuration.get(USE_EXTERNAL_LOCKING);
+        Boolean useExternalLocking = configuration.get(USE_EXTERNAL_LOCKING);
 
-        final StandardStoreFeatures.Builder fb = new StandardStoreFeatures.Builder();
+        StandardStoreFeatures.Builder fb = new StandardStoreFeatures.Builder();
 
         fb.batchMutation(true).distributed(true);
         fb.timestamps(true).cellTTL(true);
@@ -155,7 +155,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         fb.optimisticLocking(true);
         fb.multiQuery(false);
 
-        final String partitioner = this.session.getMetadata().getTokenMap().get().getPartitionerName();
+        String partitioner = this.session.getMetadata().getTokenMap().get().getPartitionerName();
         switch (partitioner.substring(partitioner.lastIndexOf('.') + 1)) {
             case "RandomPartitioner":
             case "Murmur3Partitioner": {

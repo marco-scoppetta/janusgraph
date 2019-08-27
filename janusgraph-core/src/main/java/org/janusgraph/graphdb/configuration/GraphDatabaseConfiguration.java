@@ -15,54 +15,56 @@
 package org.janusgraph.graphdb.configuration;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import org.janusgraph.core.*;
+import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.lang3.ClassUtils;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
-import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.StandardIndexProvider;
 import org.janusgraph.diskstorage.StandardStoreManager;
-import org.janusgraph.diskstorage.configuration.converter.ReadConfigurationConverter;
-import org.janusgraph.graphdb.configuration.converter.RegisteredAttributeClassesConverter;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphDefaultSchemaMaker;
-import org.janusgraph.graphdb.tinkerpop.Tp3DefaultSchemaMaker;
-import org.janusgraph.graphdb.types.typemaker.DisableDefaultSchemaMaker;
-import org.janusgraph.util.stats.NumberUtil;
-import org.janusgraph.diskstorage.util.time.*;
-import org.janusgraph.diskstorage.configuration.*;
+import org.janusgraph.diskstorage.configuration.BasicConfiguration;
+import org.janusgraph.diskstorage.configuration.ConfigNamespace;
+import org.janusgraph.diskstorage.configuration.ConfigOption;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
+import org.janusgraph.diskstorage.configuration.converter.ReadConfigurationConverter;
 import org.janusgraph.diskstorage.idmanagement.ConflictAvoidanceMode;
 import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
+import org.janusgraph.diskstorage.util.time.TimestampProviders;
+import org.janusgraph.graphdb.configuration.converter.RegisteredAttributeClassesConverter;
 import org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache;
-import org.janusgraph.graphdb.database.cache.StandardSchemaCache;
 import org.janusgraph.graphdb.database.cache.SchemaCache;
+import org.janusgraph.graphdb.database.cache.StandardSchemaCache;
+import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
+import org.janusgraph.graphdb.database.serialize.Serializer;
 import org.janusgraph.graphdb.database.serialize.StandardSerializer;
+import org.janusgraph.graphdb.tinkerpop.JanusGraphDefaultSchemaMaker;
+import org.janusgraph.graphdb.tinkerpop.Tp3DefaultSchemaMaker;
+import org.janusgraph.graphdb.transaction.StandardTransactionBuilder;
+import org.janusgraph.graphdb.types.typemaker.DisableDefaultSchemaMaker;
+import org.janusgraph.util.stats.MetricManager;
+import org.janusgraph.util.stats.NumberUtil;
 import org.janusgraph.util.system.ConfigurationUtil;
 import org.janusgraph.util.system.NetworkUtil;
-
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-
-import javax.annotation.Nullable;
-import javax.management.MBeanServerFactory;
-
-import org.apache.commons.configuration.*;
-import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import org.janusgraph.diskstorage.Backend;
-import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
-import org.janusgraph.graphdb.database.serialize.Serializer;
-import org.janusgraph.graphdb.transaction.StandardTransactionBuilder;
-import org.janusgraph.util.stats.MetricManager;
+import javax.annotation.Nullable;
+import javax.management.MBeanServerFactory;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Provides functionality to configure a {@link org.janusgraph.core.JanusGraph} INSTANCE.
@@ -1206,9 +1208,9 @@ public class GraphDatabaseConfiguration {
     private String unknownIndexKeyName;
 
 
-    public GraphDatabaseConfiguration(ReadConfiguration configurationAtOpen, String uniqueGraphId, Configuration configuration, StoreFeatures storeFeatures) {
+    public GraphDatabaseConfiguration(ReadConfiguration configurationAtOpen, Configuration configuration, StoreFeatures storeFeatures) {
         this.configurationAtOpen = configurationAtOpen;
-        this.uniqueGraphId = uniqueGraphId;
+        this.uniqueGraphId = configuration.get(UNIQUE_INSTANCE_ID);
         this.configuration = configuration;
         this.storeFeatures = storeFeatures;
         preLoadConfiguration();

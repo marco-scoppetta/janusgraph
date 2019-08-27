@@ -14,14 +14,12 @@
 
 package org.janusgraph.graphdb.management;
 
-import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import static org.janusgraph.core.schema.SchemaStatus.ENABLED;
 import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.core.PropertyKey;
 
-import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
 
