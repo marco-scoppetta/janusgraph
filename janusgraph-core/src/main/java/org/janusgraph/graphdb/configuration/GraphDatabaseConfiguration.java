@@ -147,10 +147,6 @@ public class GraphDatabaseConfiguration {
                     "configuration option results in the opening of this graph anwyay.",
             ConfigOption.Type.LOCAL, Boolean.class, false);
 
-    public static final ConfigOption<String> TITAN_COMPATIBLE_VERSIONS = new ConfigOption<>(GRAPH_NS, "titan-version",
-            "Titan version for backwards compatibility which this database was created. Automatically set on first start. Don't manually set this property.",
-            ConfigOption.Type.FIXED, String.class).hide();
-
     public static final ConfigOption<Boolean> ALLOW_STALE_CONFIG = new ConfigOption<>(GRAPH_NS, "allow-stale-config",
             "Whether to allow the local and storage-backend-hosted copies of the configuration to contain conflicting values for " +
                     "options with any of the following types: " + Joiner.on(", ").join(ConfigOption.getManagedTypes()) + ".  " +

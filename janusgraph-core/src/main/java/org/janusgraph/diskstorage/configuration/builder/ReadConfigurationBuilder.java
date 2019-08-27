@@ -14,11 +14,8 @@
 
 package org.janusgraph.diskstorage.configuration.builder;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import org.janusgraph.core.JanusGraphConfigurationException;
 import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.*;
@@ -31,16 +28,14 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.BackendOperation;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
+import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.JanusGraphConstants;
-import org.janusgraph.graphdb.configuration.validator.CompatibilityValidator;
-import org.janusgraph.graphdb.database.management.ManagementSystem;
 import org.janusgraph.util.system.LoggerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
 
@@ -49,14 +44,13 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
  */
 public class ReadConfigurationBuilder {
 
-    private static final Logger log = LoggerFactory.getLogger(ReadConfigurationBuilder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReadConfigurationBuilder.class);
 
     static final String BACKLEVEL_STORAGE_VERSION_EXCEPTION = "The storage version on the client or server is lower than the storage version of the graph: graph storage version %s vs. client storage version %s when opening graph %s.";
     static final String INCOMPATIBLE_STORAGE_VERSION_EXCEPTION = "Storage version is incompatible with current client: graph storage version %s vs. client storage version %s when opening graph %s.";
 
     public static ReadConfiguration buildGlobalConfiguration(BasicConfiguration localBasicConfiguration,
                                                              KeyColumnValueStoreManager storeManager,
-                                                             ModifiableConfigurationBuilder modifiableConfigurationBuilder,
                                                              KCVSConfigurationBuilder kcvsConfigurationBuilder) {
 
 
@@ -82,7 +76,7 @@ public class ReadConfigurationBuilder {
         try (KCVSConfiguration keyColumnValueStoreConfiguration = kcvsConfigurationBuilder.buildGlobalConfiguration(transactionalProvider, systemPropertiesStore, localBasicConfiguration)) {
 
             //Freeze global configuration if not already frozen!
-            ModifiableConfiguration globalWrite = modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration);
+            ModifiableConfiguration globalWrite = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, keyColumnValueStoreConfiguration, BasicConfiguration.Restriction.GLOBAL);
 
             if (!globalWrite.isFrozen()) {
                 //Copy over global configurations
@@ -113,7 +107,7 @@ public class ReadConfigurationBuilder {
         // If the graph doesn't have a storage version set it and update version
         if (!globalWrite.has(INITIAL_STORAGE_VERSION)) {
             janusGraphVersionsWithDisallowedUpgrade(globalWrite);
-            log.info("graph.storage-version has been upgraded from 1 to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
+            LOG.info("graph.storage-version has been upgraded from 1 to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
                     JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
             return;
         }
@@ -126,16 +120,15 @@ public class ReadConfigurationBuilder {
         // If the graph has a storage version, but it's lower than the client or server opening the graph upgrade the version and storage version
         if (initialStorageVersion < storageVersion) {
             janusGraphVersionsWithDisallowedUpgrade(globalWrite);
-            log.info("graph.storage-version has been upgraded from {} to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
+            LOG.info("graph.storage-version has been upgraded from {} to {} and graph.janusgraph-version has been upgraded from {} to {} on graph {}",
                     globalWrite.get(INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION, globalWrite.get(INITIAL_JANUSGRAPH_VERSION), JanusGraphConstants.VERSION, graphName);
         } else {
-            log.warn("Warning graph.allow-upgrade is currently set to true on graph {}. Please set graph.allow-upgrade to false in your properties file.", graphName);
+            LOG.warn("Warning graph.allow-upgrade is currently set to true on graph {}. Please set graph.allow-upgrade to false in your properties file.", graphName);
         }
     }
 
     private static void janusGraphVersionsWithDisallowedUpgrade(ModifiableConfiguration globalWrite) {
         globalWrite.set(INITIAL_JANUSGRAPH_VERSION, JanusGraphConstants.VERSION);
-        globalWrite.set(TITAN_COMPATIBLE_VERSIONS, JanusGraphConstants.VERSION);
         globalWrite.set(INITIAL_STORAGE_VERSION, JanusGraphConstants.STORAGE_VERSION);
         globalWrite.set(ALLOW_UPGRADE, false);
     }
@@ -161,15 +154,15 @@ public class ReadConfigurationBuilder {
             final TimestampProviders backendPreference;
             if (f.hasTimestamps() && null != (backendPreference = f.getPreferredTimestamps())) {
                 globalWrite.set(TIMESTAMP_PROVIDER, backendPreference);
-                log.debug("Set timestamps to {} according to storage backend preference",
+                LOG.debug("Set timestamps to {} according to storage backend preference",
                         LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             } else {
                 globalWrite.set(TIMESTAMP_PROVIDER, TIMESTAMP_PROVIDER.getDefaultValue());
-                log.debug("Set default timestamp provider {}",
+                LOG.debug("Set default timestamp provider {}",
                         LoggerUtil.sanitizeAndLaunder(globalWrite.get(TIMESTAMP_PROVIDER)));
             }
         } else {
-            log.debug("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));
+            LOG.debug("Using configured timestamp provider {}", localBasicConfiguration.get(TIMESTAMP_PROVIDER));
         }
     }
 
@@ -255,10 +248,10 @@ public class ReadConfigurationBuilder {
 //                final String fullOptionName = ConfigElement.getPath(pathId.element, pathId.umbrellaElements);
 //                final String template = "Local setting {}={} (Type: {}) is overridden by globally managed value ({}).  Use the {} interface instead of the local configuration to control this setting.";
 //                Object[] replacements = new Object[]{fullOptionName, localValue, configOption.getType(), storeValue, ManagementSystem.class.getSimpleName()};
-//                if (managedOverridesAllowed) { // Lower log severity when this is enabled
-//                    log.warn(template, replacements);
+//                if (managedOverridesAllowed) { // Lower LOG severity when this is enabled
+//                    LOG.warn(template, replacements);
 //                } else {
-//                    log.error(template, replacements);
+//                    LOG.error(template, replacements);
 //                }
 //                optionsWithDiscrepancies.add(fullOptionName);
 //            }

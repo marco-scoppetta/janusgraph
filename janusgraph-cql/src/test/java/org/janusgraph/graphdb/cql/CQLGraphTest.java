@@ -32,26 +32,4 @@ public class CQLGraphTest extends CassandraGraphTest {
     public WriteConfiguration getConfiguration() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
-
-    @Test
-    public void testTitanGraphBackwardCompatibility() {
-        close();
-        WriteConfiguration wc = getConfiguration();
-        wc.set(ConfigElement.getPath(KEYSPACE), "titan");
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS), "x.x.x");
-
-        assertNull(wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_JANUSGRAPH_VERSION),
-                GraphDatabaseConfiguration.INITIAL_JANUSGRAPH_VERSION.getDatatype()));
-
-        assertFalse(JanusGraphConstants.TITAN_COMPATIBLE_VERSIONS.contains(
-                wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS),
-                        GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS.getDatatype())));
-
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS), "1.0.0");
-        assertTrue(JanusGraphConstants.TITAN_COMPATIBLE_VERSIONS.contains(
-                wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS),
-                        GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS.getDatatype())));
-
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
-    }
 }

@@ -36,11 +36,8 @@ public class BasicConfiguration implements Configuration {
 
     public enum Restriction {LOCAL, GLOBAL, NONE}
 
-    protected static final String FROZEN_KEY = "hidden.frozen";
-
     private final ReadConfiguration config;
     private final Restriction restriction;
-    private Boolean isFrozen;
 
     public BasicConfiguration(ConfigNamespace root, ReadConfiguration config, Restriction restriction) {
         Preconditions.checkNotNull(root);
@@ -56,7 +53,7 @@ public class BasicConfiguration implements Configuration {
         return root;
     }
 
-    protected void verifyOption(ConfigOption option) {
+    void verifyOption(ConfigOption option) {
         Preconditions.checkNotNull(option);
         verifyElement(option);
         if (restriction == Restriction.GLOBAL) {
@@ -108,18 +105,6 @@ public class BasicConfiguration implements Configuration {
             }
         }
         return result;
-    }
-
-    public boolean isFrozen() {
-        if (null == isFrozen) {
-            Boolean frozen = config.get(FROZEN_KEY, Boolean.class);
-            isFrozen = null == frozen ? false : frozen;
-        }
-        return isFrozen;
-    }
-
-    void setFrozen() {
-        isFrozen = true;
     }
 
     public ReadConfiguration getConfiguration() {

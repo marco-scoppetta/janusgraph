@@ -63,9 +63,6 @@ public class ReadConfigurationBuilderTest {
     private KeyColumnValueStoreManager storeManager;
 
     @Mock
-    private ModifiableConfigurationBuilder modifiableConfigurationBuilder;
-
-    @Mock
     private StoreFeatures features;
 
     @Mock
@@ -101,8 +98,8 @@ public class ReadConfigurationBuilderTest {
 //        when(kcvsConfigurationBuilder.buildStandaloneGlobalConfiguration(storeManager,localBasicConfiguration))
 //            .thenReturn(keyColumnValueStoreConfiguration); recently remove method buildStandAloneGlobalConfiguration, to be fixed this mocking
 
-        when(modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration))
-            .thenReturn(globalWrite);
+//        when(modifiableConfigurationBuilder.buildGlobalWrite(keyColumnValueStoreConfiguration))
+//            .thenReturn(globalWrite); // recently remove modifiableConfigurationBuilder
     }
 
     @Test
@@ -253,29 +250,6 @@ public class ReadConfigurationBuilderTest {
             exception.getMessage());
     }
 
-    @Test
-    public void shouldSetTitanIDStoreNameWhenKeystoreNotExists() {
-        when(globalWrite.isFrozen()).thenReturn(true);
-        allowUpgradeWithJanusGraphIDStoreNameMock();
-        globalWriteTitanCompatibleVersionMock();
-
-        buildConfiguration();
-
-        verify(overwrite).set(IDS_STORE_NAME, JanusGraphConstants.TITAN_ID_STORE_NAME);
-    }
-
-    @Test
-    public void shouldNotSetTitanIDStoreNameWhenKeystoreExists() {
-        when(globalWrite.isFrozen()).thenReturn(true);
-        allowUpgradeWithJanusGraphIDStoreNameMock();
-        globalWriteTitanCompatibleVersionMock();
-        when(keyColumnValueStoreConfiguration.get(IDS_STORE_NAME.getName(), IDS_STORE_NAME.getDatatype()))
-            .thenReturn("test_value");
-
-        buildConfiguration();
-
-        verify(overwrite, never()).set(IDS_STORE_NAME, JanusGraphConstants.TITAN_ID_STORE_NAME);
-    }
 
     @ParameterizedTest
     @MethodSource("managedConfigOptionTypes")
@@ -327,7 +301,7 @@ public class ReadConfigurationBuilderTest {
     }
 
     private ReadConfiguration buildConfiguration(){
-        return ReadConfigurationBuilder.buildGlobalConfiguration(localConfig, localBasicConfiguration, storeManager, modifiableConfigurationBuilder, kcvsConfigurationBuilder);
+        return ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, kcvsConfigurationBuilder);
     }
 
     private void frozenGlobalWriteWithAllowUpgradeMock(boolean upgradeAllowed){
@@ -352,18 +326,6 @@ public class ReadConfigurationBuilderTest {
         });
     }
 
-    private void globalWriteTitanCompatibleVersionMock(){
-        when(globalWrite.get(any())).thenAnswer(invocation -> {
-            Object argument = invocation.getArguments()[0];
-            if(INITIAL_STORAGE_VERSION.equals(argument)){
-                return JanusGraphConstants.STORAGE_VERSION;
-            }
-            if(TITAN_COMPATIBLE_VERSIONS.equals(argument)){
-                return JanusGraphConstants.TITAN_COMPATIBLE_VERSIONS.get(0);
-            }
-            return null;
-        });
-    }
 
     private void upgradeWithStaleConfigMock(boolean allowStaleConfig){
         when(localBasicConfiguration.has(any())).thenAnswer(invocation -> {
@@ -427,7 +389,6 @@ public class ReadConfigurationBuilderTest {
 
     private void verifySetupVersionsWithDisallowedUpgrade(){
         verify(globalWrite).set(INITIAL_JANUSGRAPH_VERSION, JanusGraphConstants.VERSION);
-        verify(globalWrite).set(TITAN_COMPATIBLE_VERSIONS, JanusGraphConstants.VERSION);
         verify(globalWrite).set(INITIAL_STORAGE_VERSION, JanusGraphConstants.STORAGE_VERSION);
         verify(globalWrite).set(ALLOW_UPGRADE, false);
     }

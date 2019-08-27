@@ -118,26 +118,6 @@ public class ConfigurationTest {
         userconfig.set("indexes.find.name","lulu");
 
         userconfig.close();
-        ReadConfiguration globalConfig = userconfig.getConfiguration();
-
-//        MixedConfiguration mixed = new MixedConfiguration(root,globalConfig,localConfig);
-//        assertEquals(ImmutableSet.of("search","find"),mixed.getContainedNamespaces(indexes));
-//        Configuration search = mixed.restrictTo("search");
-//        assertEquals("foo",search.get(indexback));
-//        assertEquals(400,search.get(ping).intValue());
-//        assertEquals(100,mixed.get(ping,"find").intValue());
-//        assertEquals(false, mixed.get(presort, "find"));
-//        assertEquals(400,mixed.get(ping,"search").intValue());
-//        assertEquals(false, mixed.get(presort, "search"));
-//        assertFalse(mixed.has(bim));
-//        assertTrue(mixed.has(bits));
-//        assertEquals(5,mixed.getSubset(storage).size());
-//
-//        assertEquals(1.5d, (double)mixed.get(bar));
-//        assertEquals("localhost",mixed.get(hostnames)[0]);
-//        assertEquals(1111,mixed.get(locktime).longValue());
-//
-//        mixed.close();
     }
 
     @Test

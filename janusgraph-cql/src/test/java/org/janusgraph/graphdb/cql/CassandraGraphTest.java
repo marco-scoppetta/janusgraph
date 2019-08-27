@@ -123,33 +123,4 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
                         .get(WRITE_CONSISTENCY));
         tx.rollback();
     }
-
-    @Test
-    public void testTitanGraphBackwardCompatibility() {
-        close();
-        WriteConfiguration wc = getConfiguration();
-        wc.set(ConfigElement.getPath(KEYSPACE), "titan");
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS), "x.x.x");
-
-        assertNull(wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_JANUSGRAPH_VERSION),
-                GraphDatabaseConfiguration.INITIAL_JANUSGRAPH_VERSION.getDatatype()));
-
-        assertFalse(JanusGraphConstants.TITAN_COMPATIBLE_VERSIONS.contains(
-                wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS),
-                        GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS.getDatatype())
-        ));
-
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS), "1.0.0");
-        assertTrue(JanusGraphConstants.TITAN_COMPATIBLE_VERSIONS.contains(
-                wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS),
-                        GraphDatabaseConfiguration.TITAN_COMPATIBLE_VERSIONS.getDatatype())
-        ));
-
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.IDS_STORE_NAME), JanusGraphConstants.TITAN_ID_STORE_NAME);
-        assertTrue(JanusGraphConstants.TITAN_ID_STORE_NAME.equals(
-                wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.IDS_STORE_NAME),
-                        GraphDatabaseConfiguration.IDS_STORE_NAME.getDatatype())
-        ));
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
-    }
 }

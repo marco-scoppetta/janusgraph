@@ -115,17 +115,6 @@ public abstract class AbstractJanusGraphProvider extends AbstractGraphProvider {
         return graph.traversal().withStrategies(strategies);
     }
 
-//    @Override
-//    public <ID> ID reconstituteGraphSONIdentifier(final Class<? extends Element> clazz, final Object id) {
-//        if (Edge.class.isAssignableFrom(clazz)) {
-//            // JanusGraphSONModule toStrings the edgeId - expect a String value for the id
-//            if (!(id instanceof String)) throw new RuntimeException("Expected a String value for the RelationIdentifier");
-//            return (ID) RelationIdentifier.parse((String) id);
-//        } else {
-//            return (ID) id;
-//        }
-//    }
-
     @Override
     public void clear(Graph g, final Configuration configuration) throws Exception {
         if (null != g) {
@@ -136,7 +125,7 @@ public abstract class AbstractJanusGraphProvider extends AbstractGraphProvider {
                 try {
                     g.close();
                 } catch (IOException | IllegalStateException e) {
-                    logger.warn("Titan graph may not have closed cleanly", e);
+                    logger.warn("Janus graph may not have closed cleanly", e);
                 }
             }
         }

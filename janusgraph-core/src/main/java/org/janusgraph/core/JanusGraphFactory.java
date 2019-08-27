@@ -34,7 +34,6 @@ import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
-import org.janusgraph.diskstorage.configuration.builder.ModifiableConfigurationBuilder;
 import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
@@ -77,8 +76,7 @@ import static org.janusgraph.util.system.LoggerUtil.sanitizeAndLaunder;
 
 public class JanusGraphFactory {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(JanusGraphFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JanusGraphFactory.class);
 
     /**
      * Opens a {@link JanusGraph} database.
@@ -161,27 +159,35 @@ public class JanusGraphFactory {
      * @return JanusGraph graph database
      */
     private static StandardJanusGraph open(ReadConfiguration configuration, String backupName) {
-        ModifiableConfiguration config = new ModifiableConfiguration(ROOT_NS, (WriteConfiguration) configuration, BasicConfiguration.Restriction.NONE);
-        String graphName = config.has(GRAPH_NAME) ? config.get(GRAPH_NAME) : backupName;
-        JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
+        // Create BasicConfiguration out of ReadConfiguration for local configuration
         BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS, configuration, BasicConfiguration.Restriction.NONE);
+
+        // Initialise StoreManager Factory with local configuration
         StoreManagerFactory storeManagerFactory = getFactory(localBasicConfiguration);
-        // Used to connect to 'system_properties' to read global configuration
+        // Initialise Store Manager used to connect to 'system_properties' to read global configuration
         KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
         // Configurations read from system_properties -> Global for every graph existing in the current DB
-        ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new ModifiableConfigurationBuilder(), new KCVSConfigurationBuilder());
+        ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new KCVSConfigurationBuilder());
+        // Create BasicConfiguration out of ReadConfiguration for global configuration
         BasicConfiguration globalBasicConfig = new BasicConfiguration(ROOT_NS, globalConfig, BasicConfiguration.Restriction.NONE);
 
-
+        // Merge and sanitise local and global configuration to get final Graph configuration which incorporates all necessary configs.
         GraphDatabaseConfiguration dbConfig = GraphDatabaseConfigurationBuilder.build(localBasicConfiguration, globalBasicConfig, storeManager);
+
         Backend backend = new Backend(dbConfig.getConfiguration(), storeManagerFactory);
 
+
+        // When user specifies graphname property is because he wishes to register the graph with the GraphManager
+        // The GraphManager though needs to be enabled using the YAML properties file
+        String graphName = localBasicConfiguration.has(GRAPH_NAME) ? localBasicConfiguration.get(GRAPH_NAME) : backupName;
+        JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
         if (null != graphName) {
             Preconditions.checkNotNull(jgm, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
             return (StandardJanusGraph) jgm.openGraph(graphName, gName -> new StandardJanusGraph(dbConfig, backend));
         } else {
+            // If the GraphManager is not null, but graphname is, the user probably forgot to set it, that's why the warning.
             if (jgm != null) {
-                log.warn("You should supply \"graph.graphname\" in your .properties file configuration if you are opening " +
+                LOG.warn("You should supply \"graph.graphname\" in your .properties file configuration if you are opening " +
                         "a graph that has not already been opened at server start, i.e. it was " +
                         "defined in your YAML file. This will ensure the graph is tracked by the JanusGraphManager, " +
                         "which will enable autocommit and rollback functionality upon all gremlin script executions. " +
@@ -298,7 +304,7 @@ public class JanusGraphFactory {
     }
 
     /**
-     * Returns a {@link org.janusgraph.core.log.LogProcessorFramework} for processing transaction log entries
+     * Returns a {@link org.janusgraph.core.log.LogProcessorFramework} for processing transaction LOG entries
      * against the provided graph instance.
      *
      * @param graph
@@ -310,7 +316,7 @@ public class JanusGraphFactory {
 
     /**
      * Returns a {@link TransactionRecovery} process for recovering partially failed transactions. The recovery process
-     * will start processing the write-ahead transaction log at the specified transaction time.
+     * will start processing the write-ahead transaction LOG at the specified transaction time.
      *
      * @param graph
      * @param start
@@ -435,10 +441,10 @@ public class JanusGraphFactory {
         final File storeDirectory = new File(file);
         if (!storeDirectory.isAbsolute()) {
             String newFile = configParent.getAbsolutePath() + File.separator + file;
-            log.debug("Overwrote relative path: was {}, now {}", sanitizeAndLaunder(file), sanitizeAndLaunder(newFile));
+            LOG.debug("Overwrote relative path: was {}, now {}", sanitizeAndLaunder(file), sanitizeAndLaunder(newFile));
             return newFile;
         } else {
-            log.debug("Loaded absolute path for key: {}", sanitizeAndLaunder(file));
+            LOG.debug("Loaded absolute path for key: {}", sanitizeAndLaunder(file));
             return file;
         }
     }
