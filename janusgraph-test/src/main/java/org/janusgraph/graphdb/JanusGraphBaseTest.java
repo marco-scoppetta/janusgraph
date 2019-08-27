@@ -121,7 +121,7 @@ public abstract class JanusGraphBaseTest {
         // Don't print anything if tests started from within IntelliJ
         // TODO add system property when invoking tests from CircleCI
         if(System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
-        int totLength = 140;
+        int totLength = 170;
         String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
         int rightSpaceLength = totLength - centralText.length();
         StringBuilder rightSpace = new StringBuilder();
