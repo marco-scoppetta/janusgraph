@@ -103,7 +103,7 @@ public class VertexIDAssignerTest {
 
     private JanusGraph getInMemoryGraph(boolean allowSettingVertexId, boolean idsFlush, int numPartitionsBits) {
         ModifiableConfiguration config = GraphDatabaseConfiguration.buildGraphConfiguration();
-        config.set(GraphDatabaseConfiguration.STORAGE_BACKEND, InMemoryStoreManager.class.getCanonicalName());
+        config.set(GraphDatabaseConfiguration.STORAGE_BACKEND, "inmemory");
         config.set(GraphDatabaseConfiguration.IDS_FLUSH, idsFlush);
         config.set(GraphDatabaseConfiguration.IDAUTHORITY_WAIT, Duration.ofMillis(1L));
         config.set(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS, 1<<numPartitionsBits);
