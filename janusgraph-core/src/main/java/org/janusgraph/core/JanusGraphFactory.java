@@ -337,7 +337,18 @@ public class JanusGraphFactory {
 
     //This is temporarily public because needed in tests, to be made private once we fix tingz around
     public static StoreManagerFactory getFactory(org.janusgraph.diskstorage.configuration.Configuration configuration) {
-        String className = "org.janusgraph.diskstorage.cql.CQLStoreManagerFactory";
+        String className;
+        switch (configuration.get(STORAGE_BACKEND)) {
+            case "cql":
+                className = "org.janusgraph.diskstorage.cql.CQLStoreManagerFactory";
+                break;
+            case "inmemory":
+                className = "org.janusgraph.diskstorage.keycolumnvalue.inmemory.InMemoryStoreManagerFactory";
+                break;
+            default:
+                throw new RuntimeException("Unknown backend option");
+        }
+
         return ConfigurationUtil.instantiate(className, new Object[]{configuration}, new Class[]{org.janusgraph.diskstorage.configuration.Configuration.class});
     }
 
