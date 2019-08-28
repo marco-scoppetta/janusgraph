@@ -45,7 +45,7 @@ public class QueryTest {
     @BeforeEach
     public void setup() {
         ModifiableConfiguration config = GraphDatabaseConfiguration.buildGraphConfiguration();
-        config.set(GraphDatabaseConfiguration.STORAGE_BACKEND, InMemoryStoreManager.class.getCanonicalName());
+        config.set(GraphDatabaseConfiguration.STORAGE_BACKEND, "inmemory");
         graph = JanusGraphFactory.open(config);
         tx = graph.newTransaction();
     }
