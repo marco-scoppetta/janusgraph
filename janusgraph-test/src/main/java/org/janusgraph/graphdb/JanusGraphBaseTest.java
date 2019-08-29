@@ -136,6 +136,7 @@ public abstract class JanusGraphBaseTest {
 
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
+        FactoriesTracker.reset();
         fancyPrintOut(testInfo);
         this.testInfo = testInfo;
         this.config = getConfigurationWithRandomKeyspace();

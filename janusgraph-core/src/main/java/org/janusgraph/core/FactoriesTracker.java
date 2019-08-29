@@ -21,6 +21,9 @@ public class FactoriesTracker {
 
     static private Set<String> factories = new HashSet<>();
 
+    static public void reset(){
+        factories = new HashSet<>();
+    }
 
     static public void addFactory(String hashCode) {
         boolean add = factories.add(hashCode);
