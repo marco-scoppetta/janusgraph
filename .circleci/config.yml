@@ -18,8 +18,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -38,8 +36,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -61,8 +57,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -84,8 +78,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -107,8 +99,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -130,8 +120,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -153,8 +141,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:
@@ -176,8 +162,6 @@ jobs:
         docker:
             - image: circleci/openjdk:8u222-jdk-stretch
         working_directory: ~/repo
-        environment:
-            MAVEN_OPTS: -Xmx3200m
         steps:
             - checkout
             - restore_cache:

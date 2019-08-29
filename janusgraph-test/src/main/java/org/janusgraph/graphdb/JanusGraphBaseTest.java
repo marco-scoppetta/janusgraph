@@ -108,17 +108,15 @@ public abstract class JanusGraphBaseTest {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
     }
 
-    //This method creates a backend which does not get closed, only invoked by JanusGraphIoTest and CassandraScanJobIT - fix this at some point
-    public static void clearGraph(WriteConfiguration config) throws BackendException {
+    public void clearGraph(WriteConfiguration config) throws BackendException {
         getBackend(config).clearStorage();
     }
 
-    public static Backend getBackend(WriteConfiguration config) {
+    public Backend getBackend(WriteConfiguration config) {
         ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
-//        StoreManagerFactory storeManagerFactory = JanusGraphFactory.getFactory(adjustedConfig);
-        return new Backend(adjustedConfig, null);
+        return new Backend(adjustedConfig, this.storeManagerFactory);
     }
 
     public static void fancyPrintOut(TestInfo testInfo) {

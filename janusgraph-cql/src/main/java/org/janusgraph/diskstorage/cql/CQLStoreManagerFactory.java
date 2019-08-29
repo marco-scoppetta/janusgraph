@@ -62,7 +62,7 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
 
     @Override
     public void close() {
-        session.close();
+        session.closeAsync();
         FactoriesTracker.removeFactory(this.toString());
     }
 
