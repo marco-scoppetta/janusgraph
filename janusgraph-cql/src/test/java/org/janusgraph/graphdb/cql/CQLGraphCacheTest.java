@@ -24,7 +24,7 @@ public class CQLGraphCacheTest extends JanusGraphTest {
 
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
-        return StorageSetup.addPermanentCache(CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()));
+        return StorageSetup.addPermanentCache(CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace());
     }
 
 

@@ -23,7 +23,7 @@ public class CQLGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTe
 
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
+        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
     }
 
 
