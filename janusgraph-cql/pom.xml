@@ -372,15 +372,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-	          <id>coverage</id>
-	          <activation>
-	              <activeByDefault>false</activeByDefault>
-	          </activation>
-	          <properties>
-	              <test.extra.jvm.opts>${jacoco.opts} ${test.javaagent.opts}</test.extra.jvm.opts>
-	          </properties>
-        </profile>
-    </profiles>
 </project>

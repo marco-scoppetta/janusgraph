@@ -3614,7 +3614,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         try {
             PropertyKey id = mgmt.makePropertyKey("id").cardinality(Cardinality.LIST).dataType(Integer.class).make();
             mgmt.addProperties(edge, id);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
         finishSchema();
@@ -3628,7 +3628,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         try {
             PropertyKey id = mgmt.makePropertyKey("id").cardinality(Cardinality.SET).dataType(Integer.class).make();
             mgmt.addProperties(edge, id);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
         finishSchema();
@@ -3648,7 +3648,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
         try {
             v1.addEdge("knows", v2, "test", 10);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
     }
@@ -3679,14 +3679,14 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         JanusGraphVertex v1 = tx.addVertex("user");
         try {
             v1.addEdge("buys", v1);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
 
         JanusGraphVertex v2 = tx.addVertex("company");
         try {
             v2.addEdge("knows", v1);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
     }
@@ -3705,7 +3705,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
         try {
             v1.addEdge("has", v2);
-            fail("This should never reached!");
+            fail("This should never be reached!");
         } catch (IllegalArgumentException ignored) {
         }
     }

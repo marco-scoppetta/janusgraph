@@ -256,6 +256,7 @@ public class JanusGraphFactory {
             backend.clearStorage();
         } finally {
             IOUtils.closeQuietly(backend);
+            storeManagerFactory.close();
         }
     }
 
