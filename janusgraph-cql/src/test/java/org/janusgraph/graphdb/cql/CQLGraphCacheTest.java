@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 public class CQLGraphCacheTest extends JanusGraphTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return StorageSetup.addPermanentCache(CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()));
     }
 

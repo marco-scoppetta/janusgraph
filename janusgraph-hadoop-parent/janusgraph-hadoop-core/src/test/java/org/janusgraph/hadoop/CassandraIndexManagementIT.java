@@ -20,7 +20,7 @@ import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 public class CassandraIndexManagementIT extends AbstractIndexManagementIT {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 }

@@ -27,13 +27,13 @@ import org.junit.jupiter.api.BeforeAll;
 public class CQLGraphIterativeTest extends JanusGraphIterativeBenchmark {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 
     @Override
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        BasicConfiguration basicConfiguration = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, getConfiguration(), BasicConfiguration.Restriction.NONE);
+        BasicConfiguration basicConfiguration = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         return new CQLStoreManagerFactory(basicConfiguration).getManager(basicConfiguration);
     }
 

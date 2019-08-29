@@ -99,7 +99,7 @@ public abstract class JanusGraphBaseTest {
     public JanusGraphBaseTest() {
     }
 
-    public abstract WriteConfiguration getConfiguration();
+    public abstract WriteConfiguration getConfigurationWithRandomKeyspace();
 
     public Configuration getConfig() {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
@@ -135,9 +135,8 @@ public abstract class JanusGraphBaseTest {
     public void setUp(TestInfo testInfo) throws Exception {
         fancyPrintOut(testInfo);
         this.testInfo = testInfo;
-        this.config = getConfiguration();
+        this.config = getConfigurationWithRandomKeyspace();
         TestGraphConfigs.applyOverrides(config);
-        clearGraph(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         open(config);
@@ -197,13 +196,12 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void clopen(Object... settings) {
-        config = getConfiguration();
         if (mgmt != null && mgmt.isOpen()) mgmt.rollback();
         if (null != tx && tx.isOpen()) tx.commit();
         if (settings != null && settings.length > 0) {
-            final Map<TestConfigOption, Object> options = validateConfigOptions(settings);
+            Map<TestConfigOption, Object> options = validateConfigOptions(settings);
             JanusGraphManagement janusGraphManagement = null;
-            final ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
+            ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
             for (final Map.Entry<TestConfigOption, Object> option : options.entrySet()) {
                 if (option.getKey().option.isLocal()) {
                     modifiableConfiguration.set(option.getKey().option, option.getValue(), option.getKey().umbrella);
@@ -492,7 +490,7 @@ public abstract class JanusGraphBaseTest {
     }
 
     public JanusGraph getForceIndexGraph() throws BackendException {
-        final ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, getConfiguration(), BasicConfiguration.Restriction.NONE);
+        final ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.FORCE_INDEX_USAGE, true);
         final WriteConfiguration writeConfig = adjustedConfig.getConfiguration();
         TestGraphConfigs.applyOverrides(writeConfig);

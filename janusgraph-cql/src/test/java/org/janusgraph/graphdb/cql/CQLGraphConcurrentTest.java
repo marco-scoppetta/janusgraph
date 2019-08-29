@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Tag;
 public class CQLGraphConcurrentTest extends JanusGraphConcurrentTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 

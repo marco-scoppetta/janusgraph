@@ -31,7 +31,7 @@ public class Cassandra3InputFormatIT extends CassandraInputFormatIT {
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         String className = CassandraInputFormatIT.class.getSimpleName();
         return CassandraStorageSetup.getCQLConfiguration(className).getConfiguration();
     }

@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.UUID;
 
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_ENABLED;
@@ -100,8 +101,7 @@ public class CassandraStorageSetup {
 
     public static ModifiableConfiguration getCQLConfiguration(final String keyspace) {
         final ModifiableConfiguration config = buildGraphConfiguration();
-        config.set(KEYSPACE, cleanKeyspaceName(keyspace));
-        LOGGER.debug("Set keyspace name: {}", config.get(KEYSPACE));
+        config.set(KEYSPACE, "a" + UUID.randomUUID().toString().replaceAll("-", ""));
         config.set(PAGE_SIZE, 500);
         config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
         config.set(STORAGE_BACKEND, "cql");

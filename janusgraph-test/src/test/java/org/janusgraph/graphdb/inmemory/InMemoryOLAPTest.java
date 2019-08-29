@@ -26,7 +26,7 @@ import org.janusgraph.olap.OLAPTest;
 
 public class InMemoryOLAPTest extends OLAPTest {
 
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         ModifiableConfiguration config = GraphDatabaseConfiguration.buildGraphConfiguration();
         config.set(GraphDatabaseConfiguration.STORAGE_BACKEND,"inmemory");
         return config.getConfiguration();

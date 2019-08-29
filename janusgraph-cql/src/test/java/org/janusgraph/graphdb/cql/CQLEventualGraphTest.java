@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 public class CQLEventualGraphTest extends JanusGraphEventualGraphTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 

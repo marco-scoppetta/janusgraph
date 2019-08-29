@@ -57,7 +57,7 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
     public abstract WriteConfiguration getBaseConfiguration();
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         WriteConfiguration config = getBaseConfiguration();
         ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config, BasicConfiguration.Restriction.NONE);
         // Let GraphDatabaseConfiguration's config freezer set CLUSTER_PARTITION

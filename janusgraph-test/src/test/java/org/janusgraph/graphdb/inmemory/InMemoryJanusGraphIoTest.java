@@ -27,7 +27,7 @@ import java.util.Map;
  * @author Stephen Mallette (https://stephen.genoprime.com)
  */
 public class InMemoryJanusGraphIoTest extends JanusGraphIoTest {
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         ModifiableConfiguration config = GraphDatabaseConfiguration.buildGraphConfiguration();
         config.set(GraphDatabaseConfiguration.STORAGE_BACKEND,"inmemory");
         return config.getConfiguration();

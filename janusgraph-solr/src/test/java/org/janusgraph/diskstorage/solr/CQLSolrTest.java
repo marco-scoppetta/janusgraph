@@ -27,7 +27,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IN
 public class CQLSolrTest extends SolrJanusGraphIndexTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         ModifiableConfiguration config =
                 CassandraStorageSetup.getCQLConfiguration(CQLSolrTest.class.getName());
         //Add index

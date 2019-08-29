@@ -46,7 +46,7 @@ public class CqlInputFormatIT extends AbstractInputFormatIT {
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration("cqlinputformatit").set(STORAGE_HOSTS, new String[]{"127.0.0.1"}).getConfiguration();
     }
 

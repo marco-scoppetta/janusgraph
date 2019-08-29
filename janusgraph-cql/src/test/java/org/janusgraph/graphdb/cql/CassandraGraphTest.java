@@ -16,21 +16,17 @@ package org.janusgraph.graphdb.cql;
 
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.JanusGraphConstants;
-import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.READ_CONSISTENCY;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.WRITE_CONSISTENCY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,11 +48,10 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
     @Test
     public void testStorageVersionSet() {
         close();
-        WriteConfiguration wc = getConfiguration();
-        assertNull(wc.get(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION),
+        assertNull(config.get(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION),
                 GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION.getDatatype()));
-        wc.set(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION);
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
+        config.set(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION);
+        graph = JanusGraphFactory.open(config);
         mgmt = graph.openManagement();
         assertEquals(JanusGraphConstants.STORAGE_VERSION, (mgmt.get("graph.storage-version")));
         mgmt.rollback();
@@ -65,14 +60,9 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
     @Test
     public void testGraphConfigUsedByThreadBoundTx() {
         close();
-        WriteConfiguration wc = getConfiguration();
-        wc.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
-        wc.set(ConfigElement.getPath(WRITE_CONSISTENCY), "LOCAL_QUORUM");
-
-        long s = System.currentTimeMillis();
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
-        long e = System.currentTimeMillis();
-        System.out.println("Opening graph second time took: " + (e - s));
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "LOCAL_QUORUM");
+        graph = JanusGraphFactory.open(config);
 
         StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.getCurrentThreadTx();
         assertEquals("ALL",
@@ -86,11 +76,10 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
     @Test
     public void testGraphConfigUsedByTx() {
         close();
-        WriteConfiguration wc = getConfiguration();
-        wc.set(ConfigElement.getPath(READ_CONSISTENCY), "TWO");
-        wc.set(ConfigElement.getPath(WRITE_CONSISTENCY), "THREE");
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "TWO");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "THREE");
 
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
+        graph = JanusGraphFactory.open(config);
 
         StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
         assertEquals("TWO",
@@ -105,11 +94,10 @@ public abstract class CassandraGraphTest extends JanusGraphTest {
     @Test
     public void testCustomConfigUsedByTx() {
         close();
-        WriteConfiguration wc = getConfiguration();
-        wc.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
-        wc.set(ConfigElement.getPath(WRITE_CONSISTENCY), "ALL");
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "ALL");
 
-        graph = (StandardJanusGraph) JanusGraphFactory.open(wc);
+        graph = JanusGraphFactory.open(config);
 
         StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.buildTransaction()
                 .customOption(ConfigElement.getPath(READ_CONSISTENCY), "ONE")

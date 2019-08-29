@@ -42,7 +42,7 @@ public class CassandraInputFormatIT extends AbstractInputFormatIT {
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 }

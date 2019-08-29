@@ -107,6 +107,10 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
         configLoaderBuilder.withInt(DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE, readConfiguration.get(REMOTE_MAX_CONNECTIONS_PER_HOST));
         configLoaderBuilder.withInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS, readConfiguration.get(MAX_REQUESTS_PER_CONNECTION));
 
+        // Keep to 0 for the time being: https://groups.google.com/a/lists.datastax.com/forum/#!topic/java-driver-user/Bc0gQuOVVL0
+        // Ideally we want to batch all tables initialisations to happen together when opening a new keyspace
+        configLoaderBuilder.withInt(DefaultDriverOption.METADATA_SCHEMA_WINDOW, 0);
+
         builder.withConfigLoader(configLoaderBuilder.build());
         return builder.build();
     }

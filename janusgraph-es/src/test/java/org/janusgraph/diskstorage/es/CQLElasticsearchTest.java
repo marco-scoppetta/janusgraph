@@ -39,7 +39,7 @@ public class CQLElasticsearchTest extends JanusGraphIndexTest {
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         ModifiableConfiguration config = CassandraStorageSetup.getCQLConfiguration(CQLElasticsearchTest.class.getName());
         return esr.setConfiguration(config, INDEX)
             .set(GraphDatabaseConfiguration.INDEX_MAX_RESULT_SET_SIZE, 3, INDEX)

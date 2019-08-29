@@ -73,7 +73,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         WriteConfiguration config = getBaseConfiguration();
         ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config, BasicConfiguration.Restriction.NONE);
         modifiableConfiguration.set(BASIC_METRICS,true);
