@@ -1740,7 +1740,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
                 option(LOG_READ_INTERVAL, MANAGEMENT_LOG), Duration.ofMillis(250)
         );
 
-        StandardJanusGraph graph2 = (StandardJanusGraph) JanusGraphFactory.open(config);
+        StandardJanusGraph graph2 = JanusGraphFactory.open(config);
         JanusGraphTransaction tx2;
 
         mgmt.makePropertyKey("name").dataType(String.class).make();
@@ -1790,6 +1790,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         finishSchema();
         mgmt.updateIndex(mgmt.getGraphIndex("theIndex"), SchemaAction.ENABLE_INDEX);
         finishSchema();
+        graph2.close();
     }
 
     @Test
