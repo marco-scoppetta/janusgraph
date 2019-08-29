@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import io.vavr.Tuple;
 import io.vavr.collection.Array;
+import org.janusgraph.core.FactoriesTracker;
 import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
@@ -51,7 +52,7 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
     public CQLStoreManagerFactory(Configuration readConfiguration) throws PermanentBackendException {
         this.readConfiguration = readConfiguration;
         this.session = initializeSession();
-        System.out.println("INITIALISED NEW FACTORY "+this);
+        FactoriesTracker.addFactory(this.toString());
     }
 
     @Override
@@ -62,7 +63,7 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
     @Override
     public void close() {
         session.close();
-        System.out.println("CLOSED FACTORY "+this);
+        FactoriesTracker.removeFactory(this.toString());
     }
 
     private CqlSession initializeSession() throws PermanentBackendException {

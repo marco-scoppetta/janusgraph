@@ -22,6 +22,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.FactoriesTracker;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphElement;
@@ -122,7 +123,7 @@ public abstract class JanusGraphBaseTest {
     public static void fancyPrintOut(TestInfo testInfo) {
         // Don't print anything if tests started from within IntelliJ
         // TODO add system property when invoking tests from CircleCI
-        if(System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
+        if (System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
         int totLength = 170;
         String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
         int rightSpaceLength = totLength - centralText.length();
@@ -163,6 +164,7 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
+        System.out.println("============================== OPEN FACTORIES: " + FactoriesTracker.openFactories());
     }
 
     public void finishSchema() {
