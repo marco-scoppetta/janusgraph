@@ -106,6 +106,7 @@ public abstract class JanusGraphBaseTest {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
     }
 
+    //This method creates a backend which does not get closed, only invoked by JanusGraphIoTest and CassandraScanJobIT - fix this at some point
     public static void clearGraph(WriteConfiguration config) throws BackendException {
         getBackend(config).clearStorage();
     }

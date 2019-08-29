@@ -570,7 +570,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                 index.close();
             }
         } else {
-            log.debug("Backend {} has already been closed or cleared", this);
+            log.warn("Backend {} has already been closed or cleared", this);
         }
     }
 

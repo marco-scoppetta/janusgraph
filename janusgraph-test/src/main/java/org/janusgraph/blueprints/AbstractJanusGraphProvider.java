@@ -133,9 +133,10 @@ public abstract class AbstractJanusGraphProvider extends AbstractGraphProvider {
         WriteConfiguration config = new CommonsConfiguration(configuration);
         BasicConfiguration readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config,
             BasicConfiguration.Restriction.NONE);
-        if (readConfig.has(GraphDatabaseConfiguration.STORAGE_BACKEND)) {
-            JanusGraphBaseTest.clearGraph(config);
-        }
+        //Uncomment the following lines when redefined behaviour of clearing Storage
+//        if (readConfig.has(GraphDatabaseConfiguration.STORAGE_BACKEND)) {
+//            JanusGraphBaseTest.clearGraph(config);
+//        }
     }
 
     @Override
