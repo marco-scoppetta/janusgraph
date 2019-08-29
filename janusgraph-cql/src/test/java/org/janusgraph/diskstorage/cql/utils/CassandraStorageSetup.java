@@ -99,7 +99,19 @@ public class CassandraStorageSetup {
         return s;
     }
 
-    public static ModifiableConfiguration getCQLConfiguration(final String keyspace) {
+    public static ModifiableConfiguration getCQLConfiguration(String keyspace) {
+        final ModifiableConfiguration config = buildGraphConfiguration();
+        config.set(KEYSPACE, cleanKeyspaceName(keyspace));
+        config.set(PAGE_SIZE, 500);
+        config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
+        config.set(STORAGE_BACKEND, "cql");
+        if (HOSTNAME != null) config.set(STORAGE_HOSTS, new String[]{HOSTNAME});
+        config.set(DROP_ON_CLEAR, false);
+        return config;
+    }
+
+
+    public static ModifiableConfiguration getCQLConfigurationWithRandomKeyspace() {
         final ModifiableConfiguration config = buildGraphConfiguration();
         config.set(KEYSPACE, "a" + UUID.randomUUID().toString().replaceAll("-", ""));
         config.set(PAGE_SIZE, 500);
