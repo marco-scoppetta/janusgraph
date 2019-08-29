@@ -25,11 +25,7 @@ import java.io.File;
  *
  */
 public class IOUtils {
-    private static final Logger logger = LoggerFactory.getLogger(IOUtils.class);
-
-    static public boolean deleteFromDirectory(File path) {
-        return deleteDirectory(path, false);
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(IOUtils.class);
 
     static public boolean deleteDirectory(File path, boolean includeDir) {
         boolean success = true;
@@ -52,7 +48,7 @@ public class IOUtils {
             if (c != null)
                 c.close();
         } catch (Exception e) {
-            logger.warn("Failed closing " + c, e);
+            LOGGER.warn("Failed closing " + c, e);
         }
     }
 
@@ -62,7 +58,7 @@ public class IOUtils {
             if (c != null)
                 c.close();
         } catch (Exception e) {
-            logger.warn("Failed closing " + c, e);
+            LOGGER.warn("Failed closing " + c, e);
         }
     }
 }

@@ -51,6 +51,7 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
     public CQLStoreManagerFactory(Configuration readConfiguration) throws PermanentBackendException {
         this.readConfiguration = readConfiguration;
         this.session = initializeSession();
+        System.out.println("INITIALISED NEW FACTORY "+this);
     }
 
     @Override
@@ -60,7 +61,8 @@ public class CQLStoreManagerFactory implements StoreManagerFactory {
 
     @Override
     public void close() {
-        session.closeAsync();
+        session.close();
+        System.out.println("CLOSED FACTORY "+this);
     }
 
     private CqlSession initializeSession() throws PermanentBackendException {

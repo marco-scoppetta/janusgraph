@@ -149,6 +149,11 @@ public abstract class JanusGraphBaseTest {
         graph = JanusGraphFactory.open(config);
         long e = System.currentTimeMillis();
         System.out.println("Time to open a new Graph: " + (e - s));
+        graph.close();
+        s = System.currentTimeMillis();
+        graph = JanusGraphFactory.open(config);
+        e = System.currentTimeMillis();
+        System.out.println("Time to open a new Graph: " + (e - s));
         features = graph.getConfiguration().getStoreFeatures();
         tx = graph.newTransaction();
         mgmt = graph.openManagement();
