@@ -20,6 +20,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.junit.jupiter.api.BeforeAll;
 
 public class CQLMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
@@ -29,16 +30,14 @@ public class CQLMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
         startCleanEmbedded();
     }
 
-    private ModifiableConfiguration getBaseStorageConfiguration() {
+    @Override
+    public ModifiableConfiguration getConfig() {
         return getCQLConfiguration(getClass().getSimpleName());
     }
 
-    private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManagerFactory(c).getManager(c);
-    }
 
     @Override
-    public CQLStoreManager openStorageManager() throws BackendException {
-        return openStorageManager(getBaseStorageConfiguration());
+    public StoreManagerFactory openStorageManagerFactory() throws BackendException {
+        return new CQLStoreManagerFactory(getConfig());
     }
 }

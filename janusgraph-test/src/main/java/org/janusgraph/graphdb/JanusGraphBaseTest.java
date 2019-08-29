@@ -95,6 +95,7 @@ public abstract class JanusGraphBaseTest {
     public JanusGraphTransaction tx;
     public JanusGraphManagement mgmt;
     public TestInfo testInfo;
+    public StoreManagerFactory storeManagerFactory;
 
     public Map<String, LogManager> logManagers;
 
@@ -116,8 +117,8 @@ public abstract class JanusGraphBaseTest {
         ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
-        StoreManagerFactory storeManagerFactory = JanusGraphFactory.getFactory(adjustedConfig);
-        return new Backend(adjustedConfig, storeManagerFactory);
+//        StoreManagerFactory storeManagerFactory = JanusGraphFactory.getFactory(adjustedConfig);
+        return new Backend(adjustedConfig, null);
     }
 
     public static void fancyPrintOut(TestInfo testInfo) {
@@ -143,6 +144,7 @@ public abstract class JanusGraphBaseTest {
         TestGraphConfigs.applyOverrides(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
+        this.storeManagerFactory = JanusGraphFactory.getFactory(readConfig);
         open(config);
     }
 
@@ -165,6 +167,7 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
+        this.storeManagerFactory.close();
         System.out.println("============================== OPEN FACTORIES: " + FactoriesTracker.openFactories());
     }
 
@@ -292,7 +295,7 @@ public abstract class JanusGraphBaseTest {
             configuration.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "reader");
             configuration.set(GraphDatabaseConfiguration.LOG_READ_INTERVAL, Duration.ofMillis(500L), logManagerName);
             if (logStoreManager == null) {
-                logStoreManager = JanusGraphFactory.getFactory(configuration).getManager(configuration);
+                logStoreManager = storeManagerFactory.getManager(configuration);
             }
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();

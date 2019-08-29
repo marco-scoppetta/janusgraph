@@ -18,6 +18,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import org.janusgraph.diskstorage.configuration.BasicConfiguration;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.*;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.KCVEntryMutation;
@@ -50,6 +52,7 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     private KCVSCache store1;
     protected final String storeName2 = "testStore2";
     private KCVSCache store2;
+    private StoreManagerFactory storeManagerFactory;
 
 
     public KeyColumnValueStoreManager manager;
@@ -61,7 +64,8 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
         JanusGraphBaseTest.fancyPrintOut(testInfo);
-        StoreManager m = openStorageManager();
+        storeManagerFactory = openStorageManagerFactory();
+        StoreManager m = storeManagerFactory.getManager(getConfig());
         m.clearStorage();
         m.close();
         open();
@@ -70,16 +74,18 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     @AfterEach
     public void tearDown() throws Exception {
         close();
+        storeManagerFactory.close();
     }
 
-    public abstract KeyColumnValueStoreManager openStorageManager() throws BackendException;
+    public abstract StoreManagerFactory openStorageManagerFactory() throws BackendException;
+
+    public abstract ModifiableConfiguration getConfig();
 
     public void open() throws BackendException {
-        manager = openStorageManager();
+        manager = storeManagerFactory.getManager(getConfig());
         tx = new CacheTransaction(manager.beginTransaction(getTxConfig()), manager, bufferSize, Duration.ofMillis(100), true);
         store1 = new NoKCVSCache(manager.openDatabase(storeName1));
         store2 = new NoKCVSCache(manager.openDatabase(storeName2));
-
     }
 
     public void close() throws BackendException {
