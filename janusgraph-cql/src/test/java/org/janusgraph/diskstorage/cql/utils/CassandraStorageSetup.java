@@ -113,7 +113,7 @@ public class CassandraStorageSetup {
 
     public static ModifiableConfiguration getCQLConfigurationWithRandomKeyspace() {
         final ModifiableConfiguration config = buildGraphConfiguration();
-        config.set(KEYSPACE, "a" + UUID.randomUUID().toString().replaceAll("-", ""));
+        config.set(KEYSPACE, "ano");
         config.set(PAGE_SIZE, 500);
         config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
         config.set(STORAGE_BACKEND, "cql");

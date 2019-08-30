@@ -22,7 +22,6 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
-import org.janusgraph.core.FactoriesTracker;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphElement;
@@ -133,7 +132,6 @@ public abstract class JanusGraphBaseTest {
 
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
-        FactoriesTracker.reset();
         fancyPrintOut(testInfo);
         this.testInfo = testInfo;
         this.config = getConfigurationWithRandomKeyspace();
@@ -162,6 +160,7 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
+        JanusGraphFactory.drop(graph);
     }
 
     public void finishSchema() {

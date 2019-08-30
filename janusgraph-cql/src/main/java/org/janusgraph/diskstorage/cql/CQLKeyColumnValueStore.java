@@ -139,7 +139,10 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         this.tableName = tableName;
         this.closer = closer;
         this.session = this.storeManager.getSession();
-        this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName));
+        // NOTE AGAIN: storeManager now only has access to localConfig (check JanusGraphFactory,
+        // it gets initialised before reading globalConfig, so getMetaDataSchema will probably fail as it need to read configs from `system_properties`)
+        // This is a temporary tradeoff so that we dont have to init StoreManager twice!!
+        this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName)); // NOTE: this is probably reading only local config!!!!!!!!!!!
 
         if (shouldInitializeTable()) {
             initializeTable(this.storeManager.getKeyspaceName(), tableName, configuration);

@@ -257,9 +257,6 @@ public class JanusGraphFactory {
             backend.clearStorage();
         } finally {
             IOUtils.closeQuietly(backend);
-            // Force storeManager closure here because Backend might throw exception when closing after `clearStorage`
-            // there is already a try finally block in there, this is to be paranoid, verify this is not needed and remove
-            storeManager.close();
         }
     }
 
