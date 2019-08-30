@@ -134,6 +134,7 @@
         <module>janusgraph-all</module>
         <module>janusgraph-dist</module>
         <module>janusgraph-solr</module>
+        <module>janusgraph-foundationdb</module>
     </modules>
     <repositories>
         <repository>

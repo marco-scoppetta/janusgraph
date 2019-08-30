@@ -347,6 +347,9 @@ public class JanusGraphFactory {
             case "inmemory":
                 className = "org.janusgraph.diskstorage.keycolumnvalue.inmemory.InMemoryStoreManagerFactory";
                 break;
+            case "foundationdb":
+                className = "io.grakn.janusgraph.diskstorage.foundationdb.FoundationDBStoreManagerFactory";
+                break;
             default:
                 throw new IllegalArgumentException("Could not find implementation class for backend: " + backendName);
         }
