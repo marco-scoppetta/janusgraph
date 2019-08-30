@@ -16,7 +16,7 @@ package org.janusgraph.blueprints.cql;
 
 import org.janusgraph.blueprints.AbstractJanusGraphProvider;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 
 /**

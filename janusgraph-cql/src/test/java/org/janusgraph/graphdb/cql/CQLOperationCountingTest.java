@@ -15,7 +15,7 @@
 package org.janusgraph.graphdb.cql;
 
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphOperationCountingTest;
 import org.junit.jupiter.api.BeforeAll;
 
@@ -28,7 +28,7 @@ public class CQLOperationCountingTest extends JanusGraphOperationCountingTest {
 
     @Override
     public WriteConfiguration getBaseConfiguration() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
+        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
     }
 
 }

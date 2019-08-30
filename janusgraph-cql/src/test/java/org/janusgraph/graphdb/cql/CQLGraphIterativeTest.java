@@ -17,8 +17,8 @@ package org.janusgraph.graphdb.cql;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CQLStoreManager;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.CQLStoreManagerFactory;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.graphdb.JanusGraphIterativeBenchmark;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
@@ -27,13 +27,14 @@ import org.junit.jupiter.api.BeforeAll;
 public class CQLGraphIterativeTest extends JanusGraphIterativeBenchmark {
 
     @Override
-    public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
+        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
     }
 
     @Override
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CQLStoreManager(new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS,getConfiguration(), BasicConfiguration.Restriction.NONE));
+        BasicConfiguration basicConfiguration = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
+        return new CQLStoreManagerFactory(basicConfiguration).getManager(basicConfiguration);
     }
 
 

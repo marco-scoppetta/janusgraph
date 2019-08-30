@@ -16,7 +16,7 @@ package org.janusgraph.graphdb.cql;
 
 import org.janusgraph.TestCategory;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphConcurrentTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -25,8 +25,8 @@ import org.junit.jupiter.api.Tag;
 public class CQLGraphConcurrentTest extends JanusGraphConcurrentTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
+        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
     }
 
 

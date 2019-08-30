@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.janusgraph.diskstorage.cql;
+package org.janusgraph.diskstorage.cql.utils;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
-import org.janusgraph.diskstorage.cql.utils.CassandraDaemonWrapper;
 import org.janusgraph.diskstorage.configuration.ConfigElement;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.slf4j.Logger;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.UUID;
 
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_ENABLED;
@@ -64,7 +64,9 @@ public class CassandraStorageSetup {
                     throw new RuntimeException(e);
                 }
             }
+            System.out.println("Starting cassandra...");
             CassandraDaemonWrapper.start(p.yamlPath);
+            System.out.println("Cassandra Started!");
         }
     }
 
@@ -97,10 +99,21 @@ public class CassandraStorageSetup {
         return s;
     }
 
-    public static ModifiableConfiguration getCQLConfiguration(final String keyspace) {
+    public static ModifiableConfiguration getCQLConfiguration(String keyspace) {
         final ModifiableConfiguration config = buildGraphConfiguration();
         config.set(KEYSPACE, cleanKeyspaceName(keyspace));
-        LOGGER.debug("Set keyspace name: {}", config.get(KEYSPACE));
+        config.set(PAGE_SIZE, 500);
+        config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
+        config.set(STORAGE_BACKEND, "cql");
+        if (HOSTNAME != null) config.set(STORAGE_HOSTS, new String[]{HOSTNAME});
+        config.set(DROP_ON_CLEAR, false);
+        return config;
+    }
+
+
+    public static ModifiableConfiguration getCQLConfigurationWithRandomKeyspace() {
+        final ModifiableConfiguration config = buildGraphConfiguration();
+        config.set(KEYSPACE, "a" + UUID.randomUUID().toString().replaceAll("-", ""));
         config.set(PAGE_SIZE, 500);
         config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
         config.set(STORAGE_BACKEND, "cql");

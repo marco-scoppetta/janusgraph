@@ -10,19 +10,15 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.
 
-package org.janusgraph.diskstorage.configuration;
+package org.janusgraph.diskstorage.keycolumnvalue;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
-public interface SystemConfiguration extends Configuration {
+import org.janusgraph.diskstorage.configuration.Configuration;
 
-    @Override
-    SystemConfiguration restrictTo(final String... umbrellaElements);
+public interface StoreManagerFactory {
 
+    KeyColumnValueStoreManager getManager(Configuration configuration);
 
-
-
+    void close();
 }
+

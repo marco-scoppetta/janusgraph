@@ -18,6 +18,9 @@ import org.janusgraph.TestCategory;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.DistributedStoreManagerTest;
 import org.janusgraph.diskstorage.common.DistributedStoreManager.Deployment;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
+import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,8 +33,10 @@ public class CQLDistributedStoreManagerTest extends DistributedStoreManagerTest<
     }
 
     @BeforeEach
-    public void setUp() throws BackendException {
-        manager = new CQLStoreManager(CassandraStorageSetup.getCQLConfiguration(this.getClass().getSimpleName()));
+    public void setUp(TestInfo testInfo) throws BackendException {
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
+        ModifiableConfiguration c = CassandraStorageSetup.getCQLConfiguration(this.getClass().getSimpleName());
+        manager =new CQLStoreManagerFactory(c).getManager(c);
         store = manager.openDatabase("distributedcf");
     }
 

@@ -14,7 +14,7 @@
 
 package org.janusgraph.diskstorage.cql;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.*;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.*;
 
 import org.janusgraph.TestCategory;
 import org.janusgraph.diskstorage.BackendException;
@@ -37,7 +37,7 @@ public class CQLLogTest extends KCVSLogTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManager(c);
+        return new CQLStoreManagerFactory(c).getManager(c);
     }
 
     @Override

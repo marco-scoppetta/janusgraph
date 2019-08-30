@@ -17,7 +17,7 @@ package org.janusgraph.blueprints.cql;
 import org.apache.tinkerpop.gremlin.GraphProvider;
 import org.janusgraph.blueprints.AbstractJanusGraphComputerProvider;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 
 @GraphProvider.Descriptor(computer = FulgoraGraphComputer.class)

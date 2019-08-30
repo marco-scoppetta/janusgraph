@@ -68,7 +68,6 @@
         </repository>
     </distributionManagement>
     <properties>
-        <titan.compatible-versions>1.0.0,1.1.0-SNAPSHOT</titan.compatible-versions>
         <tinkerpop.version>3.4.1</tinkerpop.version>
         <junit-platform.version>1.4.0</junit-platform.version>
         <junit.version>5.4.0</junit.version>

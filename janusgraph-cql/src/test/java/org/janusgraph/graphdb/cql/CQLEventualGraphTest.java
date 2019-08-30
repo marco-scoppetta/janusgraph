@@ -15,15 +15,15 @@
 package org.janusgraph.graphdb.cql;
 
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.graphdb.JanusGraphEventualGraphTest;
 import org.junit.jupiter.api.BeforeAll;
 
 public class CQLEventualGraphTest extends JanusGraphEventualGraphTest {
 
     @Override
-    public WriteConfiguration getConfiguration() {
-        return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
+        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
     }
 
     @BeforeAll

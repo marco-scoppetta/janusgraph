@@ -67,9 +67,7 @@ public class ConfigOption<O> extends ConfigElement {
         LOCAL
     }
 
-    private static final Logger log =
-            LoggerFactory.getLogger(ConfigOption.class);
-
+    private static final Logger log = LoggerFactory.getLogger(ConfigOption.class);
     private static final EnumSet<Type> managedTypes = EnumSet.of(Type.FIXED, Type.GLOBAL_OFFLINE, Type.GLOBAL);
 
     /**

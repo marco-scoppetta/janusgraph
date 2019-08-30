@@ -31,6 +31,8 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.RecordIterator;
+import org.janusgraph.graphdb.JanusGraphBaseTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.vavr.Function1;
@@ -39,10 +41,16 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Array;
 import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
+import org.junit.jupiter.api.TestInfo;
 
 public class CQLResultSetKeyIteratorTest {
 
     private static final SliceQuery ALL_COLUMNS = new SliceQuery(BufferUtil.zeroBuffer(1), BufferUtil.oneBuffer(128));
+
+    @BeforeEach
+    public void print(TestInfo testInfo){
+        JanusGraphBaseTest.fancyPrintOut(testInfo);
+    }
 
     @Test
     public void testIterator() throws IOException {

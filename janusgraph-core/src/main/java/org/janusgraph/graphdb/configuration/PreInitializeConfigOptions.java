@@ -19,6 +19,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Read about this annotation here: https://groups.google.com/forum/#!topic/aureliusgraphs/7TjnETTXQAo
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PreInitializeConfigOptions {

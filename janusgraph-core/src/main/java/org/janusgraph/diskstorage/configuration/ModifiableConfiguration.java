@@ -21,12 +21,17 @@ import com.google.common.base.Preconditions;
 import java.util.Map;
 
 /**
+ * This configuration extends BasicConfiguration, adding 'set' and 'remove' capabilities to it.
+ * It is also possible to Freeze this Configuration, in order to make it read-only again.
  *
  * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class ModifiableConfiguration extends BasicConfiguration {
 
+    private static final String FROZEN_KEY = "hidden.frozen";
     private final WriteConfiguration config;
+    private Boolean isFrozen;
+
 
     public ModifiableConfiguration(ConfigNamespace root, WriteConfiguration config, Restriction restriction) {
         super(root, config, restriction);
@@ -34,27 +39,27 @@ public class ModifiableConfiguration extends BasicConfiguration {
         this.config = config;
     }
 
-    public<O> ModifiableConfiguration set(ConfigOption<O> option, O value, String... umbrellaElements) {
+    public <O> ModifiableConfiguration set(ConfigOption<O> option, O value, String... umbrellaElements) {
         verifyOption(option);
         Preconditions.checkArgument(hasUpgradeableFixed(option.getName()) ||
-                                    !option.isFixed() || !isFrozen(), "Cannot change configuration option: %s", option);
-        String key = super.getPath(option,umbrellaElements);
+                !option.isFixed() || !isFrozen(), "Cannot change configuration option: %s", option);
+        String key = super.getPath(option, umbrellaElements);
         value = option.verify(value);
-        config.set(key,value);
+        config.set(key, value);
         return this;
     }
 
-    public void setAll(Map<ConfigElement.PathIdentifier,Object> options) {
-        for (Map.Entry<ConfigElement.PathIdentifier,Object> entry : options.entrySet()) {
+    public void setAll(Map<ConfigElement.PathIdentifier, Object> options) {
+        for (Map.Entry<ConfigElement.PathIdentifier, Object> entry : options.entrySet()) {
             Preconditions.checkArgument(entry.getKey().element.isOption());
             set((ConfigOption) entry.getKey().element, entry.getValue(), entry.getKey().umbrellaElements);
         }
     }
 
-    public<O> void remove(ConfigOption<O> option, String... umbrellaElements) {
+    public <O> void remove(ConfigOption<O> option, String... umbrellaElements) {
         verifyOption(option);
         Preconditions.checkArgument(!option.isFixed() || !isFrozen(), "Cannot change configuration option: %s", option);
-        String key = super.getPath(option,umbrellaElements);
+        String key = super.getPath(option, umbrellaElements);
         config.remove(key);
     }
 
@@ -70,5 +75,17 @@ public class ModifiableConfiguration extends BasicConfiguration {
     @Override
     public WriteConfiguration getConfiguration() {
         return config;
+    }
+
+    public boolean isFrozen() {
+        if (null == isFrozen) {
+            Boolean frozen = config.get(FROZEN_KEY, Boolean.class);
+            isFrozen = (null == frozen) ? false : frozen;
+        }
+        return isFrozen;
+    }
+
+    private void setFrozen() {
+        isFrozen = true;
     }
 }

@@ -22,6 +22,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.FactoriesTracker;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphElement;
@@ -47,6 +48,7 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.log.Log;
 import org.janusgraph.diskstorage.log.LogManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLogManager;
@@ -66,6 +68,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -92,49 +95,54 @@ public abstract class JanusGraphBaseTest {
     public JanusGraphTransaction tx;
     public JanusGraphManagement mgmt;
     public TestInfo testInfo;
+    public StoreManagerFactory storeManagerFactory;
 
     public Map<String, LogManager> logManagers;
 
     public JanusGraphBaseTest() {
     }
 
-    public abstract WriteConfiguration getConfiguration();
+    public abstract WriteConfiguration getConfigurationWithRandomKeyspace();
 
     public Configuration getConfig() {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
     }
 
-    public static void clearGraph(WriteConfiguration config) throws BackendException {
+    public void clearGraph(WriteConfiguration config) throws BackendException {
         getBackend(config).clearStorage();
     }
 
-    public static Backend getBackend(WriteConfiguration config) {
+    public Backend getBackend(WriteConfiguration config) {
         ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
-        return new Backend(adjustedConfig);
+        return new Backend(adjustedConfig, this.storeManagerFactory);
     }
 
-    private void fancyPrintOut(TestInfo testInfo) {
-        int totLength = 140;
+    public static void fancyPrintOut(TestInfo testInfo) {
+        // Don't print anything if tests started from within IntelliJ
+        // TODO add system property when invoking tests from CircleCI
+        if (System.getProperties().containsKey("idea.test.cyclic.buffer.size")) return;
+        int totLength = 170;
         String centralText = testInfo.getTestClass().get().getSimpleName() + ": " + testInfo.getDisplayName();
         int rightSpaceLength = totLength - centralText.length();
         StringBuilder rightSpace = new StringBuilder();
         for (int i = 0; i < rightSpaceLength; i++) {
             rightSpace.append("=");
         }
-        System.out.println("\n\n============ RUNNING: [ " + centralText + " ] " + rightSpace.toString());
+        System.out.println("\n\nRUNNING: [ " + centralText + " ] " + rightSpace.toString());
     }
 
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
+        FactoriesTracker.reset();
         fancyPrintOut(testInfo);
         this.testInfo = testInfo;
-        this.config = getConfiguration();
+        this.config = getConfigurationWithRandomKeyspace();
         TestGraphConfigs.applyOverrides(config);
-        clearGraph(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
+        this.storeManagerFactory = JanusGraphFactory.getFactory(readConfig);
         open(config);
     }
 
@@ -142,6 +150,11 @@ public abstract class JanusGraphBaseTest {
         long s = System.currentTimeMillis();
         graph = JanusGraphFactory.open(config);
         long e = System.currentTimeMillis();
+        System.out.println("Time to open a new Graph: " + (e - s));
+        graph.close();
+        s = System.currentTimeMillis();
+        graph = JanusGraphFactory.open(config);
+        e = System.currentTimeMillis();
         System.out.println("Time to open a new Graph: " + (e - s));
         features = graph.getConfiguration().getStoreFeatures();
         tx = graph.newTransaction();
@@ -152,6 +165,8 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
+        this.storeManagerFactory.close();
+        System.out.println("============================== OPEN FACTORIES: " + FactoriesTracker.openFactories());
     }
 
     public void finishSchema() {
@@ -192,13 +207,12 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void clopen(Object... settings) {
-        config = getConfiguration();
         if (mgmt != null && mgmt.isOpen()) mgmt.rollback();
         if (null != tx && tx.isOpen()) tx.commit();
         if (settings != null && settings.length > 0) {
-            final Map<TestConfigOption, Object> options = validateConfigOptions(settings);
+            Map<TestConfigOption, Object> options = validateConfigOptions(settings);
             JanusGraphManagement janusGraphManagement = null;
-            final ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
+            ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
             for (final Map.Entry<TestConfigOption, Object> option : options.entrySet()) {
                 if (option.getKey().option.isLocal()) {
                     modifiableConfiguration.set(option.getKey().option, option.getValue(), option.getKey().umbrella);
@@ -279,7 +293,7 @@ public abstract class JanusGraphBaseTest {
             configuration.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "reader");
             configuration.set(GraphDatabaseConfiguration.LOG_READ_INTERVAL, Duration.ofMillis(500L), logManagerName);
             if (logStoreManager == null) {
-                logStoreManager = Backend.getStorageManager(configuration);
+                logStoreManager = storeManagerFactory.getManager(configuration);
             }
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();
@@ -487,7 +501,7 @@ public abstract class JanusGraphBaseTest {
     }
 
     public JanusGraph getForceIndexGraph() throws BackendException {
-        final ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, getConfiguration(), BasicConfiguration.Restriction.NONE);
+        final ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.FORCE_INDEX_USAGE, true);
         final WriteConfiguration writeConfig = adjustedConfig.getConfiguration();
         TestGraphConfigs.applyOverrides(writeConfig);

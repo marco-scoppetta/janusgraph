@@ -14,16 +14,18 @@
 
 package org.janusgraph.diskstorage.configuration;
 
-import com.google.common.collect.ImmutableSet;
+import org.apache.commons.configuration.BaseConfiguration;
 import org.janusgraph.core.util.ReflectiveConfigOptionLoader;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import org.apache.commons.configuration.BaseConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.StreamSupport;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -87,7 +89,7 @@ public class ConfigurationTest {
             config.set(retry,(short)100);
             fail();
         } catch (IllegalArgumentException ignored) {}
-//        System.out.println(userconfig.get("storage"));
+
         userconfig.close();
         ReadConfiguration localConfig = userconfig.getConfiguration();
 
@@ -116,29 +118,6 @@ public class ConfigurationTest {
         userconfig.set("indexes.find.name","lulu");
 
         userconfig.close();
-        ReadConfiguration globalConfig = userconfig.getConfiguration();
-
-        MixedConfiguration mixed = new MixedConfiguration(root,globalConfig,localConfig);
-        assertEquals(ImmutableSet.of("search","find"),mixed.getContainedNamespaces(indexes));
-        Configuration search = mixed.restrictTo("search");
-        assertEquals("foo",search.get(indexback));
-        assertEquals(400,search.get(ping).intValue());
-        assertEquals(100,mixed.get(ping,"find").intValue());
-        assertEquals(false, mixed.get(presort, "find"));
-        assertEquals(400,mixed.get(ping,"search").intValue());
-        assertEquals(false, mixed.get(presort, "search"));
-        assertFalse(mixed.has(bim));
-        assertTrue(mixed.has(bits));
-        assertEquals(5,mixed.getSubset(storage).size());
-
-        assertEquals(1.5d, (double)mixed.get(bar));
-        assertEquals("localhost",mixed.get(hostnames)[0]);
-        assertEquals(1111,mixed.get(locktime).longValue());
-
-        mixed.close();
-
-        //System.out.println(ConfigElement.toString(root));
-
     }
 
     @Test

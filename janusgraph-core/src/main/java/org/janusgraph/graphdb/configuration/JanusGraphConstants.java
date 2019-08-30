@@ -14,19 +14,16 @@
 
 package org.janusgraph.graphdb.configuration;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Set;
-import java.util.Properties;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import org.janusgraph.core.JanusGraphFactory;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Collection of constants used throughput the JanusGraph codebase.
@@ -43,20 +40,9 @@ public class JanusGraphConstants {
     public static final String VERSION;
 
     /**
-     * Past versions of Titan Graph with which the runtime version shares a compatible storage format
-     */
-    public static final List<String> TITAN_COMPATIBLE_VERSIONS;
-
-    /**
      * Name of the ids.store-name used by JanusGraph which is configurable
      */
     public static final String JANUSGRAPH_ID_STORE_NAME = "janusgraph_ids";
-
-    /**
-     * Past name of the ids.store-name used by Titan Graph but which was not configurable
-     */
-    public static final String TITAN_ID_STORE_NAME = "titan_ids";
-
 
     /**
      * Storage format version currently used by JanusGraph, version 1 is for JanusGraph 0.2.x and below
@@ -94,17 +80,10 @@ public class JanusGraphConstants {
 
         VERSION = props.getProperty("janusgraph.version");
         STORAGE_VERSION = props.getProperty("janusgraph.storage-version");
-        TITAN_COMPATIBLE_VERSIONS = getCompatibleVersions(props, "titan.compatible-versions");
         UPGRADEABLE_FIXED = getPropertySet(props, "janusgraph.upgradeable-fixed");
     }
 
-    static List<String> getCompatibleVersions(Properties props, String key) {
-        ImmutableList.Builder<String> b = ImmutableList.builder();
-        b.addAll(Stream.of(props.getProperty(key, "").split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList()));
-        return b.build();
-    }
-
-    static final Set<String> getPropertySet(Properties props, String key) {
+    private static Set<String> getPropertySet(Properties props, String key) {
         ImmutableSet.Builder<String> buildSet = ImmutableSet.builder();
         buildSet.addAll(Stream.of(props.getProperty(key, "").split(",")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList()));
         return buildSet.build();

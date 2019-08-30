@@ -199,7 +199,7 @@ public class ConfiguredGraphFactoryTest {
             IllegalArgumentException graph1 = assertThrows(IllegalArgumentException.class, () -> {
                 final StandardJanusGraph graph2 = (StandardJanusGraph) ConfiguredGraphFactory.open("graph1");
             });
-            assertEquals("Could not find implementation class: bogusBackend", graph1.getMessage());
+            assertEquals("Could not find implementation class for backend: bogusBackend", graph1.getMessage());
         } finally {
             ConfiguredGraphFactory.removeConfiguration("graph1");
             ConfiguredGraphFactory.close("graph1");

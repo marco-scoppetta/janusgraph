@@ -40,8 +40,8 @@ public abstract class AbstractStoreManager implements StoreManager {
     protected final Configuration storageConfig;
 
     public AbstractStoreManager(Configuration storageConfig) {
-        batchLoading = storageConfig.get(STORAGE_BATCH);
-        boolean transactional = storageConfig.get(STORAGE_TRANSACTIONAL);
+        batchLoading = storageConfig.get(STORAGE_BATCH); // read from local config
+        boolean transactional = storageConfig.get(STORAGE_TRANSACTIONAL); // check both in global and local
         if (batchLoading) {
             transactional = false;
         }
@@ -49,18 +49,18 @@ public abstract class AbstractStoreManager implements StoreManager {
         this.storageConfig = storageConfig;
     }
 
-    public Configuration getStorageConfig() {
+    protected Configuration getStorageConfig() {
         return storageConfig;
     }
 
     public EntryMetaData[] getMetaDataSchema(String storeName) {
         List<EntryMetaData> schemaBuilder = Lists.newArrayList();
         StoreFeatures features = getFeatures();
-        if (features.hasTimestamps() && storageConfig.get(STORE_META_TIMESTAMPS,storeName))
+        if (features.hasTimestamps() && storageConfig.get(STORE_META_TIMESTAMPS, storeName))
             schemaBuilder.add(EntryMetaData.TIMESTAMP);
-        if (features.hasCellTTL() && storageConfig.get(STORE_META_TTL,storeName))
+        if (features.hasCellTTL() && storageConfig.get(STORE_META_TTL, storeName))
             schemaBuilder.add(EntryMetaData.TTL);
-        if (features.hasVisibility() && storageConfig.get(STORE_META_VISIBILITY,storeName))
+        if (features.hasVisibility() && storageConfig.get(STORE_META_VISIBILITY, storeName))
             schemaBuilder.add(EntryMetaData.VISIBILITY);
 
         if (schemaBuilder.isEmpty()) return StaticArrayEntry.EMPTY_SCHEMA;

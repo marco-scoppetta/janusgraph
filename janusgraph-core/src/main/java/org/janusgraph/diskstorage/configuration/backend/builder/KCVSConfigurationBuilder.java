@@ -14,59 +14,47 @@
 
 package org.janusgraph.diskstorage.configuration.backend.builder;
 
-import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.diskstorage.BackendException;
+import com.google.common.base.Preconditions;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.backend.KCVSConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.BackendOperation;
-import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
+import org.janusgraph.diskstorage.util.time.TimestampProviders;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
+import java.time.Duration;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.SETUP_WAITTIME;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.SYSTEM_CONFIGURATION_IDENTIFIER;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TIMESTAMP_PROVIDER;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USER_CONFIGURATION_IDENTIFIER;
 
 /**
- * Builder to build {@link KCVSConfiguration} instances
+ * Builder to build {@link KCVSConfiguration} instances:
+ *
+ * All KCVSConfigurations read from 'system_properties' Store, the difference is that one reads key: 'configuration' whereas the other reads key: 'userconfig'
  */
 public class KCVSConfigurationBuilder {
 
-    public KCVSConfiguration buildStandaloneGlobalConfiguration(final KeyColumnValueStoreManager manager, final Configuration config) {
-        try {
-            final StoreFeatures features = manager.getFeatures();
-            return buildGlobalConfiguration(new BackendOperation.TransactionalProvider() {
-                @Override
-                public StoreTransaction openTx() throws BackendException {
-                    return manager.beginTransaction(StandardBaseTransactionConfig.of(config.get(TIMESTAMP_PROVIDER),features.getKeyConsistentTxConfig()));
-                }
-
-                @Override
-                public void close() throws BackendException {
-                    manager.close();
-                }
-            },manager.openDatabase(SYSTEM_PROPERTIES_STORE_NAME),config);
-        } catch (BackendException e) {
-            throw new JanusGraphException("Could not open global configuration",e);
-        }
-    }
-
-    public KCVSConfiguration buildConfiguration(final BackendOperation.TransactionalProvider txProvider,
-                                                final KeyColumnValueStore store, final String identifier,
-                                                final Configuration config) {
-        try {
-            KCVSConfiguration keyColumnValueStoreConfiguration =
-                new KCVSConfiguration(txProvider,config,store,identifier);
-            keyColumnValueStoreConfiguration.setMaxOperationWaitTime(config.get(SETUP_WAITTIME));
-            return keyColumnValueStoreConfiguration;
-        } catch (BackendException e) {
-            throw new JanusGraphException("Could not open global configuration",e);
-        }
-    }
-
-    public KCVSConfiguration buildGlobalConfiguration(final BackendOperation.TransactionalProvider txProvider,
-                                                      final KeyColumnValueStore store,
-                                                      final Configuration config) {
+    /**
+     * Build KCVSConfiguration concerning Global Configuration, system wide
+     */
+    public KCVSConfiguration buildGlobalConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, Configuration config) {
         return buildConfiguration(txProvider, store, SYSTEM_CONFIGURATION_IDENTIFIER, config);
     }
+
+    /**
+     * Build KCVSConfiguration concerning User Configuration
+     */
+    public KCVSConfiguration buildUserConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, Configuration config) {
+        return buildConfiguration(txProvider, store, USER_CONFIGURATION_IDENTIFIER, config);
+    }
+
+    private KCVSConfiguration buildConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, String identifier, Configuration config) {
+        Duration setUpWaitingTime = config.get(SETUP_WAITTIME);
+        TimestampProviders timestampProvider = config.get(TIMESTAMP_PROVIDER);
+        Preconditions.checkArgument(Duration.ZERO.compareTo(setUpWaitingTime) < 0, "Wait time must be nonnegative: %s", setUpWaitingTime);
+
+        return new KCVSConfiguration(txProvider, timestampProvider, setUpWaitingTime, store, identifier);
+    }
+
 }

@@ -14,13 +14,11 @@
 
 package org.janusgraph.core;
 
-import org.janusgraph.graphdb.configuration.builder.GraphDatabaseConfigurationBuilder;
 import org.janusgraph.graphdb.management.ConfigurationManagementGraph;
 import org.janusgraph.graphdb.management.JanusGraphManager;
 import org.janusgraph.graphdb.database.management.ManagementSystem;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.graphdb.management.utils.ConfigurationManagementGraphNotEnabledException;
 import static org.janusgraph.graphdb.management.JanusGraphManager.JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG;
 

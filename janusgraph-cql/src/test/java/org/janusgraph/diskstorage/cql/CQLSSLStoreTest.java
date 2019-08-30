@@ -18,12 +18,12 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.enableSSL;
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.getCQLConfiguration;
-import static org.janusgraph.diskstorage.cql.CassandraStorageSetup.startCleanEmbedded;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.enableSSL;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.getCQLConfiguration;
+import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.startCleanEmbedded;
 
-//@Tag("CASSANDRA_SSL_TESTS") // do we need this?
 public class CQLSSLStoreTest extends CQLStoreTest {
 
     public CQLSSLStoreTest() throws BackendException {
@@ -40,7 +40,7 @@ public class CQLSSLStoreTest extends CQLStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManager(c);
+        return new CQLStoreManagerFactory(c).getManager(c);
     }
 
     @Override

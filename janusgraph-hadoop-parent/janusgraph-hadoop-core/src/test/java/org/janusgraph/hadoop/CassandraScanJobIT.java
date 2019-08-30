@@ -15,11 +15,21 @@
 package org.janusgraph.hadoop;
 
 
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.janusgraph.core.JanusGraphVertex;
-import org.janusgraph.diskstorage.*;
-import org.janusgraph.diskstorage.configuration.*;
-import org.janusgraph.diskstorage.cql.CQLStoreManager;
-import org.janusgraph.diskstorage.cql.CassandraStorageSetup;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.KeyColumnValueStoreUtil;
+import org.janusgraph.diskstorage.KeyValueStoreUtil;
+import org.janusgraph.diskstorage.SimpleScanJob;
+import org.janusgraph.diskstorage.SimpleScanJobRunner;
+import org.janusgraph.diskstorage.configuration.ConfigElement;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.diskstorage.cql.CQLStoreManagerFactory;
+import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
@@ -32,9 +42,6 @@ import org.janusgraph.hadoop.config.JanusGraphHadoopConfiguration;
 import org.janusgraph.hadoop.formats.cql.CqlInputFormat;
 import org.janusgraph.hadoop.scan.CassandraHadoopScanRunner;
 import org.janusgraph.hadoop.scan.HadoopScanMapper;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +50,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CassandraScanJobIT extends JanusGraphBaseTest {
 
@@ -59,11 +67,11 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
         String[][] values = KeyValueStoreUtil.generateData(keys, cols);
         //Make it only half the number of columns for every 2nd key
         for (int i = 0; i < values.length; i++) {
-            if (i%2==0) values[i]= Arrays.copyOf(values[i], cols / 2);
+            if (i % 2 == 0) values[i] = Arrays.copyOf(values[i], cols / 2);
         }
         log.debug("Loading values: " + keys + "x" + cols);
-
-        KeyColumnValueStoreManager mgr = new CQLStoreManager(GraphDatabaseConfiguration.buildGraphConfiguration());
+        ModifiableConfiguration configuration = GraphDatabaseConfiguration.buildGraphConfiguration();
+        KeyColumnValueStoreManager mgr = new CQLStoreManagerFactory(configuration).getManager(configuration);
         KeyColumnValueStore store = mgr.openDatabase("edgestore");
         StoreTransaction tx = mgr.beginTransaction(StandardBaseTransactionConfig.of(TimestampProviders.MICRO));
         KeyColumnValueStoreUtil.loadValues(store, tx, values);
@@ -84,9 +92,8 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
     @Test
     public void testPartitionedVertexScan() throws Exception {
         tearDown();
-        clearGraph(getConfiguration());
-        WriteConfiguration partConf = getConfiguration();
-        open(partConf);
+        clearGraph(config);
+        open(config);
         mgmt.makeVertexLabel("part").partition().make();
         finishSchema();
         JanusGraphVertex supernode = graph.addVertex("part");
@@ -99,8 +106,8 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
         graph.tx().commit();
 
         org.apache.hadoop.conf.Configuration c = new org.apache.hadoop.conf.Configuration();
-        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.cassandra.keyspace", getClass().getSimpleName());
-        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.backend", "cassandrathrift");
+        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.cql.keyspace", getClass().getSimpleName());
+        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.backend", "cql");
         c.set("cassandra.input.partitioner.class", "org.apache.cassandra.dht.Murmur3Partitioner");
 
         Job job = getVertexJobWithDefaultMapper(c);
@@ -112,9 +119,8 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
     @Test
     public void testPartitionedVertexFilteredScan() throws Exception {
         tearDown();
-        clearGraph(getConfiguration());
-        WriteConfiguration partConf = getConfiguration();
-        open(partConf);
+        clearGraph(config);
+        open(config);
         mgmt.makeVertexLabel("part").partition().make();
         finishSchema();
         JanusGraphVertex supernode = graph.addVertex("part");
@@ -127,8 +133,8 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
         graph.tx().commit();
 
         org.apache.hadoop.conf.Configuration c = new org.apache.hadoop.conf.Configuration();
-        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.cassandra.keyspace", getClass().getSimpleName());
-        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.backend", "cassandrathrift");
+        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.cql.keyspace", getClass().getSimpleName());
+        c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.GRAPH_CONFIG_KEYS, true) + "." + "storage.backend", "cql");
         c.set(ConfigElement.getPath(JanusGraphHadoopConfiguration.FILTER_PARTITIONED_VERTICES), "true");
         c.set("cassandra.input.partitioner.class", "org.apache.cassandra.dht.Murmur3Partitioner");
 
@@ -156,7 +162,7 @@ public class CassandraScanJobIT extends JanusGraphBaseTest {
     }
 
     @Override
-    public WriteConfiguration getConfiguration() {
+    public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfiguration(getClass().getSimpleName()).getConfiguration();
     }
 }
