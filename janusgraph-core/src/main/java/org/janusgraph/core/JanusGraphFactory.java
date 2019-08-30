@@ -14,6 +14,7 @@
 
 package org.janusgraph.core;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import org.apache.commons.configuration.BaseConfiguration;
@@ -37,7 +38,9 @@ import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
 import org.janusgraph.diskstorage.configuration.builder.ReadConfigurationBuilder;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.keyvalue.OrderedKeyValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.keyvalue.OrderedKeyValueStoreManagerAdapter;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.builder.MergedConfigurationBuilder;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
@@ -163,10 +166,8 @@ public class JanusGraphFactory {
         // Create BasicConfiguration out of ReadConfiguration for local configuration
         BasicConfiguration localBasicConfiguration = new BasicConfiguration(ROOT_NS, configuration, BasicConfiguration.Restriction.NONE);
 
-        // Initialise StoreManager Factory with local configuration
-        StoreManagerFactory storeManagerFactory = getFactory(localBasicConfiguration);
         // Initialise Store Manager used to connect to 'system_properties' to read global configuration
-        KeyColumnValueStoreManager storeManager = storeManagerFactory.getManager(localBasicConfiguration);
+        KeyColumnValueStoreManager storeManager = getStoreManager(localBasicConfiguration);
 
         // Configurations read from system_properties -> Global for every graph existing in the current DB
         ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new KCVSConfigurationBuilder());
@@ -177,7 +178,7 @@ public class JanusGraphFactory {
         MergedConfiguration mergedConfig = MergedConfigurationBuilder.build(localBasicConfiguration, globalBasicConfig, storeManager);
 
         // Initialise the 2 components needed by StandardJanusGraph
-        Backend backend = new Backend(mergedConfig, storeManagerFactory);
+        Backend backend = new Backend(mergedConfig, storeManager);
         GraphDatabaseConfiguration dbConfig = new GraphDatabaseConfiguration(configuration, mergedConfig, storeManager.getFeatures());
 
 
@@ -250,13 +251,15 @@ public class JanusGraphFactory {
             graph.close();
         }
         org.janusgraph.diskstorage.configuration.Configuration backendConfiguration = g.getConfiguration().getConfiguration();
-        StoreManagerFactory storeManagerFactory = getFactory(backendConfiguration);
-        Backend backend = new Backend(backendConfiguration, storeManagerFactory);
+        KeyColumnValueStoreManager storeManager = getStoreManager(backendConfiguration);
+        Backend backend = new Backend(backendConfiguration, storeManager);
         try {
             backend.clearStorage();
         } finally {
             IOUtils.closeQuietly(backend);
-            storeManagerFactory.close();
+            // Force storeManager closure here because Backend might throw exception when closing after `clearStorage`
+            // there is already a try finally block in there, this is to be paranoid, verify this is not needed and remove
+            storeManager.close();
         }
     }
 
@@ -336,20 +339,21 @@ public class JanusGraphFactory {
     //###################################
 
 
-    //This is temporarily public because needed in tests, to be made private once we fix tingz around
-    public static StoreManagerFactory getFactory(org.janusgraph.diskstorage.configuration.Configuration configuration) {
+    @VisibleForTesting
+    public static KeyColumnValueStoreManager getStoreManager(org.janusgraph.diskstorage.configuration.Configuration configuration) {
         String className;
         String backendName = configuration.get(STORAGE_BACKEND);
         switch (backendName) {
             case "cql":
-                className = "org.janusgraph.diskstorage.cql.CQLStoreManagerFactory";
+                className = "org.janusgraph.diskstorage.cql.CQLStoreManager";
                 break;
             case "inmemory":
-                className = "org.janusgraph.diskstorage.keycolumnvalue.inmemory.InMemoryStoreManagerFactory";
+                className = "org.janusgraph.diskstorage.keycolumnvalue.inmemory.InMemoryStoreManager";
                 break;
             case "foundationdb":
-                className = "io.grakn.janusgraph.diskstorage.foundationdb.FoundationDBStoreManagerFactory";
-                break;
+                className = "io.grakn.janusgraph.diskstorage.foundationdb.FoundationDBStoreManager";
+                OrderedKeyValueStoreManager foundationManager = ConfigurationUtil.instantiate(className, new Object[]{configuration}, new Class[]{org.janusgraph.diskstorage.configuration.Configuration.class});
+                return new OrderedKeyValueStoreManagerAdapter(foundationManager);
             default:
                 throw new IllegalArgumentException("Could not find implementation class for backend: " + backendName);
         }

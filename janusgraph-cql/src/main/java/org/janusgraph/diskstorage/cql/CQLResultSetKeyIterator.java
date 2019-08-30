@@ -46,7 +46,7 @@ class CQLResultSetKeyIterator extends AbstractIterator<StaticBuffer> implements 
     private StaticBuffer currentKey = null;
     private StaticBuffer lastKey = null;
 
-    CQLResultSetKeyIterator(final SliceQuery sliceQuery, final CQLColValGetter getter, final ResultSet resultSet) {
+    CQLResultSetKeyIterator(SliceQuery sliceQuery, CQLColValGetter getter, ResultSet resultSet) {
         this.sliceQuery = sliceQuery;
         this.getter = getter;
         this.iterator = Iterator.ofAll(resultSet.iterator())
@@ -88,9 +88,9 @@ class CQLResultSetKeyIterator extends AbstractIterator<StaticBuffer> implements 
         private final CQLColValGetter getter;
         private final Iterator<Tuple3<StaticBuffer, StaticBuffer, Row>> iterator;
 
-        EntryRecordIterator(final SliceQuery sliceQuery, final CQLColValGetter getter, final Iterator<Row> iterator, final StaticBuffer key) {
+        EntryRecordIterator(SliceQuery sliceQuery, CQLColValGetter getter, Iterator<Row> iterator, StaticBuffer key) {
             this.getter = getter;
-            final StaticBuffer sliceEnd = sliceQuery.getSliceEnd();
+            StaticBuffer sliceEnd = sliceQuery.getSliceEnd();
             this.iterator = iterator
                     .<Tuple3<StaticBuffer, StaticBuffer, Row>> map(row -> Tuple.of(
                             StaticArrayBuffer.of(row.getByteBuffer(CQLKeyColumnValueStore.COLUMN_COLUMN_NAME)),

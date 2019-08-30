@@ -132,7 +132,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
      * @param configuration data used in creating this store
      * @param closer        callback used to clean up references to this store in the store manager
      */
-    public CQLKeyColumnValueStore(final CQLStoreManager storeManager, final String tableName, final Configuration configuration, final Runnable closer) {
+    public CQLKeyColumnValueStore(CQLStoreManager storeManager, String tableName, Configuration configuration, Runnable closer) {
 
         this.storeManager = storeManager;
         this.executorService = this.storeManager.getExecutorService();
@@ -230,7 +230,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         this.session.execute(createTable.build());
     }
 
-    private static CreateTableWithOptions compressionOptions(final CreateTableWithOptions createTable, final Configuration configuration) {
+    private static CreateTableWithOptions compressionOptions(CreateTableWithOptions createTable, Configuration configuration) {
         if (!configuration.get(CF_COMPRESSION)) {
             // No compression
             return createTable.withNoCompression();
@@ -243,7 +243,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     }
 
-    private static CreateTableWithOptions compactionOptions(CreateTableWithOptions createTable, final Configuration configuration) {
+    private static CreateTableWithOptions compactionOptions(CreateTableWithOptions createTable, Configuration configuration) {
         if (!configuration.has(COMPACTION_STRATEGY)) {
             return createTable;
         }
@@ -274,8 +274,8 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh) throws BackendException {
-        final Future<EntryList> result = Future.fromJavaFuture(
+    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
+        Future<EntryList> result = Future.fromJavaFuture(
             this.executorService,
             this.session.executeAsync(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
@@ -290,7 +290,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys, final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public Map<StaticBuffer, EntryList> getSlice(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException {
         throw new UnsupportedOperationException("The CQL backend does not support multi-key queries");
     }
 
@@ -302,7 +302,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
      * @param result the future to wait on
      * @throws PermanentBackendException if the thread was interrupted while waiting for the future result
      */
-    private void interruptibleWait(final Future<?> result) throws PermanentBackendException {
+    private void interruptibleWait(Future<?> result) throws PermanentBackendException {
         try {
             result.await();
         } catch (Exception e) {
@@ -313,8 +313,8 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         }
     }
 
-    private static EntryList fromResultSet(final AsyncResultSet resultSet, final StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
-        final Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(ResultSets.newInstance(resultSet)));
+    private static EntryList fromResultSet(AsyncResultSet resultSet, StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
+        Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(ResultSets.newInstance(resultSet)));
 
         // Use the Iterable overload of ofByteBuffer as it's able to allocate
         // the byte array up front.
@@ -331,7 +331,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     /*
      * Used from CQLStoreManager
      */
-    BatchableStatement<BoundStatement> deleteColumn(final StaticBuffer key, final StaticBuffer column, final long timestamp) {
+    BatchableStatement<BoundStatement> deleteColumn(StaticBuffer key, StaticBuffer column, long timestamp) {
         return this.deleteColumn.bind()
             .setByteBuffer(KEY_BINDING, key.asByteBuffer())
             .setByteBuffer(COLUMN_BINDING, column.asByteBuffer())
@@ -341,8 +341,8 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     /*
      * Used from CQLStoreManager
      */
-    BatchableStatement<BoundStatement> insertColumn(final StaticBuffer key, final Entry entry, final long timestamp) {
-        final Integer ttl = (Integer) entry.getMetaData().get(EntryMetaData.TTL);
+    BatchableStatement<BoundStatement> insertColumn(StaticBuffer key, Entry entry, long timestamp) {
+        Integer ttl = (Integer) entry.getMetaData().get(EntryMetaData.TTL);
         if (ttl != null) {
             return this.insertColumnWithTTL.bind()
                 .setByteBuffer(KEY_BINDING, key.asByteBuffer())
@@ -359,20 +359,20 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public void mutate(final StaticBuffer key, final List<Entry> additions, final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
+    public void mutate(StaticBuffer key, List<Entry> additions, List<StaticBuffer> deletions, StoreTransaction txh) throws BackendException {
         this.storeManager.mutateMany(Collections.singletonMap(this.tableName, Collections.singletonMap(key, new KCVMutation(additions, deletions))), txh);
     }
 
     @Override
-    public void acquireLock(final StaticBuffer key, final StaticBuffer column, final StaticBuffer expectedValue, final StoreTransaction txh) throws BackendException {
-        final boolean hasLocking = this.storeManager.getFeatures().hasLocking();
+    public void acquireLock(StaticBuffer key, StaticBuffer column, StaticBuffer expectedValue, StoreTransaction txh) throws BackendException {
+        boolean hasLocking = this.storeManager.getFeatures().hasLocking();
         if (!hasLocking) {
             throw new UnsupportedOperationException(String.format("%s doesn't support locking", getClass()));
         }
     }
 
     @Override
-    public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(KeyRangeQuery query, StoreTransaction txh) throws BackendException {
         if (!this.storeManager.getFeatures().hasOrderedScan()) {
             throw new PermanentBackendException("This operation is only allowed when the byteorderedpartitioner is used.");
         }
@@ -392,7 +392,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(SliceQuery query, StoreTransaction txh) throws BackendException {
         if (this.storeManager.getFeatures().hasOrderedScan()) {
             throw new PermanentBackendException("This operation is only allowed when a random partitioner (md5 or murmur3) is used.");
         }

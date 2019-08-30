@@ -18,9 +18,8 @@ import static org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup.*;
 
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
-import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.junit.jupiter.api.BeforeAll;
 
 public class CQLMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
@@ -37,7 +36,7 @@ public class CQLMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
 
     @Override
-    public StoreManagerFactory openStorageManagerFactory() throws BackendException {
-        return new CQLStoreManagerFactory(getConfig());
+    public StoreManager openStorageManager() throws BackendException {
+        return new CQLStoreManager(getConfig());
     }
 }

@@ -62,7 +62,7 @@ public class ReadConfigurationBuilder {
 
             @Override
             public void close() throws BackendException {
-                storeManager.close();
+                // do nothing
             }
         };
         KeyColumnValueStore systemPropertiesStore;

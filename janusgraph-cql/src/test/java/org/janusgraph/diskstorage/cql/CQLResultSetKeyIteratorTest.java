@@ -45,7 +45,7 @@ import org.junit.jupiter.api.TestInfo;
 
 public class CQLResultSetKeyIteratorTest {
 
-    private static final SliceQuery ALL_COLUMNS = new SliceQuery(BufferUtil.zeroBuffer(1), BufferUtil.oneBuffer(128));
+    private static SliceQuery ALL_COLUMNS = new SliceQuery(BufferUtil.zeroBuffer(1), BufferUtil.oneBuffer(128));
 
     @BeforeEach
     public void print(TestInfo testInfo){
@@ -54,27 +54,27 @@ public class CQLResultSetKeyIteratorTest {
 
     @Test
     public void testIterator() throws IOException {
-        final Array<Row> rows = Array.rangeClosed(1, 100).map(idx -> {
-            final Row row = mock(Row.class);
+        Array<Row> rows = Array.rangeClosed(1, 100).map(idx -> {
+            Row row = mock(Row.class);
             when(row.getByteBuffer("key")).thenReturn(ByteBuffer.wrap(Integer.toString(idx / 5).getBytes()));
             when(row.getByteBuffer("column1")).thenReturn(ByteBuffer.wrap(Integer.toString(idx % 5).getBytes()));
             when(row.getByteBuffer("value")).thenReturn(ByteBuffer.wrap(Integer.toString(idx).getBytes()));
             return row;
         });
 
-        final ResultSet resultSet = mock(ResultSet.class);
+        ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.iterator()).thenReturn(rows.iterator());
 
-        final CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
-        try (final CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
+        CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
+        try (CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
             int i = 0;
             while (resultSetKeyIterator.hasNext()) {
-                final StaticBuffer next = resultSetKeyIterator.next();
+                StaticBuffer next = resultSetKeyIterator.next();
 
-                final RecordIterator<Entry> entries = resultSetKeyIterator.getEntries();
+                RecordIterator<Entry> entries = resultSetKeyIterator.getEntries();
                 while (entries.hasNext()) {
-                    final Row row = rows.get(i++);
-                    final Entry entry = entries.next();
+                    Row row = rows.get(i++);
+                    Entry entry = entries.next();
 
                     assertEquals(row.getByteBuffer("key"), next.asByteBuffer());
                     assertEquals(row.getByteBuffer("column1"), entry.getColumn().asByteBuffer());
@@ -86,36 +86,36 @@ public class CQLResultSetKeyIteratorTest {
 
     @Test
     public void testEmpty() throws IOException {
-        final Array<Row> rows = Array.empty();
+        Array<Row> rows = Array.empty();
 
-        final ResultSet resultSet = mock(ResultSet.class);
+        ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.iterator()).thenReturn(rows.iterator());
 
-        final CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
-        try (final CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
+        CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
+        try (CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
             assertFalse(resultSetKeyIterator.hasNext());
         }
     }
 
     @Test
     public void testUneven() throws IOException {
-        final Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
-        final ResultSet resultSet = generateMockedResultSet(keysMap);
+        Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
+        ResultSet resultSet = generateMockedResultSet(keysMap);
 
-        final CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
-        try (final CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
-            final Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
+        CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
+        try (CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
+            Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
             while (resultSetKeyIterator.hasNext()) {
-                final StaticBuffer next = resultSetKeyIterator.next();
-                try (final RecordIterator<Entry> entries = resultSetKeyIterator.getEntries()) {
-                    final Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>> current = iterator.next();
-                    final ByteBuffer currentKey = current._1;
-                    final Array<Tuple2<ByteBuffer, ByteBuffer>> columnValues = current._2;
+                StaticBuffer next = resultSetKeyIterator.next();
+                try (RecordIterator<Entry> entries = resultSetKeyIterator.getEntries()) {
+                    Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>> current = iterator.next();
+                    ByteBuffer currentKey = current._1;
+                    Array<Tuple2<ByteBuffer, ByteBuffer>> columnValues = current._2;
 
-                    final Iterator<Tuple2<ByteBuffer, ByteBuffer>> columnIterator = columnValues.iterator();
+                    Iterator<Tuple2<ByteBuffer, ByteBuffer>> columnIterator = columnValues.iterator();
                     while (entries.hasNext()) {
-                        final Entry entry = entries.next();
-                        final Tuple2<ByteBuffer, ByteBuffer> columnAndValue = columnIterator.next();
+                        Entry entry = entries.next();
+                        Tuple2<ByteBuffer, ByteBuffer> columnAndValue = columnIterator.next();
 
                         assertEquals(currentKey, next.asByteBuffer());
                         assertEquals(columnAndValue._1, entry.getColumn().asByteBuffer());
@@ -129,24 +129,24 @@ public class CQLResultSetKeyIteratorTest {
 
     @Test
     public void testPartialIterateColumns() throws IOException {
-        final Random random = new Random();
-        final Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
-        final ResultSet resultSet = generateMockedResultSet(keysMap);
+        Random random = new Random();
+        Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
+        ResultSet resultSet = generateMockedResultSet(keysMap);
 
-        final CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
-        try (final CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
-            final Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
+        CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
+        try (CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
+            Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
             while (resultSetKeyIterator.hasNext()) {
-                final StaticBuffer next = resultSetKeyIterator.next();
-                try (final RecordIterator<Entry> entries = resultSetKeyIterator.getEntries()) {
-                    final Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>> current = iterator.next();
-                    final ByteBuffer currentKey = current._1;
-                    final Array<Tuple2<ByteBuffer, ByteBuffer>> columnValues = current._2;
+                StaticBuffer next = resultSetKeyIterator.next();
+                try (RecordIterator<Entry> entries = resultSetKeyIterator.getEntries()) {
+                    Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>> current = iterator.next();
+                    ByteBuffer currentKey = current._1;
+                    Array<Tuple2<ByteBuffer, ByteBuffer>> columnValues = current._2;
 
-                    final Iterator<Tuple2<ByteBuffer, ByteBuffer>> columnIterator = columnValues.iterator();
+                    Iterator<Tuple2<ByteBuffer, ByteBuffer>> columnIterator = columnValues.iterator();
                     while (entries.hasNext()) {
-                        final Entry entry = entries.next();
-                        final Tuple2<ByteBuffer, ByteBuffer> columnAndValue = columnIterator.next();
+                        Entry entry = entries.next();
+                        Tuple2<ByteBuffer, ByteBuffer> columnAndValue = columnIterator.next();
 
                         assertEquals(currentKey, next.asByteBuffer());
                         assertEquals(columnAndValue._1, entry.getColumn().asByteBuffer());
@@ -165,24 +165,24 @@ public class CQLResultSetKeyIteratorTest {
 
     @Test
     public void testNoIterateColumns() throws IOException {
-        final Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
-        final ResultSet resultSet = generateMockedResultSet(keysMap);
+        Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap = generateRandomKeysMap();
+        ResultSet resultSet = generateMockedResultSet(keysMap);
 
-        final CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
-        try (final CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
-            final Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
+        CQLColValGetter getter = new CQLColValGetter(new EntryMetaData[0]);
+        try (CQLResultSetKeyIterator resultSetKeyIterator = new CQLResultSetKeyIterator(ALL_COLUMNS, getter, resultSet)) {
+            Iterator<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> iterator = keysMap.iterator();
             while (resultSetKeyIterator.hasNext()) {
-                final StaticBuffer next = resultSetKeyIterator.next();
+                StaticBuffer next = resultSetKeyIterator.next();
                 assertEquals(iterator.next()._1, next.asByteBuffer());
             }
         }
     }
 
     private Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> generateRandomKeysMap(){
-        final Random random = new Random();
+        Random random = new Random();
 
-        final Function1<Integer, ByteBuffer> randomLong = idx -> {
-            final ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES).putLong(random.nextLong());
+        Function1<Integer, ByteBuffer> randomLong = idx -> {
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES).putLong(random.nextLong());
             buffer.flip();
             return buffer;
         };
@@ -194,15 +194,15 @@ public class CQLResultSetKeyIteratorTest {
     }
 
     private ResultSet generateMockedResultSet(Array<Tuple2<ByteBuffer, Array<Tuple2<ByteBuffer, ByteBuffer>>>> keysMap){
-        final Seq<Row> rows = keysMap.flatMap(tuple -> tuple._2.map(columnAndValue -> {
-            final Row row = mock(Row.class);
+        Seq<Row> rows = keysMap.flatMap(tuple -> tuple._2.map(columnAndValue -> {
+            Row row = mock(Row.class);
             when(row.getByteBuffer("key")).thenReturn(tuple._1);
             when(row.getByteBuffer("column1")).thenReturn(columnAndValue._1);
             when(row.getByteBuffer("value")).thenReturn(columnAndValue._2);
             return row;
         }));
 
-        final ResultSet resultSet = mock(ResultSet.class);
+        ResultSet resultSet = mock(ResultSet.class);
         when(resultSet.iterator()).thenReturn(rows.iterator());
 
         return resultSet;

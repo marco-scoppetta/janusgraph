@@ -18,7 +18,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-import org.janusgraph.diskstorage.configuration.BasicConfiguration;
+import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.*;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
@@ -52,7 +53,6 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     private KCVSCache store1;
     protected final String storeName2 = "testStore2";
     private KCVSCache store2;
-    private StoreManagerFactory storeManagerFactory;
 
 
     public KeyColumnValueStoreManager manager;
@@ -64,8 +64,7 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
         JanusGraphBaseTest.fancyPrintOut(testInfo);
-        storeManagerFactory = openStorageManagerFactory();
-        StoreManager m = storeManagerFactory.getManager(getConfig());
+        StoreManager m = openStorageManager();
         m.clearStorage();
         m.close();
         open();
@@ -74,15 +73,14 @@ public abstract class MultiWriteKeyColumnValueStoreTest extends AbstractKCVSTest
     @AfterEach
     public void tearDown() throws Exception {
         close();
-        storeManagerFactory.close();
     }
 
-    public abstract StoreManagerFactory openStorageManagerFactory() throws BackendException;
+    public abstract StoreManager openStorageManager() throws BackendException;
 
     public abstract ModifiableConfiguration getConfig();
 
     public void open() throws BackendException {
-        manager = storeManagerFactory.getManager(getConfig());
+        manager = JanusGraphFactory.getStoreManager(getConfig());
         tx = new CacheTransaction(manager.beginTransaction(getTxConfig()), manager, bufferSize, Duration.ofMillis(100), true);
         store1 = new NoKCVSCache(manager.openDatabase(storeName1));
         store2 = new NoKCVSCache(manager.openDatabase(storeName2));
