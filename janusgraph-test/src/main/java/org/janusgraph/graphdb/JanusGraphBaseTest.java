@@ -160,6 +160,8 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
+        // This is needed because when using Cassandra the memory usage increases with every new keyspace,
+        // to avoid killing the Garbage Collector we delete every keyspace once we're done with it.
         JanusGraphFactory.drop(graph);
     }
 
