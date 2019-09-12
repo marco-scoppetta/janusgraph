@@ -15,10 +15,10 @@
 package org.janusgraph.diskstorage.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTableWithOptions;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.datastax.oss.driver.internal.core.cql.ResultSets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.vavr.Lazy;
@@ -34,7 +33,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import io.vavr.collection.Array;
 import io.vavr.collection.Iterator;
-import io.vavr.concurrent.Future;
 import io.vavr.control.Try;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -132,17 +130,20 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
      * @param configuration data used in creating this store
      * @param closer        callback used to clean up references to this store in the store manager
      */
-    public CQLKeyColumnValueStore(final CQLStoreManager storeManager, final String tableName, final Configuration configuration, final Runnable closer) {
+    public CQLKeyColumnValueStore(CQLStoreManager storeManager, String tableName, Configuration configuration, Runnable closer) {
 
         this.storeManager = storeManager;
         this.executorService = this.storeManager.getExecutorService();
         this.tableName = tableName;
         this.closer = closer;
         this.session = this.storeManager.getSession();
-        this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName));
+        // NOTE AGAIN: storeManager now only has access to localConfig (check JanusGraphFactory,
+        // it gets initialised before reading globalConfig, so getMetaDataSchema will probably fail as it need to read configs from `system_properties`)
+        // This is a temporary tradeoff so that we dont have to init StoreManager twice!!
+        this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName)); // NOTE: this is probably reading only local config!!!!!!!!!!!
 
         if (shouldInitializeTable()) {
-            initializeTable(this.storeManager.getKeyspaceName(), tableName, configuration);
+            initialiseTable(this.storeManager.getKeyspaceName(), tableName, configuration);
         }
 
         this.getSlice = this.session.prepare(selectFrom(this.storeManager.getKeyspaceName(), this.tableName)
@@ -215,7 +216,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
             .orElse(true);
     }
 
-    private void initializeTable(String keyspaceName, String tableName, Configuration configuration) {
+    private void initialiseTable(String keyspaceName, String tableName, Configuration configuration) {
         CreateTableWithOptions createTable = createTable(keyspaceName, tableName)
             .ifNotExists()
             .withPartitionKey(KEY_COLUMN_NAME, DataTypes.BLOB)
@@ -230,7 +231,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         this.session.execute(createTable.build());
     }
 
-    private static CreateTableWithOptions compressionOptions(final CreateTableWithOptions createTable, final Configuration configuration) {
+    private static CreateTableWithOptions compressionOptions(CreateTableWithOptions createTable, Configuration configuration) {
         if (!configuration.get(CF_COMPRESSION)) {
             // No compression
             return createTable.withNoCompression();
@@ -243,7 +244,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     }
 
-    private static CreateTableWithOptions compactionOptions(CreateTableWithOptions createTable, final Configuration configuration) {
+    private static CreateTableWithOptions compactionOptions(CreateTableWithOptions createTable, Configuration configuration) {
         if (!configuration.has(COMPACTION_STRATEGY)) {
             return createTable;
         }
@@ -274,47 +275,24 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh) throws BackendException {
-        final Future<EntryList> result = Future.fromJavaFuture(
-            this.executorService,
-            this.session.executeAsync(this.getSlice.bind()
+    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
+        ResultSet result = this.session.execute(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                 .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
                 .setInt(LIMIT_BINDING, query.getLimit())
-                .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()))
-                .toCompletableFuture())
-            .map(resultSet -> fromResultSet(resultSet, this.getter));
-        interruptibleWait(result);
-        return result.getValue().get().getOrElseThrow(EXCEPTION_MAPPER);
+                .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()));
+
+        return fromResultSet(result, this.getter);
     }
 
     @Override
-    public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys, final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public Map<StaticBuffer, EntryList> getSlice(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException {
         throw new UnsupportedOperationException("The CQL backend does not support multi-key queries");
     }
 
-    /**
-     * VAVR Future.await will throw InterruptedException wrapped in a FatalException. If the Thread was in Object.wait, the interrupted
-     * flag will be cleared as a side effect and needs to be reset. This method checks that the underlying cause of the FatalException is
-     * InterruptedException and resets the interrupted flag.
-     *
-     * @param result the future to wait on
-     * @throws PermanentBackendException if the thread was interrupted while waiting for the future result
-     */
-    private void interruptibleWait(final Future<?> result) throws PermanentBackendException {
-        try {
-            result.await();
-        } catch (Exception e) {
-            if (e.getCause() instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            throw new PermanentBackendException(e.getCause());
-        }
-    }
-
-    private static EntryList fromResultSet(final AsyncResultSet resultSet, final StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
-        final Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(ResultSets.newInstance(resultSet)));
+    private static EntryList fromResultSet(ResultSet resultSet, StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
+        Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(resultSet));
 
         // Use the Iterable overload of ofByteBuffer as it's able to allocate
         // the byte array up front.
@@ -329,9 +307,9 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     /*
-     * Used from CQLStoreManager
+     * Used by CQLStoreManager
      */
-    BatchableStatement<BoundStatement> deleteColumn(final StaticBuffer key, final StaticBuffer column, final long timestamp) {
+    BatchableStatement<BoundStatement> deleteColumn(StaticBuffer key, StaticBuffer column, long timestamp) {
         return this.deleteColumn.bind()
             .setByteBuffer(KEY_BINDING, key.asByteBuffer())
             .setByteBuffer(COLUMN_BINDING, column.asByteBuffer())
@@ -339,10 +317,10 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     /*
-     * Used from CQLStoreManager
+     * Used by CQLStoreManager
      */
-    BatchableStatement<BoundStatement> insertColumn(final StaticBuffer key, final Entry entry, final long timestamp) {
-        final Integer ttl = (Integer) entry.getMetaData().get(EntryMetaData.TTL);
+    BatchableStatement<BoundStatement> insertColumn(StaticBuffer key, Entry entry, long timestamp) {
+        Integer ttl = (Integer) entry.getMetaData().get(EntryMetaData.TTL);
         if (ttl != null) {
             return this.insertColumnWithTTL.bind()
                 .setByteBuffer(KEY_BINDING, key.asByteBuffer())
@@ -359,20 +337,20 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public void mutate(final StaticBuffer key, final List<Entry> additions, final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
+    public void mutate(StaticBuffer key, List<Entry> additions, List<StaticBuffer> deletions, StoreTransaction txh) throws BackendException {
         this.storeManager.mutateMany(Collections.singletonMap(this.tableName, Collections.singletonMap(key, new KCVMutation(additions, deletions))), txh);
     }
 
     @Override
-    public void acquireLock(final StaticBuffer key, final StaticBuffer column, final StaticBuffer expectedValue, final StoreTransaction txh) throws BackendException {
-        final boolean hasLocking = this.storeManager.getFeatures().hasLocking();
+    public void acquireLock(StaticBuffer key, StaticBuffer column, StaticBuffer expectedValue, StoreTransaction txh) throws BackendException {
+        boolean hasLocking = this.storeManager.getFeatures().hasLocking();
         if (!hasLocking) {
             throw new UnsupportedOperationException(String.format("%s doesn't support locking", getClass()));
         }
     }
 
     @Override
-    public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(KeyRangeQuery query, StoreTransaction txh) throws BackendException {
         if (!this.storeManager.getFeatures().hasOrderedScan()) {
             throw new PermanentBackendException("This operation is only allowed when the byteorderedpartitioner is used.");
         }
@@ -392,7 +370,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(SliceQuery query, StoreTransaction txh) throws BackendException {
         if (this.storeManager.getFeatures().hasOrderedScan()) {
             throw new PermanentBackendException("This operation is only allowed when a random partitioner (md5 or murmur3) is used.");
         }

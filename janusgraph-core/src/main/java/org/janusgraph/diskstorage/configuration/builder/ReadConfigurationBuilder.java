@@ -45,9 +45,8 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
 public class ReadConfigurationBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReadConfigurationBuilder.class);
-
-    static final String BACKLEVEL_STORAGE_VERSION_EXCEPTION = "The storage version on the client or server is lower than the storage version of the graph: graph storage version %s vs. client storage version %s when opening graph %s.";
-    static final String INCOMPATIBLE_STORAGE_VERSION_EXCEPTION = "Storage version is incompatible with current client: graph storage version %s vs. client storage version %s when opening graph %s.";
+    private static final String BACKLEVEL_STORAGE_VERSION_EXCEPTION = "The storage version on the client or server is lower than the storage version of the graph: graph storage version %s vs. client storage version %s when opening graph %s.";
+    private static final String INCOMPATIBLE_STORAGE_VERSION_EXCEPTION = "Storage version is incompatible with current client: graph storage version %s vs. client storage version %s when opening graph %s.";
 
     public static ReadConfiguration buildGlobalConfiguration(BasicConfiguration localBasicConfiguration,
                                                              KeyColumnValueStoreManager storeManager,
@@ -62,7 +61,7 @@ public class ReadConfigurationBuilder {
 
             @Override
             public void close() throws BackendException {
-                storeManager.close();
+                // do nothing
             }
         };
         KeyColumnValueStore systemPropertiesStore;
