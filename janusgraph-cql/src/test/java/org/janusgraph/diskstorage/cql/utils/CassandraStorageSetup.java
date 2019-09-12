@@ -125,8 +125,7 @@ public class CassandraStorageSetup {
     public static ModifiableConfiguration enableSSL(final ModifiableConfiguration mc) {
         mc.set(SSL_ENABLED, true);
         mc.set(STORAGE_HOSTS, new String[]{HOSTNAME != null ? HOSTNAME : "127.0.0.1"});
-        mc.set(SSL_TRUSTSTORE_LOCATION,
-                Joiner.on(File.separator).join("target", "cassandra", "murmur-ssl", "conf", "test.truststore"));
+        mc.set(SSL_TRUSTSTORE_LOCATION, Joiner.on(File.separator).join("target", "cassandra", "murmur-ssl", "conf", "test.truststore"));
         mc.set(SSL_TRUSTSTORE_PASSWORD, "cassandra");
         return mc;
     }

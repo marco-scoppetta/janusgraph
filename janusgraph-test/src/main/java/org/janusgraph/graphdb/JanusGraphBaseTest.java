@@ -22,7 +22,6 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
-import org.janusgraph.core.FactoriesTracker;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphElement;
@@ -48,7 +47,6 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.log.Log;
 import org.janusgraph.diskstorage.log.LogManager;
 import org.janusgraph.diskstorage.log.kcvs.KCVSLogManager;
@@ -57,18 +55,15 @@ import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.types.StandardEdgeLabelMaker;
 import org.janusgraph.testutil.TestGraphConfigs;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.rules.TestName;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -95,7 +90,6 @@ public abstract class JanusGraphBaseTest {
     public JanusGraphTransaction tx;
     public JanusGraphManagement mgmt;
     public TestInfo testInfo;
-    public StoreManagerFactory storeManagerFactory;
 
     public Map<String, LogManager> logManagers;
 
@@ -109,14 +103,17 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void clearGraph(WriteConfiguration config) throws BackendException {
-        getBackend(config).clearStorage();
+        Backend backend = getBackend(config);
+        backend.clearStorage();
+        backend.close();
     }
 
-    public Backend getBackend(WriteConfiguration config) {
+    private Backend getBackend(WriteConfiguration config) {
         ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, "tmp");
         adjustedConfig.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "inst");
-        return new Backend(adjustedConfig, this.storeManagerFactory);
+        KeyColumnValueStoreManager manager = JanusGraphFactory.getStoreManager(adjustedConfig);
+        return new Backend(adjustedConfig, manager);
     }
 
     public static void fancyPrintOut(TestInfo testInfo) {
@@ -135,14 +132,12 @@ public abstract class JanusGraphBaseTest {
 
     @BeforeEach
     public void setUp(TestInfo testInfo) throws Exception {
-        FactoriesTracker.reset();
         fancyPrintOut(testInfo);
         this.testInfo = testInfo;
         this.config = getConfigurationWithRandomKeyspace();
         TestGraphConfigs.applyOverrides(config);
         logManagers = new HashMap<>();
         readConfig = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
-        this.storeManagerFactory = JanusGraphFactory.getFactory(readConfig);
         open(config);
     }
 
@@ -165,8 +160,9 @@ public abstract class JanusGraphBaseTest {
     public void tearDown() throws Exception {
         close();
         closeLogs();
-        this.storeManagerFactory.close();
-        System.out.println("============================== OPEN FACTORIES: " + FactoriesTracker.openFactories());
+        // This is needed because when using Cassandra the memory usage increases with every new keyspace,
+        // to avoid killing the Garbage Collector we delete every keyspace once we're done with it.
+        JanusGraphFactory.drop(graph);
     }
 
     public void finishSchema() {
@@ -293,7 +289,7 @@ public abstract class JanusGraphBaseTest {
             configuration.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID, "reader");
             configuration.set(GraphDatabaseConfiguration.LOG_READ_INTERVAL, Duration.ofMillis(500L), logManagerName);
             if (logStoreManager == null) {
-                logStoreManager = storeManagerFactory.getManager(configuration);
+                logStoreManager = JanusGraphFactory.getStoreManager(configuration);
             }
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();

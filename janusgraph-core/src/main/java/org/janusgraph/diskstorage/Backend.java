@@ -41,7 +41,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.ExpirationKCVSCache;
@@ -173,13 +172,10 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final ConcurrentHashMap<String, Locker> lockers = new ConcurrentHashMap<>();
 
     private final Configuration configuration;
-    private final StoreManagerFactory storeManagerFactory;
 
-    public Backend(Configuration configuration, StoreManagerFactory storeManagerFactory) {
+    public Backend(Configuration configuration, KeyColumnValueStoreManager manager) {
         this.configuration = configuration;
-        this.storeManagerFactory = storeManagerFactory;
 
-        KeyColumnValueStoreManager manager = storeManagerFactory.getManager(configuration);
         if (configuration.get(BASIC_METRICS)) {
             storeManager = new MetricInstrumentedStoreManager(manager, METRICS_STOREMANAGER_NAME, configuration.get(METRICS_MERGE_STORES), METRICS_MERGED_STORE);
         } else {
@@ -519,24 +515,26 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     public synchronized void close() throws BackendException {
         if (!hasAttemptedClose) {
-            hasAttemptedClose = true;
-            managementLogManager.close();
-            txLogManager.close();
-            userLogManager.close();
+            try {
+                hasAttemptedClose = true;
+                managementLogManager.close();
+                txLogManager.close();
+                userLogManager.close();
 
-            scanner.close();
-            if (edgeStore != null) edgeStore.close();
-            if (indexStore != null) indexStore.close();
-            if (idAuthority != null) idAuthority.close();
-            if (systemConfig != null) systemConfig.close();
-            if (userConfig != null) userConfig.close();
-            storeManager.close();
-            storeManagerFactory.close();
-            if (threadPool != null) {
-                threadPool.shutdown();
+                scanner.close();
+                if (edgeStore != null) edgeStore.close();
+                if (indexStore != null) indexStore.close();
+                if (idAuthority != null) idAuthority.close();
+                if (systemConfig != null) systemConfig.close();
+                if (userConfig != null) userConfig.close();
+                //Indexes
+                for (IndexProvider index : indexes.values()) index.close();
+            } finally {
+                storeManager.close();
+                if (threadPool != null) {
+                    threadPool.shutdown();
+                }
             }
-            //Indexes
-            for (IndexProvider index : indexes.values()) index.close();
         } else {
             log.debug("Backend {} has already been closed or cleared", this);
         }

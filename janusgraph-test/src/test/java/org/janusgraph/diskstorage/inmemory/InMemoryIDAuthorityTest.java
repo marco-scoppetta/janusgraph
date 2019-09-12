@@ -29,7 +29,7 @@ public class InMemoryIDAuthorityTest extends IDAuthorityTest {
      * The IDAllocationTest assumes that every StoreManager returned by
      * {@link #openStorageManager()} can see one another's reads and writes. In
      * the HBase and Cassandra tests, we can open a new StoreManager in every
-     * call to {@code openStorageManagerFactory} and they will all satisfy this
+     * call to {@code openStorageManager} and they will all satisfy this
      * constraint, since every manager opens with the same config and talks to
      * the same service. It's not really necessary to have separate managers,
      * but it's nice for getting an extra bit of test coverage. However,

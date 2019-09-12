@@ -36,7 +36,7 @@ public class CQLDistributedStoreManagerTest extends DistributedStoreManagerTest<
     public void setUp(TestInfo testInfo) throws BackendException {
         JanusGraphBaseTest.fancyPrintOut(testInfo);
         ModifiableConfiguration c = CassandraStorageSetup.getCQLConfiguration(this.getClass().getSimpleName());
-        manager =new CQLStoreManagerFactory(c).getManager(c);
+        manager = new CQLStoreManager(c);
         store = manager.openDatabase("distributedcf");
     }
 

@@ -72,7 +72,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     private CqlSession session;
 
     @InjectMocks
-    private CQLStoreManager mockManager = new CQLStoreManagerFactory(getBaseStorageConfiguration()).getManager(getBaseStorageConfiguration());
+    private CQLStoreManager mockManager = new CQLStoreManager(getBaseStorageConfiguration());
 
     public CQLStoreTest() throws BackendException {
     }
@@ -87,7 +87,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
     }
 
     private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
-        return new CQLStoreManagerFactory(c).getManager(c);
+        return new CQLStoreManager(c);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         when(session.getMetadata()).thenReturn(metadata);
         when(metadata.getKeyspace(mockManager.getKeyspaceName())).thenReturn(keyspaceMetadataOptional);
 
-        mockManager.initializeKeyspace();
+        mockManager.initialiseKeyspace();
 
         verify(session, never()).execute(any(Statement.class));
     }
@@ -242,7 +242,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         when(session.getMetadata()).thenReturn(metadata);
         when(metadata.getKeyspace(mockManager.getKeyspaceName())).thenReturn(keyspaceMetadataOptional);
 
-        mockManager.initializeKeyspace();
+        mockManager.initialiseKeyspace();
 
         verify(session, times(1)).execute(any(Statement.class));
     }

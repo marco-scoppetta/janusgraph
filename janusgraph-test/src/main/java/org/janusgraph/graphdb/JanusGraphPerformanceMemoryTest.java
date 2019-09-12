@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.janusgraph.core.util.TestTimeAccumulator;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.jupiter.api.Tag;
@@ -89,6 +90,8 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
         final AtomicInteger uidCounter = new AtomicInteger(0);
         Thread[] writeThreads = new Thread[4];
         long start = System.currentTimeMillis();
+        TestTimeAccumulator.reset();
+        System.out.println("statrting writes");
         for (int t = 0; t < writeThreads.length; t++) {
             writeThreads[t] = new Thread(() -> {
                 for (int r = 0; r < rounds; r++) {
@@ -113,12 +116,13 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
             writeThread.join();
         }
         System.out.println("Write time for " + (rounds * commitSize * writeThreads.length) + " vertices & edges: " + (System.currentTimeMillis() - start));
-
+        System.out.println("Time in driver for write: "+TestTimeAccumulator.getTotalTimeInMs());
         final int maxUID = uidCounter.get();
         final int trials = 1000;
         final String fixedName = "john";
-        Thread[] readThreads = new Thread[Runtime.getRuntime().availableProcessors() * 2];
+        Thread[] readThreads = new Thread[4];
         start = System.currentTimeMillis();
+        TestTimeAccumulator.reset();
         for (int t = 0; t < readThreads.length; t++) {
             readThreads[t] = new Thread(() -> {
                 JanusGraphTransaction tx = graph.newTransaction();
@@ -145,6 +149,7 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
             readThread.join();
         }
         System.out.println("Read time for " + (trials * readThreads.length) + " vertex lookups: " + (System.currentTimeMillis() - start));
+        System.out.println("Time in driver for read: "+TestTimeAccumulator.getTotalTimeInMs());
 
     }
 }
