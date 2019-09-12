@@ -15,10 +15,10 @@
 package org.janusgraph.diskstorage.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.servererrors.QueryValidationException;
@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTableWithOptions;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.datastax.oss.driver.internal.core.cql.ResultSets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.vavr.Lazy;
@@ -34,7 +33,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import io.vavr.collection.Array;
 import io.vavr.collection.Iterator;
-import io.vavr.concurrent.Future;
 import io.vavr.control.Try;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -145,7 +143,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName)); // NOTE: this is probably reading only local config!!!!!!!!!!!
 
         if (shouldInitializeTable()) {
-            initializeTable(this.storeManager.getKeyspaceName(), tableName, configuration);
+            initialiseTable(this.storeManager.getKeyspaceName(), tableName, configuration);
         }
 
         this.getSlice = this.session.prepare(selectFrom(this.storeManager.getKeyspaceName(), this.tableName)
@@ -218,7 +216,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
             .orElse(true);
     }
 
-    private void initializeTable(String keyspaceName, String tableName, Configuration configuration) {
+    private void initialiseTable(String keyspaceName, String tableName, Configuration configuration) {
         CreateTableWithOptions createTable = createTable(keyspaceName, tableName)
             .ifNotExists()
             .withPartitionKey(KEY_COLUMN_NAME, DataTypes.BLOB)
@@ -278,18 +276,14 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     @Override
     public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
-        Future<EntryList> result = Future.fromJavaFuture(
-            this.executorService,
-            this.session.executeAsync(this.getSlice.bind()
+        ResultSet result = this.session.execute(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                 .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
                 .setInt(LIMIT_BINDING, query.getLimit())
-                .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()))
-                .toCompletableFuture())
-            .map(resultSet -> fromResultSet(resultSet, this.getter));
-        interruptibleWait(result);
-        return result.getValue().get().getOrElseThrow(EXCEPTION_MAPPER);
+                .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()));
+
+        return fromResultSet(result, this.getter);
     }
 
     @Override
@@ -297,27 +291,8 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         throw new UnsupportedOperationException("The CQL backend does not support multi-key queries");
     }
 
-    /**
-     * VAVR Future.await will throw InterruptedException wrapped in a FatalException. If the Thread was in Object.wait, the interrupted
-     * flag will be cleared as a side effect and needs to be reset. This method checks that the underlying cause of the FatalException is
-     * InterruptedException and resets the interrupted flag.
-     *
-     * @param result the future to wait on
-     * @throws PermanentBackendException if the thread was interrupted while waiting for the future result
-     */
-    private void interruptibleWait(Future<?> result) throws PermanentBackendException {
-        try {
-            result.await();
-        } catch (Exception e) {
-            if (e.getCause() instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            throw new PermanentBackendException(e.getCause());
-        }
-    }
-
-    private static EntryList fromResultSet(AsyncResultSet resultSet, StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
-        Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(ResultSets.newInstance(resultSet)));
+    private static EntryList fromResultSet(ResultSet resultSet, StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
+        Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(resultSet));
 
         // Use the Iterable overload of ofByteBuffer as it's able to allocate
         // the byte array up front.
@@ -332,7 +307,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     /*
-     * Used from CQLStoreManager
+     * Used by CQLStoreManager
      */
     BatchableStatement<BoundStatement> deleteColumn(StaticBuffer key, StaticBuffer column, long timestamp) {
         return this.deleteColumn.bind()
@@ -342,7 +317,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     /*
-     * Used from CQLStoreManager
+     * Used by CQLStoreManager
      */
     BatchableStatement<BoundStatement> insertColumn(StaticBuffer key, Entry entry, long timestamp) {
         Integer ttl = (Integer) entry.getMetaData().get(EntryMetaData.TTL);

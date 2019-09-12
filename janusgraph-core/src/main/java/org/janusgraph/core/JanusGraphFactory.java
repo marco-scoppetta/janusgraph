@@ -169,7 +169,7 @@ public class JanusGraphFactory {
         // Initialise Store Manager used to connect to 'system_properties' to read global configuration
         KeyColumnValueStoreManager storeManager = getStoreManager(localBasicConfiguration);
 
-        // Configurations read from system_properties -> Global for every graph existing in the current DB
+        // Configurations read from system_properties
         ReadConfiguration globalConfig = ReadConfigurationBuilder.buildGlobalConfiguration(localBasicConfiguration, storeManager, new KCVSConfigurationBuilder());
         // Create BasicConfiguration out of ReadConfiguration for global configuration
         BasicConfiguration globalBasicConfig = new BasicConfiguration(ROOT_NS, globalConfig, BasicConfiguration.Restriction.NONE);

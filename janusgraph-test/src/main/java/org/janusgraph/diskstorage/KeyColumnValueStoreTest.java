@@ -21,6 +21,7 @@ import java.util.concurrent.*;
 
 import com.google.common.collect.ImmutableList;
 import org.janusgraph.TestCategory;
+import org.janusgraph.core.util.TestTimeAccumulator;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanJob;
 import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
@@ -309,10 +310,15 @@ public abstract class KeyColumnValueStoreTest extends AbstractKCVSTest {
         String[][] values = KeyValueStoreUtil.generateData(keys, columns);
         log.debug("Loading values: " + keys + "x" + columns);
         long time = System.currentTimeMillis();
+        TestTimeAccumulator.reset();
         loadValues(values);
-        clopen();
+        long totalTimeInMs = TestTimeAccumulator.getTotalTimeInMs();
+        close();
         System.out.println("Loading time (ms): " + (System.currentTimeMillis() - time));
+        System.out.println("Time executing mutatemany: "+totalTimeInMs);
+        System.out.println("Invoked times: "+TestTimeAccumulator.getTimes());
         //print(values);
+        open();
         Random r = new Random();
         int trials = 500 * multiplier;
         int delta = 10;
