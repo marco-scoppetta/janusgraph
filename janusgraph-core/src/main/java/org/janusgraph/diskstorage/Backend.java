@@ -41,7 +41,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManagerFactory;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.ExpirationKCVSCache;
@@ -142,9 +141,9 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     public static final int THREAD_POOL_SIZE_SCALE_FACTOR = 2;
 
-    private final KeyColumnValueStoreManager storeManager;
     private final KeyColumnValueStoreManager storeManagerLocking;
     private final StoreFeatures storeFeatures;
+    private final KeyColumnValueStoreManager storeManager;
 
     private KCVSCache edgeStore;
     private KCVSCache indexStore;
@@ -173,13 +172,10 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final ConcurrentHashMap<String, Locker> lockers = new ConcurrentHashMap<>();
 
     private final Configuration configuration;
-    private final StoreManagerFactory storeManagerFactory;
 
-    public Backend(Configuration configuration, StoreManagerFactory storeManagerFactory) {
+    public Backend(Configuration configuration, KeyColumnValueStoreManager manager) {
         this.configuration = configuration;
-        this.storeManagerFactory = storeManagerFactory;
 
-        KeyColumnValueStoreManager manager = storeManagerFactory.getManager(configuration);
         if (configuration.get(BASIC_METRICS)) {
             storeManager = new MetricInstrumentedStoreManager(manager, METRICS_STOREMANAGER_NAME, configuration.get(METRICS_MERGE_STORES), METRICS_MERGED_STORE);
         } else {
@@ -531,7 +527,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             if (systemConfig != null) systemConfig.close();
             if (userConfig != null) userConfig.close();
             storeManager.close();
-            storeManagerFactory.close();
             if (threadPool != null) {
                 threadPool.shutdown();
             }
