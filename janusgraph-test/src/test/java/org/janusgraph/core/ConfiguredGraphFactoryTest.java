@@ -108,28 +108,6 @@ public class ConfiguredGraphFactoryTest {
     }
 
     @Test
-    public void graphConfigurationShouldBeWhatWeExpectWhenUsingTemplateConfiguration()
-        throws Exception {
-
-        try {
-            final Map<String, Object> map = new HashMap<>();
-            map.put(STORAGE_BACKEND.toStringWithoutRoot(), "inmemory");
-            ConfiguredGraphFactory.createTemplateConfiguration(new MapConfiguration(map));
-            final StandardJanusGraph graph = (StandardJanusGraph) ConfiguredGraphFactory.create("graph1");
-            final StandardJanusGraph graph1 = (StandardJanusGraph) ConfiguredGraphFactory.open("graph1");
-
-            assertNotNull(graph);
-            assertEquals(graph, graph1);
-            assertEquals("graph1", graph.getConfiguration().getConfiguration().get(GRAPH_NAME));
-            assertEquals("inmemory", graph.getConfiguration().getConfiguration().get(STORAGE_BACKEND));
-
-        } finally {
-            ConfiguredGraphFactory.removeConfiguration("graph1");
-            ConfiguredGraphFactory.close("graph1");
-        }
-    }
-
-    @Test
     public void shouldThrowConfigurationDoesNotExistError() {
         RuntimeException graph1 = assertThrows(RuntimeException.class, () -> ConfiguredGraphFactory.open("graph1"));
         assertEquals("Please create configuration for this graph using the " +
