@@ -104,19 +104,19 @@ public class FoundationDBGraphTest extends JanusGraphTest {
         assertEquals(0L, (long) graph.traversal().V().count().next());
     }
 
-    @Test
-    @Disabled
-    @Override
-    public void testLargeJointIndexRetrieval() {
-        // disabled because exceeds FDB transaction commit limit
-    }
+//    @Test
+//    @Disabled
+//    @Override
+//    public void testLargeJointIndexRetrieval() {
+//        // disabled because exceeds FDB transaction commit limit
+//    }
 
-    @Test
-    @Override
-    public void testVertexCentricQuery() {
-        // updated to not exceed FDB transaction commit limit
-        testVertexCentricQuery(1000 /*noVertices*/);
-    }
+//    @Test
+//    @Override
+//    public void testVertexCentricQuery() {
+//        // updated to not exceed FDB transaction commit limit
+//        testVertexCentricQuery(1000 /*noVertices*/);
+//    }
 
     @Test
     public void testSuperNode(){
