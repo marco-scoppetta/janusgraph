@@ -105,7 +105,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     static final Function<? super Throwable, BackendException> EXCEPTION_MAPPER = cause -> Match(cause).of(
             Case($(instanceOf(QueryValidationException.class)), PermanentBackendException::new),
-            Case($(), () -> new TemporaryBackendException(cause.getMessage())));
+            Case($(), () -> new TemporaryBackendException(cause.getMessage(), false)));
 
     private final CQLStoreManager storeManager;
     private final CqlSession session;

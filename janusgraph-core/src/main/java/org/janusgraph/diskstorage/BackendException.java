@@ -50,4 +50,14 @@ public abstract class BackendException extends Exception {
     }
 
 
+    /**
+     * Allows extending classes to disable stacktrace or set enableSuppression
+     */
+    protected BackendException(String message, Throwable cause,
+                               boolean enableSuppression,
+                               boolean writableStackTrace){
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+
 }

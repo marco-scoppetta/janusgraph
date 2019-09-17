@@ -29,6 +29,10 @@ public class TemporaryBackendException extends BackendException {
 
     private static final long serialVersionUID = 9286719478969781L;
 
+    public TemporaryBackendException(String msg, boolean enableStacktrace){
+        super(msg, null, false, enableStacktrace);
+    }
+
     /**
      * @param msg Exception message
      */
