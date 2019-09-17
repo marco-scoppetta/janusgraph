@@ -114,7 +114,8 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLGraphIterativeTest,CQLGraphPerformanceMemoryTest,CQLGraphTest,CQLOLAPTest'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLGraphIterativeTest,CQLGraphPerformanceMemoryTest,CQLGraphTest'
+
 
     test-cql-graphdb-III:
         docker:
@@ -136,6 +137,27 @@ jobs:
 
             # run tests!
             - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLGraphConcurrentTest,CQLOperationCountingTest,CQLPartitionGraphTest'
+
+    test-cql-olap:
+        docker:
+            - image: circleci/openjdk:8u222-jdk-stretch
+        working_directory: ~/repo
+        steps:
+            - checkout
+            - restore_cache:
+                  keys:
+                      - v1-dependencies-{{ checksum "pom.xml" }}
+                      # fallback to using the latest cache if no exact match is found
+                      - v1-dependencies-
+
+            - run: mvn install -DskipTests
+            - save_cache:
+                  paths:
+                      - ~/.m2
+                  key: v1-dependencies-{{ checksum "pom.xml" }}
+
+            # run tests!
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLOLAPTest'
 
     test-janusgraph-test:
         docker:
@@ -189,5 +211,6 @@ workflows:
             - test-cql-graphdb-II
             - test-cql-graphdb-III
             - test-janusgraph-test
+            - test-cql-olap
 #            - test-cql-blueprints Running these means running > 2400 tests - they fail after 2:50 hours - investigate
             - build-dist
