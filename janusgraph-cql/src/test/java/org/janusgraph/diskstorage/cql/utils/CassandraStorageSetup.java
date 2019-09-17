@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.MAX_REQUESTS_PER_CONNECTION;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_ENABLED;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_TRUSTSTORE_LOCATION;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_TRUSTSTORE_PASSWORD;
@@ -117,6 +118,7 @@ public class CassandraStorageSetup {
         config.set(PAGE_SIZE, 500);
         config.set(CONNECTION_TIMEOUT, Duration.ofSeconds(60L));
         config.set(STORAGE_BACKEND, "cql");
+        config.set(MAX_REQUESTS_PER_CONNECTION, 2048);
         if (HOSTNAME != null) config.set(STORAGE_HOSTS, new String[]{HOSTNAME});
         config.set(DROP_ON_CLEAR, false);
         return config;
