@@ -17,19 +17,12 @@ package org.janusgraph.graphdb.cql;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
-import org.janusgraph.graphdb.JanusGraphTest;
-import org.junit.jupiter.api.BeforeAll;
 
-public class CQLGraphCacheTest extends JanusGraphTest {
+public class CQLGraphCacheTest extends CQLGraphTest {
 
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
+        // get configuration with DB cache enabled
         return StorageSetup.addPermanentCache(CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace());
-    }
-
-
-    @BeforeAll
-    public static void beforeClass() {
-        CassandraStorageSetup.startCleanEmbedded();
     }
 }

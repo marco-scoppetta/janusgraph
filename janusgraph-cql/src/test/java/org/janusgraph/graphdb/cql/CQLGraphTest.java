@@ -14,13 +14,106 @@
 
 package org.janusgraph.graphdb.cql;
 
+import org.janusgraph.core.JanusGraphFactory;
+import org.janusgraph.diskstorage.configuration.ConfigElement;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
+import org.janusgraph.graphdb.JanusGraphTest;
+import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.configuration.JanusGraphConstants;
+import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-public class CQLGraphTest extends CassandraGraphTest {
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.READ_CONSISTENCY;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.WRITE_CONSISTENCY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * @author Joshua Shinavier (http://fortytwo.net)
+ */
+public abstract class CQLGraphTest extends JanusGraphTest {
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
+    }
+
+    @BeforeAll
+    public static void startCassandra() {
+        CassandraStorageSetup.startCleanEmbedded();
+    }
+
+    @Test
+    public void testHasTTL() {
+        assertTrue(features.hasCellTTL());
+    }
+
+    @Test
+    public void testStorageVersionSet() {
+        close();
+        assertNull(config.get(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION),
+                GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION.getDatatype()));
+        config.set(ConfigElement.getPath(GraphDatabaseConfiguration.INITIAL_STORAGE_VERSION), JanusGraphConstants.STORAGE_VERSION);
+        graph = JanusGraphFactory.open(config);
+        mgmt = graph.openManagement();
+        assertEquals(JanusGraphConstants.STORAGE_VERSION, (mgmt.get("graph.storage-version")));
+        mgmt.rollback();
+    }
+
+    @Test
+    public void testGraphConfigUsedByThreadBoundTx() {
+        close();
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "LOCAL_QUORUM");
+        graph = JanusGraphFactory.open(config);
+
+        StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.getCurrentThreadTx();
+        assertEquals("ALL",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(READ_CONSISTENCY));
+        assertEquals("LOCAL_QUORUM",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(WRITE_CONSISTENCY));
+    }
+
+    @Test
+    public void testGraphConfigUsedByTx() {
+        close();
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "TWO");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "THREE");
+
+        graph = JanusGraphFactory.open(config);
+
+        StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
+        assertEquals("TWO",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(READ_CONSISTENCY));
+        assertEquals("THREE",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(WRITE_CONSISTENCY));
+        tx.rollback();
+    }
+
+    @Test
+    public void testCustomConfigUsedByTx() {
+        close();
+        config.set(ConfigElement.getPath(READ_CONSISTENCY), "ALL");
+        config.set(ConfigElement.getPath(WRITE_CONSISTENCY), "ALL");
+
+        graph = JanusGraphFactory.open(config);
+
+        StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.buildTransaction()
+                .customOption(ConfigElement.getPath(READ_CONSISTENCY), "ONE")
+                .customOption(ConfigElement.getPath(WRITE_CONSISTENCY), "TWO").start();
+
+        assertEquals("ONE",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(READ_CONSISTENCY));
+        assertEquals("TWO",
+                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                        .get(WRITE_CONSISTENCY));
+        tx.rollback();
     }
 }
