@@ -103,7 +103,7 @@ public abstract class JanusGraphBaseTest {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
     }
 
-    void clearGraph(WriteConfiguration config) throws BackendException {
+    public void clearGraph(WriteConfiguration config) throws BackendException {
         Backend backend = getBackend(config);
         backend.clearStorage();
         backend.close();
@@ -191,6 +191,8 @@ public abstract class JanusGraphBaseTest {
 
         if (null != graph && graph.isOpen())
             graph.close();
+        config.close();
+        readConfig.close();
     }
 
     public void newTx() {
