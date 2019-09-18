@@ -143,15 +143,6 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void open(WriteConfiguration config) {
-        try {
-            Class clazz = Class.forName("java.lang.ApplicationShutdownHooks");
-            Field field = clazz.getDeclaredField("hooks");
-            field.setAccessible(true);
-            Object hooks = field.get(null);
-            ((Map)hooks).clear();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         long s = System.currentTimeMillis();
         graph = JanusGraphFactory.open(config);
         long e = System.currentTimeMillis();
