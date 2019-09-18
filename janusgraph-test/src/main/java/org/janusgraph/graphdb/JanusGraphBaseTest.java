@@ -191,8 +191,6 @@ public abstract class JanusGraphBaseTest {
 
         if (null != graph && graph.isOpen())
             graph.close();
-        config.close();
-        readConfig.close();
     }
 
     public void newTx() {
