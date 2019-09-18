@@ -59,6 +59,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -102,7 +103,7 @@ public abstract class JanusGraphBaseTest {
         return new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, config.copy(), BasicConfiguration.Restriction.NONE);
     }
 
-    public void clearGraph(WriteConfiguration config) throws BackendException {
+    void clearGraph(WriteConfiguration config) throws BackendException {
         Backend backend = getBackend(config);
         backend.clearStorage();
         backend.close();
@@ -142,6 +143,15 @@ public abstract class JanusGraphBaseTest {
     }
 
     public void open(WriteConfiguration config) {
+        try {
+            Class clazz = Class.forName("java.lang.ApplicationShutdownHooks");
+            Field field = clazz.getDeclaredField("hooks");
+            field.setAccessible(true);
+            Object hooks = field.get(null);
+            ((Map)hooks).clear();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         long s = System.currentTimeMillis();
         graph = JanusGraphFactory.open(config);
         long e = System.currentTimeMillis();
@@ -181,12 +191,13 @@ public abstract class JanusGraphBaseTest {
 
         if (null != graph && graph.isOpen())
             graph.close();
+        config.close();
+        readConfig.close();
     }
 
     public void newTx() {
         if (null != tx && tx.isOpen())
             tx.commit();
-        //tx = graph.newThreadBoundTransaction();
         tx = graph.newTransaction();
     }
 
