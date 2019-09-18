@@ -126,8 +126,7 @@ public class FoundationDBGraphTest extends JanusGraphTest {
 
         List<Long> aList = LongStream.rangeClosed(0, 1000-1).boxed()
                 .collect(Collectors.toList());
-        aList.stream()
-                .forEach(t -> g.addV("to").property("id", t).as("to")
+        aList.forEach(t -> g.addV("to").property("id", t).as("to")
                         .addE("created").from(from).to("to").property("weight", 0.4)
                         .addV("to2").as("to2")
                         .addE("created2").from("to").to("to2").iterate());
