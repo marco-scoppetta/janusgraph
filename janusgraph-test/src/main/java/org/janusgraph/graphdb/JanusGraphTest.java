@@ -2734,10 +2734,10 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
                             VERTEX CENTRIC QUERIES
      ==================================================================================*/
 
-//    @Test
-//    public void testVertexCentricQuery() {
-//        testVertexCentricQuery(10000 /*noVertices*/);
-//    }
+    @Test
+    public void testVertexCentricQuery() {
+        testVertexCentricQuery(10000 /*noVertices*/);
+    }
 
     public void testVertexCentricQuery(int noVertices) {
         makeVertexIndexedUniqueKey("name", String.class);
@@ -5100,28 +5100,28 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         }
     }
 
-//    @Test
-//    public void testLargeJointIndexRetrieval() {
-//        makeVertexIndexedKey("sid", Integer.class);
-//        makeVertexIndexedKey("color", String.class);
-//        finishSchema();
-//
-//        int sids = 17;
-//        String[] colors = {"blue", "red", "yellow", "brown", "green", "orange", "purple"};
-//        int multiplier = 200;
-//        int numV = sids * colors.length * multiplier;
-//        for (int i = 0; i < numV; i++) {
-//            JanusGraphVertex v = graph.addVertex(
-//                    "color", colors[i % colors.length],
-//                    "sid", i % sids);
-//        }
-//        clopen();
-//
-//        assertCount(numV / sids, graph.query().has("sid", 8).vertices());
-//        assertCount(numV / colors.length, graph.query().has("color", colors[2]).vertices());
-//
-//        assertCount(multiplier, graph.query().has("sid", 11).has("color", colors[3]).vertices());
-//    }
+    @Test
+    public void testLargeJointIndexRetrieval() {
+        makeVertexIndexedKey("sid", Integer.class);
+        makeVertexIndexedKey("color", String.class);
+        finishSchema();
+
+        int sids = 17;
+        String[] colors = {"blue", "red", "yellow", "brown", "green", "orange", "purple"};
+        int multiplier = 200;
+        int numV = sids * colors.length * multiplier;
+        for (int i = 0; i < numV; i++) {
+            JanusGraphVertex v = graph.addVertex(
+                    "color", colors[i % colors.length],
+                    "sid", i % sids);
+        }
+        clopen();
+
+        assertCount(numV / sids, graph.query().has("sid", 8).vertices());
+        assertCount(numV / colors.length, graph.query().has("color", colors[2]).vertices());
+
+        assertCount(multiplier, graph.query().has("sid", 11).has("color", colors[3]).vertices());
+    }
 
 
     @Test
