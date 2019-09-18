@@ -419,17 +419,17 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
                 KCVMutation keyMutations = keyAndMutations.getValue();
 
                 //Concatenate additions and deletions and map them to async session executions (completable futures) of resulting batch statement
-                executionFutures.addAll(
-                        Stream.concat(
-                                keyMutations.getDeletions().stream().map(deletion -> columnValueStore.deleteColumn(key, deletion, deletionTime)),
-                                keyMutations.getAdditions().stream().map(addition -> columnValueStore.insertColumn(key, addition, additionTime))
-                        ).map(st -> this.session.executeAsync(
-                                BatchStatement.newInstance(DefaultBatchType.UNLOGGED)
-                                        .add(st)
-                                        .setConsistencyLevel(consistencyLevel)
-                                ).toCompletableFuture()
-                        ).collect(Collectors.toList())
-                );
+                List<BatchableStatement<BoundStatement>> modifications = Stream.concat(
+                        keyMutations.getDeletions().stream().map(deletion -> columnValueStore.deleteColumn(key, deletion, deletionTime)),
+                        keyMutations.getAdditions().stream().map(addition -> columnValueStore.insertColumn(key, addition, additionTime))
+                ).collect(Collectors.toList());
+
+                CompletableFuture<AsyncResultSet> future = this.session.executeAsync(
+                        BatchStatement.newInstance(DefaultBatchType.UNLOGGED)
+                                .addAll(modifications)
+                                .setConsistencyLevel(consistencyLevel)
+                ).toCompletableFuture();
+                executionFutures.add(future);
             }
         }
 

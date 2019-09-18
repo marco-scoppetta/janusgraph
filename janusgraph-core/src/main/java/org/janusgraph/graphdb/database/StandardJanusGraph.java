@@ -122,9 +122,9 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     static {
         TraversalStrategies graphStrategies = TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
-            .addStrategies(AdjacentVertexFilterOptimizerStrategy.instance(),
-                JanusGraphLocalQueryOptimizerStrategy.instance(), JanusGraphStepStrategy.instance(),
-                JanusGraphIoRegistrationStrategy.instance());
+                .addStrategies(AdjacentVertexFilterOptimizerStrategy.instance(),
+                        JanusGraphLocalQueryOptimizerStrategy.instance(), JanusGraphStepStrategy.instance(),
+                        JanusGraphIoRegistrationStrategy.instance());
 
         //Register with cache
         TraversalStrategies.GlobalCache.registerStrategies(StandardJanusGraph.class, graphStrategies);
@@ -157,6 +157,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
     private final Set<StandardJanusGraphTx> openTransactions;
 
     private final String name;
+    private final Thread shutdownThread;
 
     public StandardJanusGraph(GraphDatabaseConfiguration configuration, Backend backend) {
 
@@ -205,8 +206,8 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         }
         globalConfig.set(REGISTRATION_TIME, times.getTime(), uniqueInstanceId);
 
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::closeInternal, "StandardJanusGraph-shutdown"));
+        shutdownThread = new Thread(this::closeInternal, "StandardJanusGraph-shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdownThread);
     }
 
     public String getGraphName() {
@@ -225,6 +226,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     @Override
     public synchronized void close() throws JanusGraphException {
+        Runtime.getRuntime().removeShutdownHook(shutdownThread);
         closeInternal();
     }
 
@@ -277,7 +279,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             throw new IllegalStateException("Unable to close transaction", Iterables.getOnlyElement(txCloseExceptions.values()));
         } else if (1 < txCloseExceptions.size()) {
             throw new IllegalStateException(String.format("Unable to close %s transactions (see warnings in log output for details)",
-                txCloseExceptions.size()));
+                    txCloseExceptions.size()));
         }
     }
 
@@ -381,7 +383,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             StandardJanusGraphTx consistentTx = null;
             try {
                 consistentTx = StandardJanusGraph.this.newTransaction(new StandardTransactionBuilder(getConfiguration(),
-                    StandardJanusGraph.this, customTxOptions).groupName(GraphDatabaseConfiguration.METRICS_SCHEMA_PREFIX_DEFAULT));
+                        StandardJanusGraph.this, customTxOptions).groupName(GraphDatabaseConfiguration.METRICS_SCHEMA_PREFIX_DEFAULT));
                 consistentTx.getTxHandle().disableCache();
                 JanusGraphVertex v = Iterables.getOnlyElement(QueryUtil.getVertices(consistentTx, BaseKey.SchemaName, typeName), null);
                 return v != null ? v.longId() : null;
@@ -397,7 +399,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             StandardJanusGraphTx consistentTx = null;
             try {
                 consistentTx = StandardJanusGraph.this.newTransaction(new StandardTransactionBuilder(getConfiguration(),
-                    StandardJanusGraph.this, customTxOptions).groupName(GraphDatabaseConfiguration.METRICS_SCHEMA_PREFIX_DEFAULT));
+                        StandardJanusGraph.this, customTxOptions).groupName(GraphDatabaseConfiguration.METRICS_SCHEMA_PREFIX_DEFAULT));
                 consistentTx.getTxHandle().disableCache();
                 return edgeQuery(schemaId, query, consistentTx.getTxHandle());
             } finally {
@@ -409,8 +411,8 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     public RecordIterator<Long> getVertexIDs(final BackendTransaction tx) {
         Preconditions.checkArgument(backend.getStoreFeatures().hasOrderedScan() ||
-                backend.getStoreFeatures().hasUnorderedScan(),
-            "The configured storage backend does not support global graph operations - use Faunus instead");
+                        backend.getStoreFeatures().hasUnorderedScan(),
+                "The configured storage backend does not support global graph operations - use Faunus instead");
 
         final KeyIterator keyIterator;
         if (backend.getStoreFeatures().hasUnorderedScan()) {
@@ -464,7 +466,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
     private ModifiableConfiguration getGlobalSystemConfig(Backend backend) {
 
         return new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,
-            backend.getGlobalSystemConfig(), BasicConfiguration.Restriction.GLOBAL);
+                backend.getGlobalSystemConfig(), BasicConfiguration.Restriction.GLOBAL);
     }
 
     // ################### WRITE #########################
@@ -480,13 +482,13 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
     public static boolean acquireLock(InternalRelation relation, int pos, boolean acquireLocksConfig) {
         InternalRelationType type = (InternalRelationType) relation.getType();
         return acquireLocksConfig && type.getConsistencyModifier() == ConsistencyModifier.LOCK &&
-            (type.multiplicity().isUnique(EdgeDirection.fromPosition(pos))
-                || pos == 0 && type.multiplicity() == Multiplicity.SIMPLE);
+                (type.multiplicity().isUnique(EdgeDirection.fromPosition(pos))
+                        || pos == 0 && type.multiplicity() == Multiplicity.SIMPLE);
     }
 
     public static boolean acquireLock(CompositeIndexType index, boolean acquireLocksConfig) {
         return acquireLocksConfig && index.getConsistencyModifier() == ConsistencyModifier.LOCK
-            && index.getCardinality() != Cardinality.LIST;
+                && index.getCardinality() != Cardinality.LIST;
     }
 
     /**
@@ -656,7 +658,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
     }
 
     private static final Predicate<InternalRelation> SCHEMA_FILTER =
-        internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
+            internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
 
     private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.apply(internalRelation);
 
@@ -696,9 +698,9 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
             //3.2 Commit schema elements and their associated relations in a separate transaction if backend does not support
             //    transactional isolation
             boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER))
-                || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER));
+                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER));
             Preconditions.checkArgument(!hasSchemaElements || (!tx.getConfiguration().hasEnabledBatchLoading() && acquireLocks),
-                "Attempting to create schema elements in inconsistent state");
+                    "Attempting to create schema elements in inconsistent state");
 
             if (hasSchemaElements && !hasTxIsolation) {
                 /*
@@ -742,8 +744,8 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
                 //    This should not throw an exception since the mutations are just cached. If it does, it will be escalated since its critical
                 if (logTransaction) {
                     txLog.add(txLogHeader.serializePrimary(serializer,
-                        hasSecondaryPersistence ? LogTxStatus.PRIMARY_SUCCESS : LogTxStatus.COMPLETE_SUCCESS),
-                        txLogHeader.getLogKey(), mutator.getTxLogPersistor());
+                            hasSecondaryPersistence ? LogTxStatus.PRIMARY_SUCCESS : LogTxStatus.COMPLETE_SUCCESS),
+                            txLogHeader.getLogKey(), mutator.getTxLogPersistor());
                 }
 
                 try {

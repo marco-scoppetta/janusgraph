@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.KEYSPACE;
+import static org.janusgraph.diskstorage.cql.CQLConfigOptions.MAX_REQUESTS_PER_CONNECTION;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_ENABLED;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_TRUSTSTORE_LOCATION;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.SSL_TRUSTSTORE_PASSWORD;

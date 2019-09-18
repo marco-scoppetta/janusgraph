@@ -59,6 +59,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -181,12 +182,13 @@ public abstract class JanusGraphBaseTest {
 
         if (null != graph && graph.isOpen())
             graph.close();
+        config.close();
+        readConfig.close();
     }
 
     public void newTx() {
         if (null != tx && tx.isOpen())
             tx.commit();
-        //tx = graph.newThreadBoundTransaction();
         tx = graph.newTransaction();
     }
 
