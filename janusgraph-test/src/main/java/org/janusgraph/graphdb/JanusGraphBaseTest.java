@@ -128,7 +128,6 @@ public abstract class JanusGraphBaseTest {
         for (int i = 0; i < rightSpaceLength; i++) {
             rightSpace.append("=");
         }
-        testInfo.getTestMethod().get().
         System.out.println("\n\nRUNNING: [ " + centralText + " ] " + rightSpace.toString());
     }
 
