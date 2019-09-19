@@ -14,7 +14,7 @@
 
 package org.janusgraph.core;
 
-import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsGraph;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class TransactionTest {
 
     private ThreadLocal getThreadLocalTxs(JanusGraph graph) {
         try {
-            Field txs = JanusGraphBlueprintsGraph.class.getDeclaredField("txs");
+            Field txs = StandardJanusGraph.class.getDeclaredField("txs");
             txs.setAccessible(true);
             return (ThreadLocal) txs.get(graph);
         } catch (IllegalAccessException | NoSuchFieldException e) {

@@ -105,14 +105,14 @@ public class RestClientSetupTest {
     }
 
     private ElasticSearchClient baseConfigTest(Map<String, String> extraConfigValues) throws Exception {
-        final CommonsConfiguration cc = new CommonsConfiguration(new BaseConfiguration());
+        CommonsConfiguration cc = new CommonsConfiguration(new BaseConfiguration());
         cc.set("index." + INDEX_NAME + ".backend", "elasticsearch");
         cc.set("index." + INDEX_NAME + ".elasticsearch.interface", "REST_CLIENT");
         for(Map.Entry<String, String> me: extraConfigValues.entrySet()) {
             cc.set(me.getKey(), me.getValue());
         }
 
-        final ModifiableConfiguration config = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, cc,
+        ModifiableConfiguration config = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, cc,
                 BasicConfiguration.Restriction.NONE);
 
         doReturn(restClientBuilderMock).

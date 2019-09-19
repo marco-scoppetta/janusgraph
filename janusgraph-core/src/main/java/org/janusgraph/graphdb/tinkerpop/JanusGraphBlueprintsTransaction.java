@@ -47,7 +47,7 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
      * Returns the graph that this transaction is based on
      * @return
      */
-    protected abstract JanusGraphBlueprintsGraph getGraph();
+    protected abstract StandardJanusGraph getGraph();
 
     @Override
     public Features features() {
@@ -71,14 +71,14 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
 
     @Override
     public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
-        JanusGraphBlueprintsGraph graph = getGraph();
+        StandardJanusGraph graph = getGraph();
         if (isOpen()) commit();
         return graph.compute(graphComputerClass);
     }
 
     @Override
     public FulgoraGraphComputer compute() throws IllegalArgumentException {
-        JanusGraphBlueprintsGraph graph = getGraph();
+        StandardJanusGraph graph = getGraph();
         if (isOpen()) commit();
         return graph.compute();
     }
@@ -153,14 +153,6 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
         return (Iterator)getEdges(ids).iterator();
     }
 
-
-
-
-//    @Override
-//    public GraphComputer compute(final Class... graphComputerClass) {
-//        throw new UnsupportedOperationException("Graph Computer not supported on an individual transaction. Call on graph instead.");
-//    }
-
     @Override
     public String toString() {
         int ihc = System.identityHashCode(this);
@@ -214,6 +206,5 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
     public void close() {
         tx().close();
     }
-
 
 }
