@@ -16,8 +16,6 @@ package org.janusgraph.graphdb.database;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -136,6 +134,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.REGISTRATION_TIME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.REPLACE_INSTANCE_IF_EXISTS;
@@ -229,7 +228,7 @@ public class StandardJanusGraph implements JanusGraph {
         return StringFactory.graphString(this, config.getBackendDescription());
     }
 
-    public Graph.Variables variables() {
+    public Variables variables() {
         return new JanusGraphVariables(this.getBackend().getUserConfiguration());
     }
 
@@ -270,7 +269,7 @@ public class StandardJanusGraph implements JanusGraph {
     @Override
     public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
         if (!graphComputerClass.equals(FulgoraGraphComputer.class)) {
-            throw Graph.Exceptions.graphDoesNotSupportProvidedGraphComputer(graphComputerClass);
+            throw Exceptions.graphDoesNotSupportProvidedGraphComputer(graphComputerClass);
         } else {
             return (C) compute();
         }
@@ -610,11 +609,6 @@ public class StandardJanusGraph implements JanusGraph {
         return serializer;
     }
 
-    //TODO: premature optimization, re-evaluate later
-//    public RelationQueryCache getQueryCache() {
-//        return queryCache;
-//    }
-
     public SchemaCache getSchemaCache() {
         return schemaCache;
     }
@@ -840,7 +834,7 @@ public class StandardJanusGraph implements JanusGraph {
         ListMultimap<InternalVertex, InternalRelation> mutatedProperties = ArrayListMultimap.create();
         List<IndexSerializer.IndexUpdate> indexUpdates = Lists.newArrayList();
         //1) Collect deleted edges and their index updates and acquire edge locks
-        for (InternalRelation del : Iterables.filter(deletedRelations, filter)) {
+        for (InternalRelation del : Iterables.filter(deletedRelations, filter::test)) {
             Preconditions.checkArgument(del.isRemoved());
             for (int pos = 0; pos < del.getLen(); pos++) {
                 InternalVertex vertex = del.getVertex(pos);
@@ -857,7 +851,7 @@ public class StandardJanusGraph implements JanusGraph {
         }
 
         //2) Collect added edges and their index updates and acquire edge locks
-        for (InternalRelation add : Iterables.filter(addedRelations, filter)) {
+        for (InternalRelation add : Iterables.filter(addedRelations, filter::test)) {
             Preconditions.checkArgument(add.isNew());
 
             for (int pos = 0; pos < add.getLen(); pos++) {
@@ -935,13 +929,13 @@ public class StandardJanusGraph implements JanusGraph {
         for (IndexSerializer.IndexUpdate indexUpdate : indexUpdates) {
             assert indexUpdate.isAddition() || indexUpdate.isDeletion();
             if (indexUpdate.isCompositeIndex()) {
-                final IndexSerializer.IndexUpdate<StaticBuffer, Entry> update = indexUpdate;
+                IndexSerializer.IndexUpdate<StaticBuffer, Entry> update = indexUpdate;
                 if (update.isAddition())
                     mutator.mutateIndex(update.getKey(), Lists.newArrayList(update.getEntry()), KCVSCache.NO_DELETIONS);
                 else
                     mutator.mutateIndex(update.getKey(), KeyColumnValueStore.NO_ADDITIONS, Lists.newArrayList(update.getEntry()));
             } else {
-                final IndexSerializer.IndexUpdate<String, IndexEntry> update = indexUpdate;
+                IndexSerializer.IndexUpdate<String, IndexEntry> update = indexUpdate;
                 has2iMods = true;
                 IndexTransaction itx = mutator.getIndexTransaction(update.getIndex().getBackingIndexName());
                 String indexStore = ((MixedIndexType) update.getIndex()).getStoreName();
@@ -954,12 +948,11 @@ public class StandardJanusGraph implements JanusGraph {
         return new ModificationSummary(!mutations.isEmpty(), has2iMods);
     }
 
-    private static final Predicate<InternalRelation> SCHEMA_FILTER =
-            internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
+    private static final Predicate<InternalRelation> SCHEMA_FILTER = internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
 
-    private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.apply(internalRelation);
+    private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.test(internalRelation);
 
-    private static final Predicate<InternalRelation> NO_FILTER = Predicates.alwaysTrue();
+    private static final Predicate<InternalRelation> NO_FILTER = internalRelation -> true;
 
     public void commit(Collection<InternalRelation> addedRelations,
                        Collection<InternalRelation> deletedRelations, StandardJanusGraphTx tx) {
@@ -994,8 +987,8 @@ public class StandardJanusGraph implements JanusGraph {
 
             //3.2 Commit schema elements and their associated relations in a separate transaction if backend does not support
             //    transactional isolation
-            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER))
-                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER));
+            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER::test))
+                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER::test));
             Preconditions.checkArgument(!hasSchemaElements || (!tx.getConfiguration().hasEnabledBatchLoading() && acquireLocks),
                     "Attempting to create schema elements in inconsistent state");
 
@@ -1007,7 +1000,7 @@ public class StandardJanusGraph implements JanusGraph {
                  * mutations in the tx. If the storage supports transactional
                  * isolation, then don't create a separate tx.
                  */
-                final BackendTransaction schemaMutator = openBackendTransaction(tx);
+                BackendTransaction schemaMutator = openBackendTransaction(tx);
 
                 try {
                     //[FAILURE] If the preparation throws an exception abort directly - nothing persisted since batch-loading cannot be enabled for schema elements
