@@ -194,7 +194,7 @@ public class StandardJanusGraph implements JanusGraph {
     private JanusGraphBlueprintsTransaction getAutoStartTx() {
         if (txs == null) throw new IllegalStateException("Graph has been closed");
         // Here txs is still null
-        // with readWrite we trigger READ_WRITE_BEHAVIOR.AUTO,
+        // with readWrite() we trigger READ_WRITE_BEHAVIOR.AUTO,
         // which in turns calls transaction.open() -> calls doOpen -> calls startNewTx() -> init new JanusGraphTransaction
         // and assigns it to txs
         tinkerpopTxContainer.readWrite(); // acknowledges that transaction is about to be used for either write o read (init tx)
@@ -277,8 +277,7 @@ public class StandardJanusGraph implements JanusGraph {
 
     @Override
     public FulgoraGraphComputer compute() throws IllegalArgumentException {
-        StandardJanusGraph graph = (StandardJanusGraph) this;
-        return new FulgoraGraphComputer(graph, graph.getConfiguration().getConfiguration());
+        return new FulgoraGraphComputer(this, this.getConfiguration().getConfiguration());
     }
 
     @Override

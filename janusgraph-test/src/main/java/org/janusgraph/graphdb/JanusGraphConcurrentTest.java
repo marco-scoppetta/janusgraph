@@ -293,10 +293,6 @@ public abstract class JanusGraphConcurrentTest extends JanusGraphBaseTest {
      */
     @Test
     public void testStandardIndexVertexPropertyReads() throws InterruptedException, ExecutionException {
-        testStandardIndexVertexPropertyReadsLogic();
-    }
-
-    protected void testStandardIndexVertexPropertyReadsLogic() throws InterruptedException, ExecutionException {
         final int propCount = JanusGraphConcurrentTest.THREAD_COUNT * 5;
         final int vertexCount = 1000;
         // Create props with standard indexes
