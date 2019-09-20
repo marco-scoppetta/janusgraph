@@ -31,8 +31,7 @@ import com.google.common.base.Joiner;
 
 public class CsvConsumer implements IResultsConsumer {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(CsvConsumer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CsvConsumer.class);
 
     private final Writer csv;
 
@@ -135,7 +134,7 @@ public class CsvConsumer implements IResultsConsumer {
 
     public CsvConsumer(String fileName) throws IOException {
         csvFile = new File(fileName);
-        log.debug("Opening {} in append mode", csvFile);
+        LOG.debug("Opening {} in append mode", csvFile);
         csv = new OutputStreamWriter(new FileOutputStream(csvFile, true));
         printHeader();
     }
@@ -147,14 +146,14 @@ public class CsvConsumer implements IResultsConsumer {
             fields.add(c.get(r));
         }
         csv.write(String.format("%s%n", j.join(fields)));
-        log.debug("Wrote {} to {}", r, csvFile);
+        LOG.debug("Wrote {} to {}", r, csvFile);
         csv.flush();
     }
 
     private synchronized void printHeader() throws IOException {
         long len = csvFile.length();
         if (0 != len) {
-            log.debug("Not writing header to {}; file has non-zero length {}", csvFile, len);
+            LOG.debug("Not writing header to {}; file has non-zero length {}", csvFile, len);
             return;
         }
 
@@ -164,7 +163,7 @@ public class CsvConsumer implements IResultsConsumer {
             headers.add(c.getName());
         }
         csv.write(String.format("%s%n", j.join(headers)));
-        log.debug("Wrote header to {}", csvFile);
+        LOG.debug("Wrote header to {}", csvFile);
         csv.flush();
     }
 }

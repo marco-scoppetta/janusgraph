@@ -82,15 +82,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class OLAPTest extends JanusGraphBaseTest {
 
-    private static final Random random = new Random();
-
-    private static final Logger log =
-            LoggerFactory.getLogger(OLAPTest.class);
+    private static final Random RANDOM = new Random();
+    private static final Logger LOG = LoggerFactory.getLogger(OLAPTest.class);
 
     @Override
     @BeforeEach
@@ -120,17 +116,17 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         JanusGraphVertex[] vs = new JanusGraphVertex[numV];
         for (int i=0;i<numV;i++) {
             vs[i] = tx.addVertex("uid",i+1);
-            int numberOfValues = random.nextInt(5)+1;
+            int numberOfValues = RANDOM.nextInt(5)+1;
             vs[i].property(VertexProperty.Cardinality.single, "numvals", numberOfValues);
             for (int j=0;j<numberOfValues;j++) {
-                vs[i].property("values",random.nextInt(100));
+                vs[i].property("values", RANDOM.nextInt(100));
             }
         }
         for (int i=0;i<numV;i++) {
             int edges = i+1;
             JanusGraphVertex v = vs[i];
             for (int j=0;j<edges;j++) {
-                JanusGraphVertex u = vs[random.nextInt(numV)];
+                JanusGraphVertex u = vs[RANDOM.nextInt(numV)];
                 v.addEdge("knows", u);
                 numE++;
             }
@@ -536,11 +532,11 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
             for (int i=0;i<branch;i++) {
                 JanusGraphVertex u = tx.addVertex();
                 u.addEdge("likes",v);
-                log.debug("likes {}->{}", u.id(), v.id());
+                LOG.debug("likes {}->{}", u.id(), v.id());
                 // Commented since the PageRank implementation does not discriminate by label
 //                if (previous!=null) {
 //                    u.addEdge("knows",previous);
-//                    log.error("knows {}->{}", u.id(), v.id());
+//                    LOG.error("knows {}->{}", u.id(), v.id());
 //                }
 //              previous=u;
                 expand(u,distance+1,diameter,branch);
@@ -562,7 +558,7 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         expand(v,0,diameter,branch);
         clopen();
         assertCount(numV, tx.query().vertices());
-        log.debug("PR test numV: {}", numV);
+        LOG.debug("PR test numV: {}", numV);
         newTx();
 
         //Precompute correct PR results:
@@ -570,7 +566,7 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         for (int i=diameter;i>=0;i--) {
             double pr = (1.0D - alpha)/numV;
             if (i<diameter) pr+= alpha*branch*correctPR[i+1];
-            log.debug("diameter={} pr={}", diameter, pr);
+            LOG.debug("diameter={} pr={}", diameter, pr);
             correctPR[i]=pr;
         }
 
@@ -609,7 +605,7 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
             assertFalse(vertexIDs.contains(vertexID));
             vertexIDs.add(vertexID);
 
-            log.debug("vertexID={} computedPR={}", vertexID, computedPR);
+            LOG.debug("vertexID={} computedPR={}", vertexID, computedPR);
         }
 
         assertEquals(numV, vertexCounter);
@@ -631,8 +627,8 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         assertCount(numV,tx.query().vertices());
         assertCount(numE,tx.query().edges());
 
-        log.debug("seed inE count: {}", vertex.query().direction(Direction.IN).edgeCount());
-        log.debug("seed outE count: {}", vertex.query().direction(Direction.OUT).edgeCount());
+        LOG.debug("seed inE count: {}", vertex.query().direction(Direction.IN).edgeCount());
+        LOG.debug("seed outE count: {}", vertex.query().direction(Direction.OUT).edgeCount());
 
         clopen();
 
@@ -666,8 +662,8 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         int total=1;
         if (depth>=maxDepth) return total;
 
-        for (int i=0;i<random.nextInt(maxBranch)+1;i++) {
-            int dist = random.nextInt(3)+1;
+        for (int i = 0; i< RANDOM.nextInt(maxBranch)+1; i++) {
+            int dist = RANDOM.nextInt(3)+1;
             JanusGraphVertex n = tx.addVertex();
             n.addEdge("connect",vertex, "distance",dist);
             total+=growVertex(n,depth+dist,maxDepth,maxBranch);

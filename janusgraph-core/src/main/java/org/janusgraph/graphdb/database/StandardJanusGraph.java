@@ -16,26 +16,43 @@ package org.janusgraph.graphdb.database;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONVersion;
+import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoVersion;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphIndexQuery;
+import org.janusgraph.core.JanusGraphMultiVertexQuery;
+import org.janusgraph.core.JanusGraphQuery;
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.RelationType;
 import org.janusgraph.core.VertexLabel;
 import org.janusgraph.core.schema.ConsistencyModifier;
+import org.janusgraph.core.schema.EdgeLabelMaker;
 import org.janusgraph.core.schema.JanusGraphManagement;
+import org.janusgraph.core.schema.PropertyKeyMaker;
 import org.janusgraph.core.schema.SchemaStatus;
+import org.janusgraph.core.schema.VertexLabelMaker;
 import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.BackendTransaction;
@@ -76,10 +93,14 @@ import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.internal.InternalVertexLabel;
+import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.QueryUtil;
 import org.janusgraph.graphdb.relations.EdgeDirection;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsGraph;
+import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsTransaction;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphFeatures;
+import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistry;
+import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistryV1d0;
+import org.janusgraph.graphdb.tinkerpop.JanusGraphVariables;
 import org.janusgraph.graphdb.tinkerpop.optimize.AdjacentVertexFilterOptimizerStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphIoRegistrationStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphLocalQueryOptimizerStrategy;
@@ -104,6 +125,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,11 +133,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.REGISTRATION_TIME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.REPLACE_INSTANCE_IF_EXISTS;
 
-public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
+public class StandardJanusGraph implements JanusGraph {
 
     private static final Logger LOG = LoggerFactory.getLogger(StandardJanusGraph.class);
 
@@ -158,6 +182,277 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     private final String name;
     private final Thread shutdownThread;
+
+    // ########## TRANSACTION HANDLING ###########################
+
+    private final GraphTransaction tinkerpopTxContainer = new GraphTransaction();
+
+    // if txs is null the graph is closed, if it contains null, there is no open tx
+    private ThreadLocal<JanusGraphBlueprintsTransaction> txs = ThreadLocal.withInitial(() -> null);
+
+    // RETURNS TXS
+    private JanusGraphBlueprintsTransaction getAutoStartTx() {
+        if (txs == null) throw new IllegalStateException("Graph has been closed");
+        // Here txs is still null
+        // with readWrite() we trigger READ_WRITE_BEHAVIOR.AUTO,
+        // which in turns calls transaction.open() -> calls doOpen -> calls startNewTx() -> init new JanusGraphTransaction
+        // and assigns it to txs
+        tinkerpopTxContainer.readWrite(); // acknowledges that transaction is about to be used for either write o read (init tx)
+
+        JanusGraphBlueprintsTransaction tx = txs.get();
+        Preconditions.checkNotNull(tx, "Invalid read-write behavior configured: Should either open transaction or throw exception.");
+        return tx;
+    }
+
+    // INITIALISE TXS
+    private void startNewTx() {
+        JanusGraphBlueprintsTransaction tx = txs.get();
+        if (tx != null && tx.isOpen()) throw Transaction.Exceptions.transactionAlreadyOpen();
+        tx = (JanusGraphBlueprintsTransaction) newThreadBoundTransaction();
+        txs.set(tx);
+        LOG.debug("Created new thread-bound transaction {}", tx);
+    }
+
+    public JanusGraphTransaction getCurrentThreadTx() {
+        return getAutoStartTx();
+    }
+
+    @Override
+    public Transaction tx() {
+        return tinkerpopTxContainer;
+    }
+
+    @Override
+    public String toString() {
+        GraphDatabaseConfiguration config = ((StandardJanusGraph) this).getConfiguration();
+        return StringFactory.graphString(this, config.getBackendDescription());
+    }
+
+    public Variables variables() {
+        return new JanusGraphVariables(this.getBackend().getUserConfiguration());
+    }
+
+    @Override
+    public org.apache.commons.configuration.Configuration configuration() {
+        GraphDatabaseConfiguration config = ((StandardJanusGraph) this).getConfiguration();
+        return config.getConfigurationAtOpen();
+    }
+
+    @Override
+    public <I extends Io> I io(final Io.Builder<I> builder) {
+        if (builder.requiresVersion(GryoVersion.V1_0) || builder.requiresVersion(GraphSONVersion.V1_0)) {
+            return (I) builder.graph(this).onMapper(mapper -> mapper.addRegistry(JanusGraphIoRegistryV1d0.getInstance())).create();
+        } else if (builder.requiresVersion(GraphSONVersion.V2_0)) {
+            return (I) builder.graph(this).onMapper(mapper -> mapper.addRegistry(JanusGraphIoRegistry.getInstance())).create();
+        } else {
+            return (I) builder.graph(this).onMapper(mapper -> mapper.addRegistry(JanusGraphIoRegistry.getInstance())).create();
+        }
+    }
+
+    // ########## TRANSACTIONAL FORWARDING ###########################
+
+    @Override
+    public JanusGraphVertex addVertex(Object... keyValues) {
+        return getAutoStartTx().addVertex(keyValues);
+    }
+
+    @Override
+    public Iterator<Vertex> vertices(Object... vertexIds) {
+        return getAutoStartTx().vertices(vertexIds);
+    }
+
+    @Override
+    public Iterator<Edge> edges(Object... edgeIds) {
+        return getAutoStartTx().edges(edgeIds);
+    }
+
+    @Override
+    public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
+        if (!graphComputerClass.equals(FulgoraGraphComputer.class)) {
+            throw Exceptions.graphDoesNotSupportProvidedGraphComputer(graphComputerClass);
+        } else {
+            return (C) compute();
+        }
+    }
+
+    @Override
+    public FulgoraGraphComputer compute() throws IllegalArgumentException {
+        return new FulgoraGraphComputer(this, this.getConfiguration().getConfiguration());
+    }
+
+    @Override
+    public JanusGraphVertex addVertex(String vertexLabel) {
+        return getAutoStartTx().addVertex(vertexLabel);
+    }
+
+    @Override
+    public JanusGraphQuery<? extends JanusGraphQuery> query() {
+        return getAutoStartTx().query();
+    }
+
+    @Override
+    public JanusGraphIndexQuery indexQuery(String indexName, String query) {
+        return getAutoStartTx().indexQuery(indexName, query);
+    }
+
+    @Override
+    public JanusGraphMultiVertexQuery multiQuery(JanusGraphVertex... vertices) {
+        return getAutoStartTx().multiQuery(vertices);
+    }
+
+    @Override
+    public JanusGraphMultiVertexQuery multiQuery(Collection<JanusGraphVertex> vertices) {
+        return getAutoStartTx().multiQuery(vertices);
+    }
+
+
+    //Schema
+
+    @Override
+    public PropertyKeyMaker makePropertyKey(String name) {
+        return getAutoStartTx().makePropertyKey(name);
+    }
+
+    @Override
+    public EdgeLabelMaker makeEdgeLabel(String name) {
+        return getAutoStartTx().makeEdgeLabel(name);
+    }
+
+    @Override
+    public VertexLabelMaker makeVertexLabel(String name) {
+        return getAutoStartTx().makeVertexLabel(name);
+    }
+
+    @Override
+    public VertexLabel addProperties(VertexLabel vertexLabel, PropertyKey... keys) {
+        return getAutoStartTx().addProperties(vertexLabel, keys);
+    }
+
+    @Override
+    public EdgeLabel addProperties(EdgeLabel edgeLabel, PropertyKey... keys) {
+        return getAutoStartTx().addProperties(edgeLabel, keys);
+    }
+
+    @Override
+    public EdgeLabel addConnection(EdgeLabel edgeLabel, VertexLabel outVLabel, VertexLabel inVLabel) {
+        return getAutoStartTx().addConnection(edgeLabel, outVLabel, inVLabel);
+    }
+
+    @Override
+    public boolean containsPropertyKey(String name) {
+        return getAutoStartTx().containsPropertyKey(name);
+    }
+
+    @Override
+    public PropertyKey getOrCreatePropertyKey(String name) {
+        return getAutoStartTx().getOrCreatePropertyKey(name);
+    }
+
+    @Override
+    public PropertyKey getPropertyKey(String name) {
+        return getAutoStartTx().getPropertyKey(name);
+    }
+
+    @Override
+    public boolean containsEdgeLabel(String name) {
+        return getAutoStartTx().containsEdgeLabel(name);
+    }
+
+    @Override
+    public EdgeLabel getOrCreateEdgeLabel(String name) {
+        return getAutoStartTx().getOrCreateEdgeLabel(name);
+    }
+
+    @Override
+    public EdgeLabel getEdgeLabel(String name) {
+        return getAutoStartTx().getEdgeLabel(name);
+    }
+
+    @Override
+    public boolean containsRelationType(String name) {
+        return getAutoStartTx().containsRelationType(name);
+    }
+
+    @Override
+    public RelationType getRelationType(String name) {
+        return getAutoStartTx().getRelationType(name);
+    }
+
+    @Override
+    public boolean containsVertexLabel(String name) {
+        return getAutoStartTx().containsVertexLabel(name);
+    }
+
+    @Override
+    public VertexLabel getVertexLabel(String name) {
+        return getAutoStartTx().getVertexLabel(name);
+    }
+
+    @Override
+    public VertexLabel getOrCreateVertexLabel(String name) {
+        return getAutoStartTx().getOrCreateVertexLabel(name);
+    }
+
+
+    // WRAPPER AROUND TXS for some reason
+    // probably so that we can extend an automatic abstract thread local tx while using janustransaction as implementation!
+    class GraphTransaction extends AbstractThreadLocalTransaction {
+
+        public GraphTransaction() {
+            super(StandardJanusGraph.this);
+        }
+
+        @Override
+        public void doOpen() {
+            startNewTx();
+        }
+
+        @Override
+        public void doCommit() {
+            getAutoStartTx().commit();
+        }
+
+        @Override
+        public void doRollback() {
+            getAutoStartTx().rollback();
+        }
+
+        @Override
+        public JanusGraphTransaction createThreadedTx() {
+            return newTransaction();
+        }
+
+        @Override
+        public boolean isOpen() {
+            if (null == txs) {
+                // Graph has been closed
+                return false;
+            }
+            JanusGraphBlueprintsTransaction tx = txs.get();
+            return tx != null && tx.isOpen();
+        }
+
+        @Override
+        protected void doClose() {
+            super.doClose();
+            transactionListeners.remove();
+            txs.remove();
+        }
+
+        @Override
+        public Transaction onReadWrite(Consumer<Transaction> transactionConsumer) {
+            Preconditions.checkArgument(transactionConsumer instanceof READ_WRITE_BEHAVIOR,
+                    "Only READ_WRITE_BEHAVIOR instances are accepted argument, got: %s", transactionConsumer);
+            return super.onReadWrite(transactionConsumer);
+        }
+
+        @Override
+        public Transaction onClose(Consumer<Transaction> transactionConsumer) {
+            Preconditions.checkArgument(transactionConsumer instanceof CLOSE_BEHAVIOR,
+                    "Only CLOSE_BEHAVIOR instances are accepted argument, got: %s", transactionConsumer);
+            return super.onClose(transactionConsumer);
+        }
+    }
 
     public StandardJanusGraph(GraphDatabaseConfiguration configuration, Backend backend) {
 
@@ -263,7 +558,8 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
                 }
             }
 
-            super.close();
+            txs.remove();
+            txs = null;
 
             IOUtils.closeQuietly(idAssigner);
             IOUtils.closeQuietly(backend);
@@ -312,11 +608,6 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         return serializer;
     }
 
-    //TODO: premature optimization, re-evaluate later
-//    public RelationQueryCache getQueryCache() {
-//        return queryCache;
-//    }
-
     public SchemaCache getSchemaCache() {
         return schemaCache;
     }
@@ -346,7 +637,6 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         return new StandardTransactionBuilder(getConfiguration(), this);
     }
 
-    @Override
     public JanusGraphTransaction newThreadBoundTransaction() {
         return buildTransaction().threadBound().start();
     }
@@ -393,7 +683,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         }
 
         @Override
-        public EntryList retrieveSchemaRelations(final long schemaId, final BaseRelationType type, final Direction dir) {
+        public EntryList retrieveSchemaRelations(long schemaId, BaseRelationType type, Direction dir) {
             SliceQuery query = queryCache.getQuery(type, dir);
             Configuration customTxOptions = backend.getStoreFeatures().getKeyConsistentTxConfig();
             StandardJanusGraphTx consistentTx = null;
@@ -409,7 +699,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
     };
 
-    public RecordIterator<Long> getVertexIDs(final BackendTransaction tx) {
+    public RecordIterator<Long> getVertexIDs(BackendTransaction tx) {
         Preconditions.checkArgument(backend.getStoreFeatures().hasOrderedScan() ||
                         backend.getStoreFeatures().hasUnorderedScan(),
                 "The configured storage backend does not support global graph operations - use Faunus instead");
@@ -532,18 +822,18 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         }
     }
 
-    public ModificationSummary prepareCommit(final Collection<InternalRelation> addedRelations,
-                                             final Collection<InternalRelation> deletedRelations,
-                                             final Predicate<InternalRelation> filter,
-                                             final BackendTransaction mutator, final StandardJanusGraphTx tx,
-                                             final boolean acquireLocks) throws BackendException {
+    private ModificationSummary prepareCommit(Collection<InternalRelation> addedRelations,
+                                              Collection<InternalRelation> deletedRelations,
+                                              Predicate<InternalRelation> filter,
+                                              BackendTransaction mutator, StandardJanusGraphTx tx,
+                                              boolean acquireLocks) throws BackendException {
 
 
         ListMultimap<Long, InternalRelation> mutations = ArrayListMultimap.create();
         ListMultimap<InternalVertex, InternalRelation> mutatedProperties = ArrayListMultimap.create();
         List<IndexSerializer.IndexUpdate> indexUpdates = Lists.newArrayList();
         //1) Collect deleted edges and their index updates and acquire edge locks
-        for (InternalRelation del : Iterables.filter(deletedRelations, filter)) {
+        for (InternalRelation del : Iterables.filter(deletedRelations, filter::test)) {
             Preconditions.checkArgument(del.isRemoved());
             for (int pos = 0; pos < del.getLen(); pos++) {
                 InternalVertex vertex = del.getVertex(pos);
@@ -560,7 +850,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         }
 
         //2) Collect added edges and their index updates and acquire edge locks
-        for (InternalRelation add : Iterables.filter(addedRelations, filter)) {
+        for (InternalRelation add : Iterables.filter(addedRelations, filter::test)) {
             Preconditions.checkArgument(add.isNew());
 
             for (int pos = 0; pos < add.getLen(); pos++) {
@@ -638,13 +928,13 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         for (IndexSerializer.IndexUpdate indexUpdate : indexUpdates) {
             assert indexUpdate.isAddition() || indexUpdate.isDeletion();
             if (indexUpdate.isCompositeIndex()) {
-                final IndexSerializer.IndexUpdate<StaticBuffer, Entry> update = indexUpdate;
+                IndexSerializer.IndexUpdate<StaticBuffer, Entry> update = indexUpdate;
                 if (update.isAddition())
                     mutator.mutateIndex(update.getKey(), Lists.newArrayList(update.getEntry()), KCVSCache.NO_DELETIONS);
                 else
                     mutator.mutateIndex(update.getKey(), KeyColumnValueStore.NO_ADDITIONS, Lists.newArrayList(update.getEntry()));
             } else {
-                final IndexSerializer.IndexUpdate<String, IndexEntry> update = indexUpdate;
+                IndexSerializer.IndexUpdate<String, IndexEntry> update = indexUpdate;
                 has2iMods = true;
                 IndexTransaction itx = mutator.getIndexTransaction(update.getIndex().getBackingIndexName());
                 String indexStore = ((MixedIndexType) update.getIndex()).getStoreName();
@@ -657,15 +947,14 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
         return new ModificationSummary(!mutations.isEmpty(), has2iMods);
     }
 
-    private static final Predicate<InternalRelation> SCHEMA_FILTER =
-            internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
+    private static final Predicate<InternalRelation> SCHEMA_FILTER = internalRelation -> internalRelation.getType() instanceof BaseRelationType && internalRelation.getVertex(0) instanceof JanusGraphSchemaVertex;
 
-    private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.apply(internalRelation);
+    private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.test(internalRelation);
 
-    private static final Predicate<InternalRelation> NO_FILTER = Predicates.alwaysTrue();
+    private static final Predicate<InternalRelation> NO_FILTER = internalRelation -> true;
 
-    public void commit(final Collection<InternalRelation> addedRelations,
-                       final Collection<InternalRelation> deletedRelations, final StandardJanusGraphTx tx) {
+    public void commit(Collection<InternalRelation> addedRelations,
+                       Collection<InternalRelation> deletedRelations, StandardJanusGraphTx tx) {
         if (addedRelations.isEmpty() && deletedRelations.isEmpty()) return;
         //1. Finalize transaction
         LOG.debug("Saving transaction. Added {}, removed {}", addedRelations.size(), deletedRelations.size());
@@ -697,8 +986,8 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
 
             //3.2 Commit schema elements and their associated relations in a separate transaction if backend does not support
             //    transactional isolation
-            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER))
-                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER));
+            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER::test))
+                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER::test));
             Preconditions.checkArgument(!hasSchemaElements || (!tx.getConfiguration().hasEnabledBatchLoading() && acquireLocks),
                     "Attempting to create schema elements in inconsistent state");
 
@@ -710,7 +999,7 @@ public class StandardJanusGraph extends JanusGraphBlueprintsGraph {
                  * mutations in the tx. If the storage supports transactional
                  * isolation, then don't create a separate tx.
                  */
-                final BackendTransaction schemaMutator = openBackendTransaction(tx);
+                BackendTransaction schemaMutator = openBackendTransaction(tx);
 
                 try {
                     //[FAILURE] If the preparation throws an exception abort directly - nothing persisted since batch-loading cannot be enabled for schema elements

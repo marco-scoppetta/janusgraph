@@ -16,8 +16,8 @@ package org.janusgraph.graphdb.tinkerpop.optimize;
 
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.olap.computer.FulgoraElementTraversal;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsGraph;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 import com.google.common.collect.Lists;
@@ -99,7 +99,7 @@ public class JanusGraphTraversalUtil {
                 throw new IllegalArgumentException("Traversal is not bound to a graph: " + traversal);
             Graph graph = optGraph.get();
             if (graph instanceof JanusGraphTransaction) tx = (JanusGraphTransaction) graph;
-            else if (graph instanceof JanusGraphBlueprintsGraph) tx = ((JanusGraphBlueprintsGraph) graph).getCurrentThreadTx();
+            else if (graph instanceof StandardJanusGraph) tx = ((StandardJanusGraph) graph).getCurrentThreadTx();
             else throw new IllegalArgumentException("Traversal is not bound to a JanusGraph Graph, but: " + graph);
         }
         if (tx == null)

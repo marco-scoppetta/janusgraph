@@ -15,19 +15,25 @@
 package org.janusgraph;
 
 
-import org.janusgraph.core.JanusGraphFactory;
+import org.apache.commons.lang.StringUtils;
 import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.ReadConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-import org.janusgraph.util.system.IOUtils;
-import org.apache.commons.lang.StringUtils;
-
 import java.io.File;
 import java.time.Duration;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_TIME;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DROP_ON_CLEAR;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_WAIT;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.USE_MULTIQUERY;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
 public class StorageSetup {
 
@@ -38,7 +44,7 @@ public class StorageSetup {
         if (null == homeDirectory) {
             homeDirectory = "target" + File.separator + "db";
         }
-        if (subDirectory!=null && !StringUtils.isEmpty(subDirectory)) homeDirectory += File.separator + subDirectory;
+        if (subDirectory != null && !StringUtils.isEmpty(subDirectory)) homeDirectory += File.separator + subDirectory;
         File homeFile = new File(homeDirectory);
         if (!homeFile.exists()) homeFile.mkdirs();
         return homeDirectory;
@@ -46,15 +52,15 @@ public class StorageSetup {
 
     public static ModifiableConfiguration getInMemoryConfiguration() {
         return buildGraphConfiguration()
-            .set(STORAGE_BACKEND, "inmemory")
-            .set(IDAUTHORITY_WAIT, Duration.ZERO)
-            .set(DROP_ON_CLEAR, false);
+                .set(STORAGE_BACKEND, "inmemory")
+                .set(IDAUTHORITY_WAIT, Duration.ZERO)
+                .set(DROP_ON_CLEAR, false);
     }
 
     public static JanusGraph getInMemoryGraph() {
         return JanusGraphFactory.open(getInMemoryConfiguration());
     }
-    
+
     public static JanusGraph getInMemoryGraphWithMultiQuery() {
         return JanusGraphFactory.open(getInMemoryConfiguration().set(USE_MULTIQUERY, true));
     }
@@ -66,11 +72,11 @@ public class StorageSetup {
     }
 
     public static ModifiableConfiguration getConfig(WriteConfiguration config) {
-        return new ModifiableConfiguration(ROOT_NS,config, BasicConfiguration.Restriction.NONE);
+        return new ModifiableConfiguration(ROOT_NS, config, BasicConfiguration.Restriction.NONE);
     }
 
     public static BasicConfiguration getConfig(ReadConfiguration config) {
-        return new BasicConfiguration(ROOT_NS,config, BasicConfiguration.Restriction.NONE);
+        return new BasicConfiguration(ROOT_NS, config, BasicConfiguration.Restriction.NONE);
     }
 
 }

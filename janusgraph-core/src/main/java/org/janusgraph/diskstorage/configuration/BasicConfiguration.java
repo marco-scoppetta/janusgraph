@@ -25,9 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Read-only configuration that can optionally be restricted to only accept LOCAL or GLOBAL options.
- *
- * @author Matthias Broecheler (me@matthiasb.com)
+ * Read-only configuration that can be optionally restricted to only accept LOCAL or GLOBAL options.
  */
 public class BasicConfiguration implements Configuration {
 
@@ -41,7 +39,7 @@ public class BasicConfiguration implements Configuration {
 
     public BasicConfiguration(ConfigNamespace root, ReadConfiguration config, Restriction restriction) {
         Preconditions.checkNotNull(root);
-        Preconditions.checkArgument(!root.isUmbrella(),"Root cannot be an umbrella namespace");
+        Preconditions.checkArgument(!root.isUmbrella(), "Root cannot be an umbrella namespace");
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(restriction);
 
@@ -49,7 +47,8 @@ public class BasicConfiguration implements Configuration {
         this.config = config;
         this.restriction = restriction;
     }
-    public ConfigNamespace getRootNamespace() {
+
+    ConfigNamespace getRootNamespace() {
         return root;
     }
 
@@ -118,38 +117,38 @@ public class BasicConfiguration implements Configuration {
 
     private void verifyElement(ConfigElement element) {
         Preconditions.checkNotNull(element);
-        Preconditions.checkArgument(element.getRoot().equals(root),"Configuration element is not associated with this configuration: %s",element);
+        Preconditions.checkArgument(element.getRoot().equals(root), "Configuration element is not associated with this configuration: %s", element);
     }
 
     protected String getPath(ConfigElement option, String... umbrellaElements) {
         verifyElement(option);
-        return ConfigElement.getPath(option,umbrellaElements);
+        return ConfigElement.getPath(option, umbrellaElements);
     }
 
-    protected Set<String> getContainedNamespaces(ReadConfiguration config, ConfigNamespace umbrella, String... umbrellaElements) {
+    private Set<String> getContainedNamespaces(ReadConfiguration config, ConfigNamespace umbrella, String... umbrellaElements) {
         verifyElement(umbrella);
         Preconditions.checkArgument(umbrella.isUmbrella());
 
-        String prefix = ConfigElement.getPath(umbrella,umbrellaElements);
+        String prefix = ConfigElement.getPath(umbrella, umbrellaElements);
         Set<String> result = Sets.newHashSet();
 
         for (String key : config.getKeys(prefix)) {
             Preconditions.checkArgument(key.startsWith(prefix));
-            String sub = key.substring(prefix.length()+1).trim();
+            String sub = key.substring(prefix.length() + 1).trim();
             if (!sub.isEmpty()) {
                 String ns = ConfigElement.getComponents(sub)[0];
-                Preconditions.checkArgument(StringUtils.isNotBlank(ns),"Invalid sub-namespace for key: %s",key);
+                Preconditions.checkArgument(StringUtils.isNotBlank(ns), "Invalid sub-namespace for key: %s", key);
                 result.add(ns);
             }
         }
         return result;
     }
 
-    protected Map<String,Object> getSubset(ReadConfiguration config, ConfigNamespace umbrella, String... umbrellaElements) {
+    protected Map<String, Object> getSubset(ReadConfiguration config, ConfigNamespace umbrella, String... umbrellaElements) {
         verifyElement(umbrella);
 
         String prefix = umbrella.isRoot() ? "" : ConfigElement.getPath(umbrella, umbrellaElements);
-        Map<String,Object> result = Maps.newHashMap();
+        Map<String, Object> result = Maps.newHashMap();
 
         for (String key : config.getKeys(prefix)) {
             Preconditions.checkArgument(key.startsWith(prefix));
@@ -159,7 +158,7 @@ public class BasicConfiguration implements Configuration {
             int startIndex = umbrella.isRoot() ? prefix.length() : prefix.length() + 1;
             String sub = key.substring(startIndex).trim();
             if (!sub.isEmpty()) {
-                result.put(sub,config.get(key,Object.class));
+                result.put(sub, config.get(key, Object.class));
             }
         }
         return result;
@@ -168,23 +167,23 @@ public class BasicConfiguration implements Configuration {
 
     /**
      * Return a new Configuration which contains a subset of current BasicConfiguration
-    */
+     */
     private static Configuration restrictTo(Configuration config, String... fixedUmbrella) {
-        Preconditions.checkArgument(fixedUmbrella!=null && fixedUmbrella.length>0);
+        Preconditions.checkArgument(fixedUmbrella != null && fixedUmbrella.length > 0);
         return new Configuration() {
 
             private String[] concat(String... others) {
-                if (others==null || others.length==0) return fixedUmbrella;
-                String[] join = new String[fixedUmbrella.length+others.length];
-                System.arraycopy(fixedUmbrella,0,join,0,fixedUmbrella.length);
-                System.arraycopy(others,0,join,fixedUmbrella.length,others.length);
+                if (others == null || others.length == 0) return fixedUmbrella;
+                String[] join = new String[fixedUmbrella.length + others.length];
+                System.arraycopy(fixedUmbrella, 0, join, 0, fixedUmbrella.length);
+                System.arraycopy(others, 0, join, fixedUmbrella.length, others.length);
                 return join;
             }
 
             @Override
             public boolean has(ConfigOption option, String... umbrellaElements) {
                 if (option.getNamespace().hasUmbrella())
-                    return config.has(option,concat(umbrellaElements));
+                    return config.has(option, concat(umbrellaElements));
                 else
                     return config.has(option);
             }
@@ -192,19 +191,19 @@ public class BasicConfiguration implements Configuration {
             @Override
             public <O> O get(ConfigOption<O> option, String... umbrellaElements) {
                 if (option.getNamespace().hasUmbrella())
-                    return config.get(option,concat(umbrellaElements));
+                    return config.get(option, concat(umbrellaElements));
                 else
                     return config.get(option);
             }
 
             @Override
             public Set<String> getContainedNamespaces(ConfigNamespace umbrella, String... umbrellaElements) {
-                return config.getContainedNamespaces(umbrella,concat(umbrellaElements));
+                return config.getContainedNamespaces(umbrella, concat(umbrellaElements));
             }
 
             @Override
             public Map<String, Object> getSubset(ConfigNamespace umbrella, String... umbrellaElements) {
-                return config.getSubset(umbrella,concat(umbrellaElements));
+                return config.getSubset(umbrella, concat(umbrellaElements));
             }
 
             @Override

@@ -60,14 +60,15 @@ public class TestBed {
 
     public static class B {
 
-        public B(int a) {}
+        public B(int a) {
+        }
 
     }
 
     private static void doSomethingExpensive(int milliseconds) {
-        double d=0.0;
+        double d = 0.0;
         Random r = new Random();
-        for (int i=0;i<10000*milliseconds;i++) d+=Math.pow(1.1,r.nextDouble());
+        for (int i = 0; i < 10000 * milliseconds; i++) d += Math.pow(1.1, r.nextDouble());
 
     }
 
@@ -144,11 +145,11 @@ public class TestBed {
         }
 
         public void observe(Object o) {
-            om.observe(o,os);
+            om.observe(o, os);
         }
 
         public void observe(Object o1, Object o2) {
-            om.observe(o1,o2,os);
+            om.observe(o1, o2, os);
         }
 
 
@@ -164,8 +165,9 @@ public class TestBed {
         }
     }
 
-    public static @Nonnull String getInt(@Nonnull int a, int b) {
-        return String.valueOf(a+b);
+    public static @Nonnull
+    String getInt(@Nonnull int a, int b) {
+        return String.valueOf(a + b);
     }
 
 
@@ -174,7 +176,7 @@ public class TestBed {
      * @throws java.io.IOException
      */
     public static void main(String[] args) throws Exception {
-        Method method = TestBed.class.getMethod("getInt",int.class,int.class);
+        Method method = TestBed.class.getMethod("getInt", int.class, int.class);
         AnnotatedType rt = method.getAnnotatedReturnType();
         System.out.println(rt.getType());
         System.out.println(rt.getAnnotations().length);
@@ -209,36 +211,36 @@ public class TestBed {
             @Override
             public void run() {
                 try {
-                for (int i=0;i<10;i++) {
-                    exe.submit(new Runnable() {
+                    for (int i = 0; i < 10; i++) {
+                        exe.submit(new Runnable() {
 
-                        private final int number = atomicInt.incrementAndGet();
+                            private final int number = atomicInt.incrementAndGet();
 
-                        @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(150);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(150);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println(number);
                             }
-                            System.out.println(number);
-                        }
-                    });
-                    System.out.println("Submitted: "+i);
+                        });
+                        System.out.println("Submitted: " + i);
 //                    doSomethingExpensive(20);
-                }
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        },0,1, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.SECONDS);
         Thread.sleep(10000);
 //        future.get(1,TimeUnit.SECONDS);
         System.out.println("Cancel: " + future.cancel(false));
         System.out.println("Done: " + future.isDone());
         exe.shutdown();
 //        Thread.sleep(2000);
-        System.out.println("Terminate: " + exe.awaitTermination(5,TimeUnit.SECONDS));
+        System.out.println("Terminate: " + exe.awaitTermination(5, TimeUnit.SECONDS));
         System.out.println("DONE");
     }
 
