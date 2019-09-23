@@ -25,15 +25,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementations of {@link TimestampProvider} for different resolutions of time:
  * <ul>
- *     <li>NANO: nano-second time resolution based on System.nanoTime using a base-time established
- *     by System.currentTimeMillis(). The exact resolution depends on the particular JVM and host machine.</li>
- *     <li>MICRO: micro-second time which is actually at milli-second resolution.</li>
- *     <li>MILLI: milli-second time resolution</li>
+ * <li>NANO: nano-second time resolution based on System.nanoTime using a base-time established
+ * by System.currentTimeMillis(). The exact resolution depends on the particular JVM and host machine.</li>
+ * <li>MICRO: micro-second time which is actually at milli-second resolution.</li>
+ * <li>MILLI: milli-second time resolution</li>
  * </ul>
  */
 public enum TimestampProviders implements TimestampProvider {
     NANO {
-
         /**
          * This returns the approximate number of nanoseconds
          * elapsed since the UNIX Epoch.  The least significant
@@ -85,7 +84,7 @@ public enum TimestampProviders implements TimestampProvider {
 
         @Override
         public long getTime(Instant timestamp) {
-            return timestamp.getEpochSecond() * 1000000L + timestamp.getNano()/1000;
+            return timestamp.getEpochSecond() * 1000000L + timestamp.getNano() / 1000;
 
         }
     },
@@ -112,16 +111,13 @@ public enum TimestampProviders implements TimestampProvider {
         }
     };
 
-    private static final Logger log =
-            LoggerFactory.getLogger(TimestampProviders.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimestampProviders.class);
 
     @Override
     public Instant sleepPast(Instant futureTime) throws InterruptedException {
 
         Instant now;
-
         ChronoUnit unit = getUnit();
-
         /*
          * Distributed storage managers that rely on timestamps play with the
          * least significant bit in timestamp longs, turning it on or off to
@@ -144,9 +140,7 @@ public enum TimestampProviders implements TimestampProvider {
             if (0L == delta)
                 delta = 1L;
 
-            if (log.isTraceEnabled()) {
-                log.trace("Sleeping: now={} targettime={} delta={} {}", now, futureTime, delta, unit);
-            }
+            LOGGER.trace("Sleeping: now={} targettime={} delta={} {}", now, futureTime, delta, unit);
 
             Temporals.timeUnit(unit).sleep(delta);
         }

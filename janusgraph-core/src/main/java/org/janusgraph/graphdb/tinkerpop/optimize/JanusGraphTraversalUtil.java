@@ -95,8 +95,9 @@ public class JanusGraphTraversalUtil {
         if (traversal instanceof FulgoraElementTraversal) {
             tx = (JanusGraphTransaction) optGraph.get();
         } else {
-            if (!optGraph.isPresent())
+            if (!optGraph.isPresent()){
                 throw new IllegalArgumentException("Traversal is not bound to a graph: " + traversal);
+            }
             Graph graph = optGraph.get();
             if (graph instanceof JanusGraphTransaction) tx = (JanusGraphTransaction) graph;
             else if (graph instanceof StandardJanusGraph) tx = ((StandardJanusGraph) graph).getCurrentThreadTx();

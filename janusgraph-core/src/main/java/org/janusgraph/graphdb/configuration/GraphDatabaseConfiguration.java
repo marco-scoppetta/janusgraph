@@ -1339,11 +1339,10 @@ public class GraphDatabaseConfiguration {
         return getSerializer(configuration);
     }
 
-    public static Serializer getSerializer(Configuration configuration) {
+    private static Serializer getSerializer(Configuration configuration) {
         Serializer serializer = new StandardSerializer();
 
-        List<RegisteredAttributeClass<?>> registeredAttributeClasses =
-                RegisteredAttributeClassesConverter.getInstance().convert(configuration);
+        List<RegisteredAttributeClass<?>> registeredAttributeClasses = RegisteredAttributeClassesConverter.getInstance().convert(configuration);
 
         for (RegisteredAttributeClass<?> clazz : registeredAttributeClasses) {
             clazz.registerWith(serializer);

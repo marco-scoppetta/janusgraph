@@ -301,8 +301,8 @@ public class IndexSerializer {
 
     private static int getIndexTTL(InternalVertex vertex, PropertyKey... keys) {
         int ttl = StandardJanusGraph.getTTL(vertex);
-        for (final PropertyKey key : keys) {
-            final int kttl = ((InternalRelationType) key).getTTL();
+        for (PropertyKey key : keys) {
+            int kttl = ((InternalRelationType) key).getTTL();
             if (kttl > 0 && (kttl < ttl || ttl <= 0)) ttl = kttl;
         }
         return ttl;
@@ -310,9 +310,9 @@ public class IndexSerializer {
 
     public Collection<IndexUpdate> getIndexUpdates(InternalVertex vertex, Collection<InternalRelation> updatedProperties) {
         if (updatedProperties.isEmpty()) return Collections.emptyList();
-        final Set<IndexUpdate> updates = Sets.newHashSet();
+        Set<IndexUpdate> updates = Sets.newHashSet();
 
-        for (final InternalRelation rel : updatedProperties) {
+        for (InternalRelation rel : updatedProperties) {
             assert rel.isProperty();
             final JanusGraphVertexProperty p = (JanusGraphVertexProperty)rel;
             assert rel.isNew() || rel.isRemoved(); assert rel.getVertex(0).equals(vertex);
@@ -320,18 +320,18 @@ public class IndexSerializer {
             for (final IndexType index : ((InternalRelationType)p.propertyKey()).getKeyIndexes()) {
                 if (!indexAppliesTo(index,vertex)) continue;
                 if (index.isCompositeIndex()) { //Gather composite indexes
-                    final CompositeIndexType cIndex = (CompositeIndexType)index;
-                    final IndexRecords updateRecords = indexMatches(vertex,cIndex,updateType==IndexUpdate.Type.DELETE,p.propertyKey(),new RecordEntry(p));
-                    for (final RecordEntry[] record : updateRecords) {
-                        final IndexUpdate update = new IndexUpdate<>(cIndex, updateType, getIndexKey(cIndex, record), getIndexEntry(cIndex, record, vertex), vertex);
-                        final int ttl = getIndexTTL(vertex,getKeysOfRecords(record));
+                    CompositeIndexType cIndex = (CompositeIndexType)index;
+                    IndexRecords updateRecords = indexMatches(vertex,cIndex,updateType==IndexUpdate.Type.DELETE,p.propertyKey(),new RecordEntry(p));
+                    for (RecordEntry[] record : updateRecords) {
+                        IndexUpdate update = new IndexUpdate<>(cIndex, updateType, getIndexKey(cIndex, record), getIndexEntry(cIndex, record, vertex), vertex);
+                        int ttl = getIndexTTL(vertex,getKeysOfRecords(record));
                         if (ttl>0 && updateType== IndexUpdate.Type.ADD) update.setTTL(ttl);
                         updates.add(update);
                     }
                 } else { //Update mixed indexes
                     if (((MixedIndexType)index).getField(p.propertyKey()).getStatus()== SchemaStatus.DISABLED) continue;
-                    final IndexUpdate update = getMixedIndexUpdate(vertex, p.propertyKey(), p.value(), (MixedIndexType) index, updateType);
-                    final int ttl = getIndexTTL(vertex,p.propertyKey());
+                    IndexUpdate update = getMixedIndexUpdate(vertex, p.propertyKey(), p.value(), (MixedIndexType) index, updateType);
+                    int ttl = getIndexTTL(vertex,p.propertyKey());
                     if (ttl>0 && updateType== IndexUpdate.Type.ADD) update.setTTL(ttl);
                     updates.add(update);
                 }
@@ -340,8 +340,7 @@ public class IndexSerializer {
         return updates;
     }
 
-    private IndexUpdate<String,IndexEntry> getMixedIndexUpdate(JanusGraphElement element, PropertyKey key, Object value,
-                                                               MixedIndexType index, IndexUpdate.Type updateType)  {
+    private IndexUpdate<String,IndexEntry> getMixedIndexUpdate(JanusGraphElement element, PropertyKey key, Object value, MixedIndexType index, IndexUpdate.Type updateType)  {
         return new IndexUpdate<>(index, updateType, element2String(element), new IndexEntry(key2Field(index.getField(key)), value), element);
     }
 
