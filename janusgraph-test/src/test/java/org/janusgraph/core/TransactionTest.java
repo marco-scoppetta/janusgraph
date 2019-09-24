@@ -14,6 +14,7 @@
 
 package org.janusgraph.core;
 
+import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 
 import org.junit.jupiter.api.Assertions;
@@ -25,33 +26,31 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class TransactionTest {
-    private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
     @Test
-    void threadLocalTxMustBeCleaned() throws InterruptedException, ExecutionException {
-        JanusGraph graph = JanusGraphFactory.open("inmemory");
-
-        CompletableFuture.runAsync(() -> {
-            graph.tx().commit();
-            graph.tx().close();
-        }, executorService).get();
-
-        Assertions.assertDoesNotThrow(() -> {
-            CompletableFuture.runAsync(
-                () -> Assertions.assertNull(getThreadLocalTxs(graph).get()), executorService).get();
-        });
+    void threadLocalTxMustBeCleaned(){
+        StandardJanusGraph graph = JanusGraphFactory.open("inmemory");
+        graph.tx().close();
+        assertFalse(graph.tx().isOpen());
+        // DO NOT USE graph.getCurrentThreadTx() as this method will create a new Tx if it does not exist/it is closed
+        assertNull(((StandardJanusGraph.AutomaticLocalTinkerTransaction) graph.tx()).getJanusTransaction());
         graph.close();
-        executorService.shutdown();
     }
 
-    private ThreadLocal getThreadLocalTxs(JanusGraph graph) {
-        try {
-            Field txs = StandardJanusGraph.class.getDeclaredField("txs");
-            txs.setAccessible(true);
-            return (ThreadLocal) txs.get(graph);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
+    @Test
+    void threadLocalTxMustBeCleaned2(){
+        StandardJanusGraph graph = JanusGraphFactory.open("inmemory");
+        graph.addVertex("banana");
+        assertTrue(graph.tx().isOpen());
+        graph.close();
+        assertFalse(graph.tx().isOpen());
+        // DO NOT USE graph.getCurrentThreadTx() as this method will create a new Tx if it does not exist/it is closed
+        assertNull(((StandardJanusGraph.AutomaticLocalTinkerTransaction) graph.tx()).getJanusTransaction());
     }
+
 }
