@@ -14,26 +14,20 @@
 
 package org.janusgraph.core;
 
-import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
-
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Field;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+//This test needs to be placed somewhere else once we'll start refactoring Tests
+// as of now it is just used to check we don't forget to remove internal references to automagic transaction that JanusGraph starts
+// whenever doing any operation on the graph like graph.addVertex()
 class TransactionTest {
 
     @Test
-    void threadLocalTxMustBeCleaned(){
+    void whenAutomaticGraphTransactionIsClosed_removeReferenceToInternalJanusTransaction(){
         StandardJanusGraph graph = JanusGraphFactory.open("inmemory");
         graph.tx().close();
         assertFalse(graph.tx().isOpen());
@@ -43,7 +37,7 @@ class TransactionTest {
     }
 
     @Test
-    void threadLocalTxMustBeCleaned2(){
+    void whenGraphIsClosed_closeAndRemoveReferenceToAutomaticInternalJanusTransaction(){
         StandardJanusGraph graph = JanusGraphFactory.open("inmemory");
         graph.addVertex("banana");
         assertTrue(graph.tx().isOpen());

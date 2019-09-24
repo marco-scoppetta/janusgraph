@@ -41,8 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ExpirationCacheTest extends KCVSCacheTest {
 
-    public static final String METRICS_STRING = "metrics";
-    public static final long CACHE_SIZE = 1024*1024*48; //48 MB
+    private static final String METRICS_STRING = "metrics";
+    private static final long CACHE_SIZE = 1024*1024*48; //48 MB
 
     @Override
     public KCVSCache getCache(KeyColumnValueStore store) {
@@ -52,7 +52,6 @@ public class ExpirationCacheTest extends KCVSCacheTest {
     private static KCVSCache getCache(KeyColumnValueStore store, Duration expirationTime, Duration graceWait) {
         return new ExpirationKCVSCache(store,METRICS_STRING,expirationTime.toMillis(),graceWait.toMillis(),CACHE_SIZE);
     }
-
 
     @Test
     public void testExpiration() throws Exception {

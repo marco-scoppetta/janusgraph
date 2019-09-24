@@ -270,8 +270,9 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             throw new ReadOnlyTransactionException("Cannot create new entities in read-only transaction");
         }
         for (JanusGraphVertex v : vertices) {
-            if (v.hasId() && idManager.isUnmodifiableVertex(v.longId()) && !v.isNew())
+            if (v.hasId() && idManager.isUnmodifiableVertex(v.longId()) && !v.isNew()) {
                 throw new SchemaViolationException("Cannot modify unmodifiable vertex: " + v);
+            }
         }
         verifyAccess(vertices);
     }
@@ -280,10 +281,12 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         verifyOpen();
         for (JanusGraphVertex v : vertices) {
             Preconditions.checkArgument(v instanceof InternalVertex, "Invalid vertex: %s", v);
-            if (!(v instanceof SystemRelationType) && this != ((InternalVertex) v).tx())
+            if (!(v instanceof SystemRelationType) && this != ((InternalVertex) v).tx()) {
                 throw new IllegalStateException("The vertex or type is not associated with this transaction [" + v + "]");
-            if (v.isRemoved())
+            }
+            if (v.isRemoved()) {
                 throw new IllegalStateException("The vertex or type has been removed [" + v + "]");
+            }
         }
     }
 
@@ -299,9 +302,11 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
     public StandardJanusGraphTx getNextTx() {
         Preconditions.checkArgument(isClosed());
-        if (!config.isThreadBound())
+        if (!config.isThreadBound()) {
             throw new IllegalStateException("Cannot access element because its enclosing transaction is closed and unbound");
-        else return (StandardJanusGraphTx) graph.getCurrentThreadTx();
+        } else {
+            return (StandardJanusGraphTx) graph.getCurrentThreadTx();
+        }
     }
 
     public TransactionConfiguration getConfiguration() {
@@ -364,7 +369,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
      * ------------------------------------ Vertex Handling ------------------------------------
      */
 
-    public boolean containsVertex(final long vertexId) {
+    private boolean containsVertex(long vertexId) {
         return getVertex(vertexId) != null;
     }
 
@@ -745,18 +750,19 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     }
 
     public JanusGraphVertexProperty addProperty(VertexProperty.Cardinality cardinality, JanusGraphVertex vertex, PropertyKey key, Object value) {
-        if (key.cardinality().convert() != cardinality && cardinality != VertexProperty.Cardinality.single)
+        if (key.cardinality().convert() != cardinality && cardinality != VertexProperty.Cardinality.single) {
             throw new SchemaViolationException("Key is defined for %s cardinality which conflicts with specified: %s", key.cardinality(), cardinality);
+        }
         verifyWriteAccess(vertex);
         Preconditions.checkArgument(!(key instanceof ImplicitKey), "Cannot create a property of implicit type: %s", key.name());
         vertex = ((InternalVertex) vertex).it();
         Preconditions.checkNotNull(key);
         checkPropertyConstraintForVertexOrCreatePropertyConstraint(vertex, key);
-        final Object normalizedValue = verifyAttribute(key, value);
+        Object normalizedValue = verifyAttribute(key, value);
         Cardinality keyCardinality = key.cardinality();
 
         //Determine unique indexes
-        final List<IndexLockTuple> uniqueIndexTuples = new ArrayList<>();
+        List<IndexLockTuple> uniqueIndexTuples = new ArrayList<>();
         for (CompositeIndexType index : TypeUtil.getUniqueIndexes(key)) {
             IndexSerializer.IndexRecords matches = IndexSerializer.indexMatches(vertex, index, key, normalizedValue);
             for (Object[] match : matches.getRecordValues()) uniqueIndexTuples.add(new IndexLockTuple(index, match));
@@ -764,42 +770,27 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
         TransactionLock uniqueLock = getUniquenessLock(vertex, (InternalRelationType) key, normalizedValue);
         //Add locks for unique indexes
-        for (IndexLockTuple lockTuple : uniqueIndexTuples)
+        for (IndexLockTuple lockTuple : uniqueIndexTuples) {
             uniqueLock = new CombinerLock(uniqueLock, getLock(lockTuple), times);
+        }
         uniqueLock.lock(LOCK_TIMEOUT);
         try {
-//            //Check vertex-centric uniqueness -> this doesn't really make sense to check
-//            if (config.hasVerifyUniqueness()) {
-//                if (cardinality == Cardinality.SINGLE) {
-//                    if (!Iterables.isEmpty(query(vertex).type(key).properties()))
-//                        throw new SchemaViolationException("A property with the given key [%s] already exists on the vertex [%s] and the property key is defined as single-valued", key.name(), vertex);
-//                }
-//                if (cardinality == Cardinality.SET) {
-//                    if (!Iterables.isEmpty(Iterables.filter(query(vertex).type(key).properties(), new Predicate<JanusGraphVertexProperty>() {
-//                        @Override
-//                        public boolean apply(@Nullable JanusGraphVertexProperty janusgraphProperty) {
-//                            return normalizedValue.equals(janusgraphProperty.value());
-//                        }
-//                    })))
-//                        throw new SchemaViolationException("A property with the given key [%s] and value [%s] already exists on the vertex and the property key is defined as set-valued", key.name(), normalizedValue);
-//                }
-//            }
-
             //Delete properties if the cardinality is restricted
             if (cardinality == VertexProperty.Cardinality.single || cardinality == VertexProperty.Cardinality.set) {
                 Consumer<JanusGraphRelation> propertyRemover;
-                if (cardinality == VertexProperty.Cardinality.single)
+                if (cardinality == VertexProperty.Cardinality.single) {
                     propertyRemover = JanusGraphElement::remove;
-                else
+                } else {
                     propertyRemover = p -> {
                         if (((JanusGraphVertexProperty) p).value().equals(normalizedValue)) p.remove();
                     };
+                }
 
                 /* If we are simply overwriting a vertex property, then we don't have to explicitly remove it thereby saving a read operation
                    However, this only applies if
                    1) we don't lock on the property key or consistency checks are disabled and
                    2) there are no indexes for this property key
-                   3) the cardinalities match (if we overwrite a set with single, we need to read all other values to delete)
+                   3) the cardinality match (if we overwrite a set with single, we need to read all other values to delete)
                 */
 
                 if ((!config.hasVerifyUniqueness() || ((InternalRelationType) key).getConsistencyModifier() != ConsistencyModifier.LOCK) &&
@@ -833,8 +824,9 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     @Override
     public Iterable<JanusGraphEdge> getEdges(RelationIdentifier... ids) {
         verifyOpen();
-        if (ids == null || ids.length == 0)
+        if (ids == null || ids.length == 0) {
             return new VertexCentricEdgeIterable(getInternalVertices(), RelationCategory.EDGE);
+        }
 
         if (null != config.getGroupName()) {
             MetricManager.INSTANCE.getCounter(config.getGroupName(), "db", "getEdgesByID").inc();
@@ -1101,7 +1093,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         return builder;
     }
 
-    public void executeMultiQuery(final Collection<InternalVertex> vertices, final SliceQuery sq, final QueryProfiler profiler) {
+    public void executeMultiQuery(Collection<InternalVertex> vertices, SliceQuery sq, QueryProfiler profiler) {
         LongArrayList vertexIds = new LongArrayList(vertices.size());
         for (InternalVertex v : vertices) {
             if (!v.isNew() && v.hasId() && (v instanceof CacheVertex) && !v.hasLoadedRelations(sq))
@@ -1113,7 +1105,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             int pos = 0;
             for (JanusGraphVertex v : vertices) {
                 if (pos < vertexIds.size() && vertexIds.get(pos) == v.longId()) {
-                    final EntryList vresults = results.get(pos);
+                    EntryList vresults = results.get(pos);
                     ((CacheVertex) v).loadRelations(sq, query -> vresults);
                     pos++;
                 }
@@ -1125,7 +1117,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
     public final QueryExecutor<VertexCentricQuery, JanusGraphRelation, SliceQuery> edgeProcessorImpl = new QueryExecutor<VertexCentricQuery, JanusGraphRelation, SliceQuery>() {
         @Override
-        public Iterator<JanusGraphRelation> getNew(final VertexCentricQuery query) {
+        public Iterator<JanusGraphRelation> getNew(VertexCentricQuery query) {
             InternalVertex vertex = query.getVertex();
             if (vertex.isNew() || vertex.hasAddedRelations()) {
                 return (Iterator) vertex.getAddedRelations(new Predicate<InternalRelation>() {
@@ -1134,7 +1126,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                     private JanusGraphRelation previous = null;
 
                     @Override
-                    public boolean apply(final InternalRelation relation) {
+                    public boolean apply(InternalRelation relation) {
                         if ((relation instanceof JanusGraphEdge) && relation.isLoop()
                                 && query.getDirection() != Direction.BOTH) {
                             if (relation.equals(previous))
@@ -1162,27 +1154,29 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
         @Override
         public boolean isDeleted(VertexCentricQuery query, JanusGraphRelation result) {
-            if (deletedRelations.containsKey(result.longId()) || result != ((InternalRelation) result).it())
+            if (deletedRelations.containsKey(result.longId()) || result != ((InternalRelation) result).it()) {
                 return true;
+            }
             //Check if this relation is replaced by an added one due to a multiplicity constraint
             InternalRelationType type = (InternalRelationType) result.getType();
             InternalVertex vertex = query.getVertex();
             if (type.multiplicity().isConstrained() && vertex.hasAddedRelations()) {
-                final RelationComparator comparator = new RelationComparator(vertex);
+                RelationComparator comparator = new RelationComparator(vertex);
                 return !Iterables.isEmpty(vertex.getAddedRelations(internalRelation -> comparator.compare((InternalRelation) result, internalRelation) == 0));
             }
             return false;
         }
 
         @Override
-        public Iterator<JanusGraphRelation> execute(final VertexCentricQuery query, final SliceQuery sq, final Object exeInfo, final QueryProfiler profiler) {
+        public Iterator<JanusGraphRelation> execute(VertexCentricQuery query, SliceQuery sq, Object exeInfo, QueryProfiler profiler) {
             assert exeInfo == null;
-            if (query.getVertex().isNew())
+            if (query.getVertex().isNew()) {
                 return Collections.emptyIterator();
+            }
 
-            final InternalVertex v = query.getVertex();
+            InternalVertex v = query.getVertex();
 
-            final EntryList iterable = v.loadRelations(sq, query1 -> QueryProfiler.profile(profiler, query1, q -> graph.edgeQuery(v.longId(), q, txHandle)));
+            EntryList iterable = v.loadRelations(sq, query1 -> QueryProfiler.profile(profiler, query1, q -> graph.edgeQuery(v.longId(), q, txHandle)));
 
             return RelationConstructor.readRelation(v, iterable, StandardJanusGraphTx.this).iterator();
         }
@@ -1190,7 +1184,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
     public final QueryExecutor<GraphCentricQuery, JanusGraphElement, JointIndexQuery> elementProcessor;
 
-    public final QueryExecutor<GraphCentricQuery, JanusGraphElement, JointIndexQuery> elementProcessorImpl = new QueryExecutor<GraphCentricQuery, JanusGraphElement, JointIndexQuery>() {
+    private final QueryExecutor<GraphCentricQuery, JanusGraphElement, JointIndexQuery> elementProcessorImpl = new QueryExecutor<GraphCentricQuery, JanusGraphElement, JointIndexQuery>() {
 
         private PredicateCondition<PropertyKey, JanusGraphElement> getEqualityCondition(Condition<JanusGraphElement> condition) {
             if (condition instanceof PredicateCondition) {
@@ -1329,7 +1323,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
     };
 
-    public Function<Object, ? extends JanusGraphElement> getConversionFunction(final ElementCategory elementCategory) {
+    public Function<Object, ? extends JanusGraphElement> getConversionFunction(ElementCategory elementCategory) {
         switch (elementCategory) {
             case VERTEX:
                 return vertexIDConversionFct;

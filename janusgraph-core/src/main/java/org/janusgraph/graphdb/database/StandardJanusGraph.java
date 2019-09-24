@@ -443,11 +443,12 @@ public class StandardJanusGraph implements JanusGraph {
     //This transaction is AUTOmatic in so that it does not need to be explicitly open -> it will invoke readWrite which triggers tx.open() if not open yet
     // It is also automatic because it is possible to invoke tx.close() directly without first explicitly invoking commit or rollback,
     // when invoking close directly, the tx will internally trigger tx.rollback.
+    // Also this is public just so that we can use it in tests
     public class AutomaticLocalTinkerTransaction extends AbstractThreadLocalTransaction {
 
         private ThreadLocal<JanusGraphBlueprintsTransaction> localJanusTransaction = ThreadLocal.withInitial(() -> null);
 
-        public AutomaticLocalTinkerTransaction() {
+        AutomaticLocalTinkerTransaction() {
             super(StandardJanusGraph.this);
         }
 
