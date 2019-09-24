@@ -23,7 +23,7 @@ public class NetworkUtil {
         return InetAddress.getLoopbackAddress().getHostAddress();
     }
 
-    public static InetAddress getLocalHost() {
+    private static InetAddress getLocalHost() {
         try {
             return InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
@@ -31,11 +31,11 @@ public class NetworkUtil {
         }
     }
 
-    public static String getLocalAddress() {
+    private static String getLocalAddress() {
         return getLocalHost().getHostAddress();
     }
 
-    public static String getLocalHostName() {
+    private static String getLocalHostName() {
         return getLocalHost().getHostName();
     }
 

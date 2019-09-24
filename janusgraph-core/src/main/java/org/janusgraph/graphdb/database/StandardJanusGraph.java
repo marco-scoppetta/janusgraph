@@ -115,7 +115,6 @@ import org.janusgraph.graphdb.types.system.BaseRelationType;
 import org.janusgraph.graphdb.types.vertices.JanusGraphSchemaVertex;
 import org.janusgraph.graphdb.util.ExceptionFactory;
 import org.janusgraph.util.system.IOUtils;
-import org.janusgraph.util.system.TXUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -435,11 +434,11 @@ public class StandardJanusGraph implements JanusGraph {
     }
 
 
-    // Tinkerpop wrapper around StandardJanusGraph transaction, used as automatic transaction used by the graph
+    // Tinkerpop wrapper around StandardJanusGraph transaction, automatic transaction used by the graph
     // when user cannot be bother to use manual/explicit transactions,
     // i.e. when user wants to do graph.addVertex(); graph.tx().commit();
     // rather than tx = graph.newTransaction(); tx.addVertex(); tx.commit();
-    // This wrapper internally uses the thread-local Janusgraph transaction, which for some reason is also exposed via .
+    // This wrapper internally uses the thread-local Janusgraph transaction.
     class AutomaticLocalTinkerTransaction extends AbstractThreadLocalTransaction {
 
         private ThreadLocal<JanusGraphBlueprintsTransaction> localJanusTransaction = ThreadLocal.withInitial(() -> null);
@@ -682,7 +681,13 @@ public class StandardJanusGraph implements JanusGraph {
                 JanusGraphVertex v = Iterables.getOnlyElement(QueryUtil.getVertices(consistentTx, BaseKey.SchemaName, typeName), null);
                 return v != null ? v.longId() : null;
             } finally {
-                TXUtils.rollbackQuietly(consistentTx);
+                try {
+                    if (consistentTx != null) {
+                        consistentTx.rollback();
+                    }
+                } catch (Throwable t) {
+                    LOG.warn("Unable to rollback transaction", t);
+                }
             }
         }
 
@@ -697,7 +702,13 @@ public class StandardJanusGraph implements JanusGraph {
                 consistentTx.getTxHandle().disableCache();
                 return edgeQuery(schemaId, query, consistentTx.getTxHandle());
             } finally {
-                TXUtils.rollbackQuietly(consistentTx);
+                try {
+                    if (consistentTx != null) {
+                        consistentTx.rollback();
+                    }
+                } catch (Throwable t) {
+                    LOG.warn("Unable to rollback transaction", t);
+                }
             }
         }
 

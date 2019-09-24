@@ -24,8 +24,7 @@ import java.time.Duration;
  */
 public abstract class BackgroundThread extends Thread {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(BackgroundThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BackgroundThread.class);
 
     private volatile boolean interruptible = true;
     private volatile boolean softInterrupted = false;
@@ -55,7 +54,7 @@ public abstract class BackgroundThread extends Thread {
             try {
                 waitCondition();
             } catch (InterruptedException e) {
-                log.debug("Interrupted in background thread wait condition", e);
+                LOG.debug("Interrupted in background thread wait condition", e);
                 break;
             }
 
@@ -77,7 +76,7 @@ public abstract class BackgroundThread extends Thread {
             try {
                 action();
             } catch (Throwable e) {
-                log.error("Exception while executing action on background thread",e);
+                LOG.error("Exception while executing action on background thread",e);
             } finally {
                 /*
                  * This doesn't really need to be in a finally block as long as
@@ -91,7 +90,7 @@ public abstract class BackgroundThread extends Thread {
         try {
             cleanup();
         } catch (Throwable e) {
-            log.error("Exception while executing cleanup on background thread",e);
+            LOG.error("Exception while executing cleanup on background thread",e);
         }
 
     }
@@ -124,7 +123,7 @@ public abstract class BackgroundThread extends Thread {
     public void close(Duration duration) {
 
         if (!isAlive()) {
-            log.warn("Already closed: {}", this);
+            LOG.warn("Already closed: {}", this);
             return;
         }
 
@@ -138,10 +137,10 @@ public abstract class BackgroundThread extends Thread {
         try {
             join(maxWaitMs);
         } catch (InterruptedException e) {
-            log.error("Interrupted while waiting for thread {} to join",e);
+            LOG.error("Interrupted while waiting for thread to join", e);
         }
         if (isAlive()) {
-            log.error("Thread {} did not terminate in time [{}]. This could mean that important clean up functions could not be called.", getName(), maxWaitMs);
+            LOG.error("Thread {} did not terminate in time [{}]. This could mean that important clean up functions could not be called.", getName(), maxWaitMs);
         }
     }
 
