@@ -46,22 +46,11 @@ public class GraphOfTheGodsFactory {
             "use GraphOfTheGodsFactory.loadWithoutMixedIndex(graph,true) to load without the use of an " +
             "indexing backend.";
 
-    public static JanusGraph create(final String directory) {
-        JanusGraphFactory.Builder config = JanusGraphFactory.build();
-        config.set("storage.backend", "berkeleyje");
-        config.set("storage.directory", directory);
-        config.set("index." + INDEX_NAME + ".backend", "elasticsearch");
-
-        JanusGraph graph = config.open();
-        GraphOfTheGodsFactory.load(graph);
-        return graph;
-    }
-
     public static void loadWithoutMixedIndex(final JanusGraph graph, boolean uniqueNameCompositeIndex) {
         load(graph, null, uniqueNameCompositeIndex);
     }
 
-    public static void load(final JanusGraph graph) {
+    public static void load(JanusGraph graph) {
         load(graph, INDEX_NAME, true);
     }
 
@@ -163,8 +152,7 @@ public class GraphOfTheGodsFactory {
      * <p>
      * This method may call {@link System#exit(int)} if it encounters an error, such as
      * failure to parse its arguments.  Only use this method when executing main from
-     * a command line.  Use one of the other methods on this class ({@link #create(String)}
-     * or {@link #load(org.janusgraph.core.JanusGraph)}) when calling from
+     * a command line.  Use one of the other method {@link #load(org.janusgraph.core.JanusGraph)}) when calling from
      * an enclosing application.
      *
      * @param args a singleton array containing a path to a JanusGraph config properties file

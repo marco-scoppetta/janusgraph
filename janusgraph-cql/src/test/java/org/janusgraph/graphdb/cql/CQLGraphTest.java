@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Joshua Shinavier (http://fortytwo.net)
  */
-public abstract class CQLGraphTest extends JanusGraphTest {
+public class CQLGraphTest extends JanusGraphTest {
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
         return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();

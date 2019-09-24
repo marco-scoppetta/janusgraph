@@ -45,14 +45,11 @@ public abstract class HadoopInputFormat extends InputFormat<NullWritable, Vertex
 
             String className = SETUP_PACKAGE_PREFIX + janusgraphVersion + SETUP_CLASS_NAME;
 
-            JanusGraphHadoopSetup ts = ConfigurationUtil.instantiate(
-                    className, new Object[]{ conf }, new Class[]{ Configuration.class });
+            JanusGraphHadoopSetup ts = ConfigurationUtil.instantiate(className, new Object[]{ conf }, new Class[]{ Configuration.class });
 
             return new JanusGraphVertexDeserializer(ts);
         });
     }
-
-
 
     public HadoopInputFormat(InputFormat<StaticBuffer, Iterable<Entry>> inputFormat) {
         this.inputFormat = inputFormat;

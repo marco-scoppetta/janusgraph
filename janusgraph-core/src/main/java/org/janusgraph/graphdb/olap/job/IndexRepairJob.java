@@ -134,7 +134,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                         additions.add(entry);
                     }
                 }
-                StaticBuffer vertexKey = writeTx.getIdInspector().getKey(vertex.longId());
+                StaticBuffer vertexKey = writeTx.getIdManager().getKey(vertex.longId());
                 mutator.mutateEdges(vertexKey, additions, KCVSCache.NO_DELETIONS);
                 metrics.incrementCustom(ADDED_RECORDS_COUNT, additions.size());
             } else if (index instanceof JanusGraphIndex) {

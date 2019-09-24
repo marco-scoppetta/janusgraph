@@ -93,9 +93,9 @@ public class ManagementLogger implements MessageReader {
                     long typeId = VariableLong.readPositive(in);
                     schemaCache.expireSchemaElement(typeId);
                 }
-                final GraphCacheEvictionAction action = serializer.readObjectNotNull(in, GraphCacheEvictionAction.class);
+                GraphCacheEvictionAction action = serializer.readObjectNotNull(in, GraphCacheEvictionAction.class);
                 Preconditions.checkNotNull(action);
-                final Thread ack = new Thread(new SendAckOnTxClose(evictionId, senderId, graph.getOpenTransactions(), action, graph.getGraphName()));
+                Thread ack = new Thread(new SendAckOnTxClose(evictionId, senderId, graph.getOpenTransactions(), action, graph.getGraphName()));
                 ack.setDaemon(true);
                 ack.start();
                 break;
