@@ -503,7 +503,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         CacheTransaction cacheTx = new CacheTransaction(tx, storeManagerLocking, bufferSize, maxWriteTime, configuration.hasEnabledBatchLoading());
 
         // Index transactions
-        final Map<String, IndexTransaction> indexTx = new HashMap<>(indexes.size());
+        Map<String, IndexTransaction> indexTx = new HashMap<>(indexes.size());
         for (Map.Entry<String, IndexProvider> entry : indexes.entrySet()) {
             indexTx.put(entry.getKey(), new IndexTransaction(entry.getValue(), indexKeyRetriever.get(entry.getKey()), configuration, maxWriteTime));
         }

@@ -252,25 +252,41 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
     @Test
     public void testBasic() throws BackendException {
 
-        PropertyKey uid = makeVertexIndexedUniqueKey("name", String.class);
+        makeVertexIndexedUniqueKey("name", String.class);
         finishSchema();
 
-        JanusGraphVertex n1 = tx.addVertex();
-        uid = tx.getPropertyKey("name");
-        n1.property(uid.name(), "abcd");
+        JanusGraphVertex vertex1 = tx.addVertex();
+
+        PropertyKey namePropertyKey = tx.getPropertyKey("name");
+        vertex1.property(namePropertyKey.name(), "abcd");
         clopen();
-        long nid = n1.longId();
-        uid = tx.getPropertyKey("name");
-        assertTrue(getV(tx, nid) != null);
-        assertTrue(getV(tx, uid.longId()) != null);
+
+        // Verify vertex is persisted after closing and reopening graph
+        long nid = vertex1.longId();
+        assertNotNull(getV(tx, nid));
+
+        // Verify that it is possible to retrieve the PropertyKeyVertex, whatever that means
+        namePropertyKey = tx.getPropertyKey("name");
+        JanusGraphVertex v = getV(tx, namePropertyKey.longId());
+        assertNotNull(v);
+
+        // For some reason we check that there is no vertex with nid+64, self explanatory!!111!
         assertMissing(tx, nid + 64);
-        uid = tx.getPropertyKey(uid.name());
-        n1 = getV(tx, nid);
-        assertEquals(n1, getOnlyVertex(tx.query().has(uid.name(), "abcd")));
-        assertEquals(1, Iterables.size(n1.query().relations())); //TODO: how to expose relations?
-        assertEquals("abcd", n1.value(uid.name()));
+
+        // Re-fetch everything because YES
+        namePropertyKey = tx.getPropertyKey(namePropertyKey.name());
+        vertex1 = getV(tx, nid);
+
+        // Verify that querying for the same vertex1 using the indexed property (instead of vertex id) returns the same vertex
+        assertEquals(vertex1, getOnlyVertex(tx.query().has(namePropertyKey.name(), "abcd")));
+
+        // A vertex has probably 1 relation because of the way properties are stored? (they are edges to PropertyKeyVertex?) Not sure for now
+        assertEquals(1, Iterables.size(vertex1.query().relations())); //TODO: how to expose relations?
+        assertEquals("abcd", vertex1.value(namePropertyKey.name()));
         assertCount(1, tx.query().vertices());
         close();
+
+        // Verify that dropping and re-creating a graph yields a new empty graph
         JanusGraphFactory.drop(graph);
         open(config);
         assertEmpty(tx.query().vertices());

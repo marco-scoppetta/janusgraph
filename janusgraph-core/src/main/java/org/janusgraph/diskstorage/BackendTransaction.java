@@ -99,16 +99,8 @@ public class BackendTransaction implements LoggableTransaction {
         this.threadPool = threadPool;
     }
 
-    public boolean hasAcquiredLock() {
-        return acquiredLock;
-    }
-
-    public StoreTransaction getStoreTransaction() {
-        return storeTx;
-    }
-
     public ExternalCachePersistor getTxLogPersistor() {
-        return new ExternalCachePersistor(txLogStore,storeTx);
+        return new ExternalCachePersistor(txLogStore, storeTx);
     }
 
     public BaseTransactionConfig getBaseTransactionConfig() {
@@ -133,13 +125,13 @@ public class BackendTransaction implements LoggableTransaction {
         storeTx.commit();
     }
 
-    public Map<String,Throwable> commitIndexes() {
-        final Map<String,Throwable> exceptions = new HashMap<>(indexTx.size());
-        for (Map.Entry<String,IndexTransaction> indexTransactionEntry : indexTx.entrySet()) {
+    public Map<String, Throwable> commitIndexes() {
+        final Map<String, Throwable> exceptions = new HashMap<>(indexTx.size());
+        for (Map.Entry<String, IndexTransaction> indexTransactionEntry : indexTx.entrySet()) {
             try {
                 indexTransactionEntry.getValue().commit();
             } catch (Throwable e) {
-                exceptions.put(indexTransactionEntry.getKey(),e);
+                exceptions.put(indexTransactionEntry.getKey(), e);
             }
         }
         return exceptions;
@@ -154,6 +146,7 @@ public class BackendTransaction implements LoggableTransaction {
     /**
      * Rolls back all transactions and makes sure that this does not get cut short
      * by exceptions. If exceptions occur, the storage exception takes priority on re-throw.
+     *
      * @throws BackendException
      */
     @Override
@@ -167,9 +160,9 @@ public class BackendTransaction implements LoggableTransaction {
             }
         }
         storeTx.rollback();
-        if (exception!=null) { //throw any encountered index transaction rollback exceptions
-            if (exception instanceof BackendException) throw (BackendException)exception;
-            else throw new PermanentBackendException("Unexpected exception",exception);
+        if (exception != null) { //throw any encountered index transaction rollback exceptions
+            if (exception instanceof BackendException) throw (BackendException) exception;
+            else throw new PermanentBackendException("Unexpected exception", exception);
         }
     }
 
@@ -223,8 +216,8 @@ public class BackendTransaction implements LoggableTransaction {
      * <p>
      * The lock has to be released when the transaction closes (commits or aborts).
      *
-     * @param key           Key on which to lock
-     * @param column        Column the column on which to lock
+     * @param key    Key on which to lock
+     * @param column Column the column on which to lock
      */
     public void acquireEdgeLock(StaticBuffer key, StaticBuffer column) throws BackendException {
         acquiredLock = true;
@@ -247,8 +240,8 @@ public class BackendTransaction implements LoggableTransaction {
      * <p>
      * The lock has to be released when the transaction closes (commits or aborts).
      *
-     * @param key           Key on which to lock
-     * @param column        Column the column on which to lock
+     * @param key    Key on which to lock
+     * @param column Column the column on which to lock
      */
     public void acquireIndexLock(StaticBuffer key, StaticBuffer column) throws BackendException {
         acquiredLock = true;
@@ -268,8 +261,7 @@ public class BackendTransaction implements LoggableTransaction {
         return executeRead(new Callable<EntryList>() {
             @Override
             public EntryList call() throws Exception {
-                return cacheEnabled?edgeStore.getSlice(query, storeTx):
-                                    edgeStore.getSliceNoCache(query,storeTx);
+                return cacheEnabled ? edgeStore.getSlice(query, storeTx) : edgeStore.getSliceNoCache(query, storeTx);
             }
 
             @Override
@@ -279,13 +271,12 @@ public class BackendTransaction implements LoggableTransaction {
         });
     }
 
-    public Map<StaticBuffer,EntryList> edgeStoreMultiQuery(final List<StaticBuffer> keys, final SliceQuery query) {
+    public Map<StaticBuffer, EntryList> edgeStoreMultiQuery(final List<StaticBuffer> keys, final SliceQuery query) {
         if (storeFeatures.hasMultiQuery()) {
-            return executeRead(new Callable<Map<StaticBuffer,EntryList>>() {
+            return executeRead(new Callable<Map<StaticBuffer, EntryList>>() {
                 @Override
-                public Map<StaticBuffer,EntryList> call() throws Exception {
-                    return cacheEnabled?edgeStore.getSlice(keys, query, storeTx):
-                                        edgeStore.getSliceNoCache(keys, query, storeTx);
+                public Map<StaticBuffer, EntryList> call() throws Exception {
+                    return cacheEnabled ? edgeStore.getSlice(keys, query, storeTx) : edgeStore.getSliceNoCache(keys, query, storeTx);
                 }
 
                 @Override
@@ -294,10 +285,10 @@ public class BackendTransaction implements LoggableTransaction {
                 }
             });
         } else {
-            final Map<StaticBuffer,EntryList> results = new HashMap<>(keys.size());
+            final Map<StaticBuffer, EntryList> results = new HashMap<>(keys.size());
             if (threadPool == null || keys.size() < MIN_TASKS_TO_PARALLELIZE) {
                 for (StaticBuffer key : keys) {
-                    results.put(key,edgeStoreQuery(new KeySliceQuery(key, query)));
+                    results.put(key, edgeStoreQuery(new KeySliceQuery(key, query)));
                 }
             } else {
                 final CountDownLatch doneSignal = new CountDownLatch(keys.size());
@@ -315,9 +306,9 @@ public class BackendTransaction implements LoggableTransaction {
                 if (failureCount.get() > 0) {
                     throw new JanusGraphException("Could not successfully complete multi-query. " + failureCount.get() + " individual queries failed.");
                 }
-                for (int i=0;i<keys.size();i++) {
-                    assert resultArray[i]!=null;
-                    results.put(keys.get(i),resultArray[i]);
+                for (int i = 0; i < keys.size(); i++) {
+                    assert resultArray[i] != null;
+                    results.put(keys.get(i), resultArray[i]);
                 }
             }
             return results;
@@ -395,8 +386,8 @@ public class BackendTransaction implements LoggableTransaction {
         return executeRead(new Callable<EntryList>() {
             @Override
             public EntryList call() throws Exception {
-                return cacheEnabled?indexStore.getSlice(query, storeTx):
-                                    indexStore.getSliceNoCache(query, storeTx);
+                return cacheEnabled ? indexStore.getSlice(query, storeTx) :
+                        indexStore.getSliceNoCache(query, storeTx);
             }
 
             @Override
@@ -439,14 +430,14 @@ public class BackendTransaction implements LoggableTransaction {
     }
 
     private class TotalsCallable implements Callable<Long> {
-    	final private RawQuery query;
-    	final private IndexTransaction indexTx;
-    	
-    	public TotalsCallable(final RawQuery query, final IndexTransaction indexTx) {
-    		this.query = query;
-    		this.indexTx = indexTx;
-    	}
-    	
+        final private RawQuery query;
+        final private IndexTransaction indexTx;
+
+        public TotalsCallable(final RawQuery query, final IndexTransaction indexTx) {
+            this.query = query;
+            this.indexTx = indexTx;
+        }
+
         @Override
         public Long call() throws Exception {
             return indexTx.totals(this.query);
@@ -457,7 +448,7 @@ public class BackendTransaction implements LoggableTransaction {
             return "Totals";
         }
     }
-    
+
     public Long totals(final String index, final RawQuery query) {
         final IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new TotalsCallable(query, indexTx));

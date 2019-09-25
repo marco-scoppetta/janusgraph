@@ -649,7 +649,7 @@ public class ManagementSystem implements JanusGraphManagement {
         }
 
         try {
-            IndexSerializer.register((MixedIndexType) indexType, key, transaction.getTxHandle());
+            IndexSerializer.register((MixedIndexType) indexType, key, transaction.getBackendTransaction());
         } catch (BackendException e) {
             throw new JanusGraphException("Could not register new index field with index backend", e);
         }

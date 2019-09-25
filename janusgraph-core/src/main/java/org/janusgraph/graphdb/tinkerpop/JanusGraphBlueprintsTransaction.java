@@ -15,6 +15,17 @@
 package org.janusgraph.graphdb.tinkerpop;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadedTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.VertexLabel;
@@ -23,16 +34,7 @@ import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.relations.RelationIdentifier;
 import org.janusgraph.graphdb.types.system.BaseVertexLabel;
-import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.structure.*;
-import org.apache.tinkerpop.gremlin.structure.io.Io;
-import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadedTransaction;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-import org.apache.commons.configuration.Configuration;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -45,6 +47,7 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
 
     /**
      * Returns the graph that this transaction is based on
+     *
      * @return
      */
     protected abstract StandardJanusGraph getGraph();
@@ -102,65 +105,61 @@ public abstract class JanusGraphBlueprintsTransaction implements JanusGraphTrans
     @Override
     public JanusGraphVertex addVertex(Object... keyValues) {
         ElementHelper.legalPropertyKeyValueArray(keyValues);
-        if (ElementHelper.getIdValue(keyValues).isPresent() && !((StandardJanusGraph) getGraph()).getConfiguration().allowVertexIdSetting()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+        if (ElementHelper.getIdValue(keyValues).isPresent() && !getGraph().getConfiguration().allowVertexIdSetting()) {
+            throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+        }
         Object labelValue = null;
         for (int i = 0; i < keyValues.length; i = i + 2) {
             if (keyValues[i].equals(T.label)) {
-                labelValue = keyValues[i+1];
+                labelValue = keyValues[i + 1];
                 Preconditions.checkArgument(labelValue instanceof VertexLabel || labelValue instanceof String,
-                        "Expected a string or VertexLabel as the vertex label argument, but got: %s",labelValue);
+                        "Expected a string or VertexLabel as the vertex label argument, but received: %s", labelValue);
                 if (labelValue instanceof String) ElementHelper.validateLabel((String) labelValue);
             }
         }
         VertexLabel label = BaseVertexLabel.DEFAULT_VERTEXLABEL;
-        if (labelValue!=null) {
-            label = (labelValue instanceof VertexLabel)?(VertexLabel)labelValue:getOrCreateVertexLabel((String) labelValue);
+        if (labelValue != null) {
+            label = (labelValue instanceof VertexLabel) ? (VertexLabel) labelValue : getOrCreateVertexLabel((String) labelValue);
         }
 
-        final Long id = ElementHelper.getIdValue(keyValues).map(Number.class::cast).map(Number::longValue).orElse(null);
-        final JanusGraphVertex vertex = addVertex(id, label);
+        Long id = ElementHelper.getIdValue(keyValues).map(Number.class::cast).map(Number::longValue).orElse(null);
+        JanusGraphVertex vertex = addVertex(id, label);
         org.janusgraph.graphdb.util.ElementHelper.attachProperties(vertex, keyValues);
         return vertex;
     }
 
     @Override
     public Iterator<Vertex> vertices(Object... vertexIds) {
-        if (vertexIds==null || vertexIds.length==0) return (Iterator)getVertices().iterator();
+        if (vertexIds == null || vertexIds.length == 0) return (Iterator) getVertices().iterator();
         ElementUtils.verifyArgsMustBeEitherIdOrElement(vertexIds);
         long[] ids = new long[vertexIds.length];
         int pos = 0;
         for (Object vertexId : vertexIds) {
-            long id = ElementUtils.getVertexId(vertexId);
-            if (id > 0) ids[pos++] = id;
+            ids[pos++] = ElementUtils.getVertexId(vertexId);
         }
-        if (pos==0) return Collections.emptyIterator();
-        if (pos<ids.length) ids = Arrays.copyOf(ids,pos);
-        return (Iterator)getVertices(ids).iterator();
+        return (Iterator) getVertices(ids).iterator();
     }
 
     @Override
     public Iterator<Edge> edges(Object... edgeIds) {
-        if (edgeIds==null || edgeIds.length==0) return (Iterator)getEdges().iterator();
+        if (edgeIds == null || edgeIds.length == 0) return (Iterator) getEdges().iterator();
         ElementUtils.verifyArgsMustBeEitherIdOrElement(edgeIds);
         RelationIdentifier[] ids = new RelationIdentifier[edgeIds.length];
         int pos = 0;
         for (Object edgeId : edgeIds) {
-            RelationIdentifier id = ElementUtils.getEdgeId(edgeId);
-            if (id != null) ids[pos++] = id;
+            ids[pos++] = ElementUtils.getEdgeId(edgeId);
         }
-        if (pos==0) return Collections.emptyIterator();
-        if (pos<ids.length) ids = Arrays.copyOf(ids,pos);
-        return (Iterator)getEdges(ids).iterator();
+        return (Iterator) getEdges(ids).iterator();
     }
 
     @Override
     public String toString() {
         int ihc = System.identityHashCode(this);
         String ihcString = String.format("0x%s", Hex.bytesToHex(
-                (byte)(ihc >>> 24 & 0x000000FF),
-                (byte)(ihc >>> 16 & 0x000000FF),
-                (byte)(ihc >>> 8  & 0x000000FF),
-                (byte)(ihc        & 0x000000FF)));
+                (byte) (ihc >>> 24 & 0x000000FF),
+                (byte) (ihc >>> 16 & 0x000000FF),
+                (byte) (ihc >>> 8 & 0x000000FF),
+                (byte) (ihc & 0x000000FF)));
         return StringFactory.graphString(this, ihcString);
     }
 

@@ -59,7 +59,6 @@ import org.janusgraph.graphdb.transaction.indexcache.ConcurrentIndexCache;
 import org.janusgraph.graphdb.transaction.indexcache.IndexCache;
 import org.janusgraph.graphdb.transaction.indexcache.SimpleIndexCache;
 import org.janusgraph.graphdb.transaction.lock.*;
-import org.janusgraph.graphdb.transaction.vertexcache.GuavaVertexCache;
 import org.janusgraph.graphdb.transaction.vertexcache.VertexCache;
 import org.janusgraph.graphdb.types.*;
 import org.janusgraph.graphdb.types.system.*;
@@ -115,7 +114,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     private final TransactionConfiguration config;
     private final IDManager idManager;
     private final AttributeHandler attributeHandler;
-    private BackendTransaction txHandle;
+    private BackendTransaction backendTransaction;
     private final EdgeSerializer edgeSerializer;
     private final IndexSerializer indexSerializer;
 
@@ -238,7 +237,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             LOG.debug("Guava vertex cache size: requested={} effective={} (min={})", config.getVertexCacheSize(), effectiveVertexCacheSize, MIN_VERTEX_CACHE_SIZE);
         }
 
-        vertexCache = new GuavaVertexCache(effectiveVertexCacheSize, concurrencyLevel, config.getDirtyVertexSize());
+        vertexCache = new VertexCache(effectiveVertexCacheSize, concurrencyLevel, config.getDirtyVertexSize());
 
         indexCache = CacheBuilder.newBuilder().weigher((Weigher<JointIndexQuery.Subquery, List<Object>>) (q, r) -> 2 + r.size()).concurrencyLevel(concurrencyLevel).maximumWeight(config.getIndexCacheWeight()).build();
 
@@ -254,11 +253,9 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             elementProcessor = elementProcessorImpl;
             edgeProcessor = edgeProcessorImpl;
         }
-    }
 
-    public void setBackendTransaction(BackendTransaction txHandle) {
-        Preconditions.checkArgument(this.txHandle == null && txHandle != null);
-        this.txHandle = txHandle;
+        this.backendTransaction = graph.openBackendTransaction(this); // awkward!
+
     }
 
     /*
@@ -318,8 +315,8 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         return graph;
     }
 
-    public BackendTransaction getTxHandle() {
-        return txHandle;
+    public BackendTransaction getBackendTransaction() {
+        return backendTransaction;
     }
 
     public EdgeSerializer getEdgeSerializer() {
@@ -404,15 +401,16 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         for (long id : ids) {
             if (isValidVertexId(id)) {
                 if (idManager.isPartitionedVertex(id)) id = idManager.getCanonicalVertexId(id);
-                if (vertexCache.contains(id))
+                if (vertexCache.contains(id)) {
                     result.add(vertexCache.get(id, existingVertexRetriever));
-                else
+                } else {
                     vertexIds.add(id);
+                }
             }
         }
         if (!vertexIds.isEmpty()) {
             if (externalVertexRetriever.hasVerifyExistence()) {
-                List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, txHandle);
+                List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, backendTransaction);
                 for (int i = 0; i < vertexIds.size(); i++) {
                     if (!existence.get(i).isEmpty()) {
                         long id = vertexIds.get(i);
@@ -462,7 +460,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             byte lifecycle = ElementLifeCycle.Loaded;
             long canonicalVertexId = idManager.isPartitionedVertex(vertexId) ? idManager.getCanonicalVertexId(vertexId) : vertexId;
             if (verifyExistence) {
-                if (graph.edgeQuery(canonicalVertexId, graph.vertexExistenceQuery, txHandle).isEmpty())
+                if (graph.edgeQuery(canonicalVertexId, graph.vertexExistenceQuery, backendTransaction).isEmpty())
                     lifecycle = ElementLifeCycle.Removed;
             }
             if (canonicalVertexId != vertexId) {
@@ -521,9 +519,8 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             Preconditions.checkArgument(label instanceof VertexLabelVertex);
             addEdge(vertex, label, BaseLabel.VertexLabelEdge);
         }
-        vertexCache.add(vertex, vertex.longId());
+        vertexCache.add(vertex);
         return vertex;
-
     }
 
     @Override
@@ -738,7 +735,9 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             if (!success) throw new AssertionError("Could not connect relation: " + r);
         }
         addedRelations.add(r);
-        for (int pos = 0; pos < r.getLen(); pos++) vertexCache.add(r.getVertex(pos), r.getVertex(pos).longId());
+        for (int pos = 0; pos < r.getLen(); pos++) {
+            vertexCache.add(r.getVertex(pos));
+        }
         if (TypeUtil.hasSimpleInternalVertexKeyIndex(r)) newVertexIndexEntries.add((JanusGraphVertexProperty) r);
     }
 
@@ -873,7 +872,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             JanusGraphVertexProperty p = addProperty(schemaVertex, BaseKey.SchemaDefinitionProperty, def.getValue());
             p.property(BaseKey.SchemaDefinitionDesc.name(), TypeDefinitionDescription.of(def.getKey()));
         }
-        vertexCache.add(schemaVertex, schemaVertex.longId());
+        vertexCache.add(schemaVertex);
         if (schemaCategory.hasName()) {
             newTypeCache.put(schemaCategory.getSchemaName(name), schemaVertex.longId());
         }
@@ -1097,7 +1096,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         }
 
         if (!vertexIds.isEmpty()) {
-            List<EntryList> results = QueryProfiler.profile(profiler, sq, true, q -> graph.edgeMultiQuery(vertexIds, q, txHandle));
+            List<EntryList> results = QueryProfiler.profile(profiler, sq, true, q -> graph.edgeMultiQuery(vertexIds, q, backendTransaction));
             int pos = 0;
             for (JanusGraphVertex v : vertices) {
                 if (pos < vertexIds.size() && vertexIds.get(pos) == v.longId()) {
@@ -1172,7 +1171,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
             InternalVertex v = query.getVertex();
 
-            EntryList iterable = v.loadRelations(sq, query1 -> QueryProfiler.profile(profiler, query1, q -> graph.edgeQuery(v.longId(), q, txHandle)));
+            EntryList iterable = v.loadRelations(sq, query1 -> QueryProfiler.profile(profiler, query1, q -> graph.edgeQuery(v.longId(), q, backendTransaction)));
 
             return RelationConstructor.readRelation(v, iterable, StandardJanusGraphTx.this).iterator();
         }
@@ -1278,7 +1277,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                     retrievals.add(limit -> {
                         JointIndexQuery.Subquery adjustedQuery = subquery.updateLimit(limit);
                         try {
-                            return indexCache.get(adjustedQuery, () -> QueryProfiler.profile(subquery.getProfiler(), adjustedQuery, q -> indexSerializer.query(q, txHandle).collect(Collectors.toList())));
+                            return indexCache.get(adjustedQuery, () -> QueryProfiler.profile(subquery.getProfiler(), adjustedQuery, q -> indexSerializer.query(q, backendTransaction).collect(Collectors.toList())));
                         } catch (Exception e) {
                             throw new JanusGraphException("Could not call index", e.getCause());
                         }
@@ -1286,10 +1285,10 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                 }
                 // Constructs an iterator which lazily streams results from 1st index, and filters by looking up in the intersection of results from all other indices (if any)
                 // NOTE NO_LIMIT is passed to processIntersectingRetrievals to prevent incomplete intersections, which could lead to missed results
-                iterator = new SubQueryIterator(indexQuery.getQuery(0), indexSerializer, txHandle, indexCache, indexQuery.getLimit(), getConversionFunction(query.getResultType()),
+                iterator = new SubQueryIterator(indexQuery.getQuery(0), indexSerializer, backendTransaction, indexCache, indexQuery.getLimit(), getConversionFunction(query.getResultType()),
                         retrievals.isEmpty() ? null : QueryUtil.processIntersectingRetrievals(retrievals, Query.NO_LIMIT));
             } else {
-                if (config.hasForceIndexUsage()){
+                if (config.hasForceIndexUsage()) {
                     throw new JanusGraphException("Could not find a suitable index to answer graph query and graph scans are disabled: " + query);
                 }
                 LOG.warn("Query requires iterating over all vertices [{}]. For better performance, use indexes", query.getCondition());
@@ -1366,12 +1365,12 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             if (hasModifications()) {
                 graph.commit(addedRelations.getAll(), deletedRelations.values(), this);
             } else {
-                txHandle.commit();
+                backendTransaction.commit();
             }
             success = true;
         } catch (Exception e) {
             try {
-                txHandle.rollback();
+                backendTransaction.rollback();
             } catch (BackendException e1) {
                 throw new JanusGraphException("Could not rollback after a failed commit", e);
             }
@@ -1392,7 +1391,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             MetricManager.INSTANCE.getCounter(config.getGroupName(), "tx", "rollback").inc();
         }
         try {
-            txHandle.rollback();
+            backendTransaction.rollback();
             success = true;
         } catch (Exception e) {
             throw new JanusGraphException("Could not rollback transaction due to exception", e);
@@ -1407,7 +1406,6 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     private void releaseTransaction() {
         isOpen = false;
         graph.closeTransaction(this);
-        vertexCache.close();
     }
 
     @Override

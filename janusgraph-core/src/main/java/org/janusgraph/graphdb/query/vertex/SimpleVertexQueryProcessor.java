@@ -118,7 +118,7 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
      * @return
      */
     private Iterator<Entry> getBasicIterator() {
-        EntryList result = vertex.loadRelations(sliceQuery, query -> QueryProfiler.profile(profiler, query, q -> tx.getGraph().edgeQuery(vertex.longId(), q, tx.getTxHandle())));
+        EntryList result = vertex.loadRelations(sliceQuery, query -> QueryProfiler.profile(profiler, query, q -> tx.getGraph().edgeQuery(vertex.longId(), q, tx.getBackendTransaction())));
         return result.iterator();
     }
 

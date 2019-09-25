@@ -14,6 +14,7 @@
 
 package org.janusgraph.graphdb.transaction;
 
+import com.sun.istack.internal.NotNull;
 import org.janusgraph.diskstorage.util.RecordIterator;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.idmanagement.IDManager;
@@ -31,28 +32,29 @@ public class VertexIterable implements Iterable<InternalVertex> {
     private final StandardJanusGraphTx tx;
     private final StandardJanusGraph graph;
 
-    public VertexIterable(final StandardJanusGraph graph, final StandardJanusGraphTx tx) {
+    VertexIterable(StandardJanusGraph graph, StandardJanusGraphTx tx) {
         this.graph = graph;
         this.tx = tx;
     }
 
     @Override
+    @NotNull
     public Iterator<InternalVertex> iterator() {
         return new Iterator<InternalVertex>() {
 
-            final RecordIterator<Long> iterator = graph.getVertexIDs(tx.getTxHandle());
-            InternalVertex nextVertex = nextVertex();
+            private final RecordIterator<Long> iterator = graph.getVertexIDs(tx.getBackendTransaction());
+            private InternalVertex nextVertex = nextVertex();
 
             private InternalVertex nextVertex() {
                 InternalVertex v = null;
                 while (v == null && iterator.hasNext()) {
-                    final long nextId = iterator.next();
-                    //Filter out invisible vertices
-                    if (IDManager.VertexIDType.Invisible.is(nextId)) continue;
-
-                    v = tx.getInternalVertex(nextId);
-                    //Filter out deleted vertices and types
-                    if (v.isRemoved()) v = null;
+                    long nextId = iterator.next();
+                    //Skip invisible vertices
+                    if (!IDManager.VertexIDType.Invisible.is(nextId)) {
+                        v = tx.getInternalVertex(nextId);
+                        //Filter out deleted vertices and types
+                        if (v.isRemoved()) v = null;
+                    }
                 }
                 return v;
             }
@@ -65,7 +67,7 @@ public class VertexIterable implements Iterable<InternalVertex> {
             @Override
             public InternalVertex next() {
                 if (!hasNext()) throw new NoSuchElementException();
-                final InternalVertex returnVertex = nextVertex;
+                InternalVertex returnVertex = nextVertex;
                 nextVertex = nextVertex();
                 return returnVertex;
             }

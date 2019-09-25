@@ -232,7 +232,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
         for (final String indexName : indexRestores.keySet()) {
             final StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
             try {
-                BackendTransaction btx = tx.getTxHandle();
+                BackendTransaction btx = tx.getBackendTransaction();
                 final IndexTransaction indexTx = btx.getIndexTransaction(indexName);
                 BackendOperation.execute(new Callable<Boolean>() {
                     @Override

@@ -318,13 +318,13 @@ public abstract class JanusGraphBaseTest {
      */
 
     public PropertyKey makeVertexIndexedKey(String name, Class dataType) {
-        final PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
+        PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
         mgmt.buildIndex(name, Vertex.class).addKey(key).buildCompositeIndex();
         return key;
     }
 
     public PropertyKey makeVertexIndexedUniqueKey(String name, Class dataType) {
-        final PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
+        PropertyKey key = mgmt.makePropertyKey(name).dataType(dataType).cardinality(Cardinality.SINGLE).make();
         mgmt.buildIndex(name, Vertex.class).addKey(key).unique().buildCompositeIndex();
         return key;
     }
@@ -437,25 +437,13 @@ public abstract class JanusGraphBaseTest {
         return result;
     }
 
-//    public static<E> E getOnlyElement(GraphTraversal<?,E> traversal) {
-//        if (!traversal.hasNext()) throw new NoSuchElementException();
-//        return getOnlyElement(traversal,null);
-//    }
-//
-//    public static<E> E getOnlyElement(GraphTraversal<?,E> traversal, E defaultElement) {
-//        if (!traversal.hasNext()) return defaultElement;
-//        E result = traversal.next();
-//        if (traversal.hasNext()) throw new IllegalArgumentException("Traversal contains more than 1 element: " + result + ", " + traversal.next());
-//        return result;
-//    }
-
     public static void assertMissing(Transaction g, Object vid) {
         assertFalse(g.vertices(vid).hasNext());
     }
 
-    public static JanusGraphVertex getV(Transaction g, Object vid) {
-        if (!g.vertices(vid).hasNext()) return null;
-        return (JanusGraphVertex) g.vertices(vid).next();
+    public static JanusGraphVertex getV(Transaction tx, Object vid) {
+        if (!tx.vertices(vid).hasNext()) return null;
+        return (JanusGraphVertex) tx.vertices(vid).next();
     }
 
     public static JanusGraphEdge getE(Transaction g, Object eid) {
