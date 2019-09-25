@@ -22,7 +22,6 @@ import org.janusgraph.util.datastructures.Retriever;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 import org.cliffc.high_scale_lib.NonBlockingHashMapLong;
@@ -31,14 +30,14 @@ import org.slf4j.LoggerFactory;
 
 public class VertexCache {
 
-    private static final Logger log = LoggerFactory.getLogger(VertexCache.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VertexCache.class);
 
-    private final ConcurrentMap<Long, InternalVertex> volatileVertices;
+    private final ConcurrentMap<Long, InternalVertex> volatileVertices; // contains either new or modified vertices
     private final Cache<Long, InternalVertex> cache;
 
     public VertexCache(final long maxCacheSize, final int concurrencyLevel, final int initialDirtySize) {
         volatileVertices = new NonBlockingHashMapLong<>(initialDirtySize);
-        log.debug("Created dirty vertex map with initial size {}", initialDirtySize);
+        LOG.debug("Created dirty vertex map with initial size {}", initialDirtySize);
 
         cache = CacheBuilder.newBuilder().maximumSize(maxCacheSize).concurrencyLevel(concurrencyLevel)
                 .removalListener((RemovalListener<Long, InternalVertex>) notification -> {
@@ -54,35 +53,30 @@ public class VertexCache {
                     }
                 })
                 .build();
-        log.debug("Created vertex cache with max size {}", maxCacheSize);
     }
 
-    public boolean contains(long id) {
-        Long vertexId = id;
+    public boolean contains(long vertexId) {
         return cache.getIfPresent(vertexId) != null || volatileVertices.containsKey(vertexId);
     }
 
     public InternalVertex get(long id, Retriever<Long, InternalVertex> retriever) {
-        final Long vertexId = id;
+        Long vertexId = id;
 
+        // If cached, retrieve and return
         InternalVertex vertex = cache.getIfPresent(vertexId);
+        if (vertex != null) return vertex;
 
-        if (vertex == null) {
-            InternalVertex newVertex = volatileVertices.get(vertexId);
-
-            if (newVertex == null) {
-                newVertex = retriever.get(vertexId);
-            }
-            assert newVertex != null;
-            try {
-                vertex = cache.get(vertexId, new NewVertexCallable(newVertex));
-            } catch (Exception e) {
-                throw new AssertionError("Should not happen: " + e.getMessage());
-            }
-            assert vertex != null;
+        // Otherwise check in the new vertices, if it's present, cache it and return it
+        InternalVertex newVertex = volatileVertices.get(vertexId);
+        if (newVertex != null) {
+            cache.put(vertexId, newVertex); // super minor optimisation that we can remove if causes issues
+            return newVertex;
         }
 
-        return vertex;
+        // As last resort ask the retriever, cache it and return it
+        InternalVertex retrieveVertex = retriever.get(vertexId);
+        cache.put(vertexId, retrieveVertex);
+        return retrieveVertex;
     }
 
     public void add(InternalVertex vertex) {
@@ -90,8 +84,9 @@ public class VertexCache {
         Long vertexId = vertex.longId();
 
         cache.put(vertexId, vertex);
-        if (vertex.isNew() || vertex.hasAddedRelations())
+        if (vertex.isNew() || vertex.hasAddedRelations()) {
             volatileVertices.put(vertexId, vertex);
+        }
     }
 
 
@@ -106,17 +101,4 @@ public class VertexCache {
         return vertices;
     }
 
-    private static class NewVertexCallable implements Callable<InternalVertex> {
-
-        private final InternalVertex vertex;
-
-        private NewVertexCallable(InternalVertex vertex) {
-            this.vertex = vertex;
-        }
-
-        @Override
-        public InternalVertex call() {
-            return vertex;
-        }
-    }
 }

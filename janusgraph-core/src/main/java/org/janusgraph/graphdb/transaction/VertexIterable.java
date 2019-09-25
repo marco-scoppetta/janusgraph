@@ -14,7 +14,6 @@
 
 package org.janusgraph.graphdb.transaction;
 
-import com.sun.istack.internal.NotNull;
 import org.janusgraph.diskstorage.util.RecordIterator;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.idmanagement.IDManager;
@@ -38,7 +37,6 @@ public class VertexIterable implements Iterable<InternalVertex> {
     }
 
     @Override
-    @NotNull
     public Iterator<InternalVertex> iterator() {
         return new Iterator<InternalVertex>() {
 
