@@ -978,7 +978,7 @@
                 -->
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>28.1-jre</version>
+                <version>23.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-lang</groupId>

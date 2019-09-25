@@ -39,7 +39,9 @@ public class VertexCache {
         volatileVertices = new NonBlockingHashMapLong<>(initialDirtySize);
         LOG.debug("Created dirty vertex map with initial size {}", initialDirtySize);
 
-        cache = CacheBuilder.newBuilder().maximumSize(maxCacheSize).concurrencyLevel(concurrencyLevel)
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(maxCacheSize)
+                .concurrencyLevel(concurrencyLevel)
                 .removalListener((RemovalListener<Long, InternalVertex>) notification -> {
                     if (notification.getCause() == RemovalCause.EXPLICIT) { //Due to invalidation at the end
                         assert volatileVertices.isEmpty();
