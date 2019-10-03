@@ -13,6 +13,7 @@
 // limitations under the License.
 package org.janusgraph.graphdb.transaction;
 
+import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.notNull;
@@ -20,6 +21,7 @@ import static org.easymock.EasyMock.replay;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.easymock.EasyMockSupport;
+import org.janusgraph.diskstorage.BackendTransaction;
 import org.junit.jupiter.api.Test;
 
 import org.janusgraph.core.RelationType;
@@ -71,6 +73,7 @@ public class StandardJanusGraphTxTest extends EasyMockSupport {
         expect(mockGraph.getEdgeSerializer()).andReturn(mockEdgeSerializer);
         expect(mockGraph.getIndexSerializer()).andReturn(mockIndexSerializer);
         expect(mockGraph.getIDManager()).andReturn(idManager);
+        expect(mockGraph.openBackendTransaction(anyObject(StandardJanusGraphTx.class))).andReturn(createMock(BackendTransaction.class));
 
         expect(gdbConfig.getTimestampProvider()).andReturn(tsProvider);
 

@@ -14,50 +14,89 @@
 
 package org.janusgraph.graphdb.transaction.vertexcache;
 
+import com.google.common.base.Preconditions;
+import com.google.common.cache.*;
 import org.janusgraph.graphdb.internal.InternalVertex;
+import org.janusgraph.graphdb.vertices.AbstractVertex;
 import org.janusgraph.util.datastructures.Retriever;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
-public interface VertexCache {
+import org.cliffc.high_scale_lib.NonBlockingHashMapLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    /**
-     * Checks whether the cache contains a vertex with the given id
-     *
-     * @param id Vertex id
-     * @return true if a vertex with the given id is contained, else false
-     */
-    boolean contains(long id);
+public class VertexCache {
+    // volatileVertices Map contains vertices that cannot be evicted from the basic cache, we must keep a reference to them (they're either new or modified vertices)
+    private final ConcurrentMap<Long, InternalVertex> volatileVertices;
+    private final Cache<Long, InternalVertex> cache;
 
-    /**
-     * Returns the vertex with the given id or null if it is not in the cache
-     *
-     * @param id
-     * @return
-     */
-    InternalVertex get(long id, Retriever<Long, InternalVertex> retriever);
+    public VertexCache(final long maxCacheSize, final int concurrencyLevel, final int initialDirtySize) {
+        volatileVertices = new NonBlockingHashMapLong<>(initialDirtySize);
+        cache = CacheBuilder.newBuilder()
+                .maximumSize(maxCacheSize)
+                .concurrencyLevel(concurrencyLevel)
+                .removalListener((RemovalListener<Long, InternalVertex>) notification -> {
+                    if (notification.getCause() == RemovalCause.EXPLICIT) { //Due to invalidation at the end
+                        assert volatileVertices.isEmpty();
+                        return;
+                    }
+                    //Should only get evicted based on size constraint or replaced through add
+                    assert (notification.getCause() == RemovalCause.SIZE || notification.getCause() == RemovalCause.REPLACED) : "Cause: " + notification.getCause();
+                    InternalVertex v = notification.getValue();
+                    if (((AbstractVertex) v).isTxOpen() && (v.isModified() || v.isRemoved())) { //move vertex to volatile map if we cannot lose track of it
+                        volatileVertices.putIfAbsent(notification.getKey(), v);
+                    }
+                })
+                .build();
+    }
 
-    /**
-     * Adds the given vertex with the given id to the cache. The given vertex may already be in the cache.
-     * In other words, this method may be called to ensure that a vertex is still in the cache.
-     *
-     * @param vertex
-     * @param id
-     * @throws IllegalArgumentException if the vertex is null or the id negative
-     */
-    void add(InternalVertex vertex, long id);
+    public boolean contains(long vertexId) {
+        return cache.getIfPresent(vertexId) != null || volatileVertices.containsKey(vertexId);
+    }
+
+    public InternalVertex get(long id, Retriever<Long, InternalVertex> retriever) {
+        Long vertexId = id;
+
+        // If cached, retrieve and return
+        InternalVertex vertex = cache.getIfPresent(vertexId);
+        if (vertex != null) return vertex;
+
+        // Otherwise check in the new vertices, if it's present, cache it and return it
+        InternalVertex newVertex = volatileVertices.get(vertexId);
+        if (newVertex != null) {
+            cache.put(vertexId, newVertex); // super minor optimisation that we can remove if causes issues
+            return newVertex;
+        }
+
+        // As last resort ask the retriever, cache it and return it
+        InternalVertex retrieveVertex = retriever.get(vertexId);
+        cache.put(vertexId, retrieveVertex);
+        return retrieveVertex;
+    }
+
+    public void add(InternalVertex vertex) {
+        Preconditions.checkNotNull(vertex);
+        Long vertexId = vertex.longId();
+
+        cache.put(vertexId, vertex);
+        if (vertex.isNew() || vertex.hasAddedRelations()) {
+            volatileVertices.put(vertexId, vertex);
+        }
+    }
+
 
     /**
      * Returns an iterable over all new vertices in the cache
-     *
-     * @return
      */
-    List<InternalVertex> getAllNew();
-
-    /**
-     * Closes the cache which allows the cache to release allocated memory.
-     * Calling any of the other methods after closing a cache has undetermined behavior.
-     */
-    void close();
+    public List<InternalVertex> getAllNew() {
+        final List<InternalVertex> vertices = new ArrayList<>(10);
+        for (InternalVertex v : volatileVertices.values()) {
+            if (v.isNew()) vertices.add(v);
+        }
+        return vertices;
+    }
 
 }

@@ -119,7 +119,7 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
     public void process(StaticBuffer key, Map<SliceQuery, EntryList> entries, ScanMetrics metrics) {
         //The queries are already tailored enough => everything should be removed
         try {
-            BackendTransaction mutator = writeTx.getTxHandle();
+            BackendTransaction mutator = writeTx.getBackendTransaction();
             final List<Entry> deletions;
             if (entries.size()==1) deletions = Iterables.getOnlyElement(entries.values());
             else {

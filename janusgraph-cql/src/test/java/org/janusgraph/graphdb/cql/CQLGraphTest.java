@@ -71,10 +71,10 @@ public class CQLGraphTest extends JanusGraphTest {
 
         StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.getCurrentThreadTx();
         assertEquals("ALL",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(READ_CONSISTENCY));
         assertEquals("LOCAL_QUORUM",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(WRITE_CONSISTENCY));
     }
 
@@ -88,10 +88,10 @@ public class CQLGraphTest extends JanusGraphTest {
 
         StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
         assertEquals("TWO",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(READ_CONSISTENCY));
         assertEquals("THREE",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(WRITE_CONSISTENCY));
         tx.rollback();
     }
@@ -109,10 +109,10 @@ public class CQLGraphTest extends JanusGraphTest {
                 .customOption(ConfigElement.getPath(WRITE_CONSISTENCY), "TWO").start();
 
         assertEquals("ONE",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(READ_CONSISTENCY));
         assertEquals("TWO",
-                tx.getTxHandle().getBaseTransactionConfig().getCustomOptions()
+                tx.getBackendTransaction().getBaseTransactionConfig().getCustomOptions()
                         .get(WRITE_CONSISTENCY));
         tx.rollback();
     }

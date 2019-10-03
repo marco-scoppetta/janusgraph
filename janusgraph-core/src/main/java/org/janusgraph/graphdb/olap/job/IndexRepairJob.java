@@ -118,7 +118,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
     @Override
     public void process(JanusGraphVertex vertex, ScanMetrics metrics) {
         try {
-            BackendTransaction mutator = writeTx.getTxHandle();
+            BackendTransaction mutator = writeTx.getBackendTransaction();
             if (index instanceof RelationTypeIndex) {
                 RelationTypeIndexWrapper wrapper = (RelationTypeIndexWrapper)index;
                 InternalRelationType wrappedType = wrapper.getWrappedType();

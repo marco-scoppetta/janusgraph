@@ -32,10 +32,7 @@ import org.janusgraph.graphdb.query.profile.QueryProfiler;
 
 import com.google.common.cache.Cache;
 
-/**
- * @author davidclement90@laposte.net
- */
-public class SubqueryIterator implements Iterator<JanusGraphElement>, AutoCloseable {
+public class SubQueryIterator implements Iterator<JanusGraphElement>, AutoCloseable {
 
     private final JointIndexQuery.Subquery subQuery;
 
@@ -49,13 +46,13 @@ public class SubqueryIterator implements Iterator<JanusGraphElement>, AutoClosea
 
     private boolean isTimerRunning;
 
-    public SubqueryIterator(JointIndexQuery.Subquery subQuery, IndexSerializer indexSerializer, BackendTransaction tx,
-            Cache<JointIndexQuery.Subquery, List<Object>> indexCache, int limit,
-            Function<Object, ? extends JanusGraphElement> function, List<Object> otherResults) {
+    public SubQueryIterator(JointIndexQuery.Subquery subQuery, IndexSerializer indexSerializer, BackendTransaction tx,
+                            Cache<JointIndexQuery.Subquery, List<Object>> indexCache, int limit,
+                            Function<Object, ? extends JanusGraphElement> function, List<Object> otherResults) {
         this.subQuery = subQuery;
         this.indexCache = indexCache;
-        final List<Object> cacheResponse = indexCache.getIfPresent(subQuery);
-        final Stream<?> stream;
+        List<Object> cacheResponse = indexCache.getIfPresent(subQuery);
+        Stream<?> stream;
         if (cacheResponse != null) {
             stream = cacheResponse.stream();
         } else {

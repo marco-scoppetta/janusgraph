@@ -17,8 +17,9 @@ package org.janusgraph.graphdb.query.vertex;
 import com.carrotsearch.hppc.LongArrayList;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
-import org.janusgraph.core.*;
+import com.google.common.collect.Iterables;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.VertexList;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
@@ -30,7 +31,7 @@ import org.janusgraph.graphdb.transaction.RelationConstructor;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Iterator;
 
 /**
  * This is an optimization of specifically for {@link VertexCentricQuery} that addresses the special but
@@ -57,13 +58,13 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
 
     public SimpleVertexQueryProcessor(VertexCentricQuery query, StandardJanusGraphTx tx) {
         Preconditions.checkArgument(query.isSimple());
-        this.query=query;
-        this.tx=tx;
+        this.query = query;
+        this.tx = tx;
         BackendQueryHolder<SliceQuery> bqh = query.getSubQuery(0);
-        this.sliceQuery=bqh.getBackendQuery();
-        this.profiler=bqh.getProfiler();
-        this.vertex=query.getVertex();
-        this.edgeSerializer=tx.getEdgeSerializer();
+        this.sliceQuery = bqh.getBackendQuery();
+        this.profiler = bqh.getProfiler();
+        this.vertex = query.getVertex();
+        this.edgeSerializer = tx.getEdgeSerializer();
     }
 
     @Override
@@ -71,7 +72,7 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
         Iterator<Entry> iterator;
         //If there is a limit we need to wrap the basic iterator in a LimitAdjustingIterator which ensures the right number
         //of elements is returned. Otherwise we just return the basic iterator.
-        if (sliceQuery.hasLimit() && sliceQuery.getLimit()!=query.getLimit()) {
+        if (sliceQuery.hasLimit() && sliceQuery.getLimit() != query.getLimit()) {
             iterator = new LimitAdjustingIterator();
         } else {
             iterator = getBasicIterator();
@@ -97,18 +98,18 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
     public VertexList vertexIds() {
         LongArrayList list = new LongArrayList();
         long previousId = 0;
-        for (Long id : Iterables.transform(this,new Function<Entry, Long>() {
+        for (Long id : Iterables.transform(this, new Function<Entry, Long>() {
             @Nullable
             @Override
             public Long apply(@Nullable Entry entry) {
-                return edgeSerializer.readRelation(entry,true,tx).getOtherVertexId();
+                return edgeSerializer.readRelation(entry, true, tx).getOtherVertexId();
             }
         })) {
             list.add(id);
-            if (id>=previousId && previousId>=0) previousId=id;
-            else previousId=-1;
+            if (id >= previousId && previousId >= 0) previousId = id;
+            else previousId = -1;
         }
-        return new VertexLongList(tx,list,previousId>=0);
+        return new VertexLongList(tx, list, previousId >= 0);
     }
 
     /**
@@ -117,7 +118,7 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
      * @return
      */
     private Iterator<Entry> getBasicIterator() {
-        final EntryList result = vertex.loadRelations(sliceQuery, query -> QueryProfiler.profile(profiler, query, q -> tx.getGraph().edgeQuery(vertex.longId(), q, tx.getTxHandle())));
+        EntryList result = vertex.loadRelations(sliceQuery, query -> QueryProfiler.profile(profiler, query, q -> tx.getGraph().edgeQuery(vertex.longId(), q, tx.getBackendTransaction())));
         return result.iterator();
     }
 
@@ -125,17 +126,16 @@ public class SimpleVertexQueryProcessor implements Iterable<Entry> {
     private final class LimitAdjustingIterator extends org.janusgraph.graphdb.query.LimitAdjustingIterator<Entry> {
 
         private LimitAdjustingIterator() {
-            super(query.getLimit(),sliceQuery.getLimit());
+            super(query.getLimit(), sliceQuery.getLimit());
         }
 
         @Override
         public Iterator<Entry> getNewIterator(int newLimit) {
-            if (newLimit>sliceQuery.getLimit())
+            if (newLimit > sliceQuery.getLimit()) {
                 sliceQuery = sliceQuery.updateLimit(newLimit);
+            }
             return getBasicIterator();
         }
     }
-
-
 
 }
