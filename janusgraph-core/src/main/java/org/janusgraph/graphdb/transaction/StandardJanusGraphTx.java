@@ -114,7 +114,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     private final TransactionConfiguration config;
     private final IDManager idManager;
     private final AttributeHandler attributeHandler;
-    private BackendTransaction backendTransaction;
+    private final BackendTransaction backendTransaction;
     private final EdgeSerializer edgeSerializer;
     private final IndexSerializer indexSerializer;
 
@@ -175,7 +175,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     /**
      * This belongs in JanusGraphConfig.
      */
-    private final TimestampProvider times;
+    private final TimestampProvider timestampProvider;
 
     /**
      * Whether or not this transaction is open
@@ -191,7 +191,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         Preconditions.checkArgument(graph.isOpen());
         Preconditions.checkNotNull(config);
         this.graph = graph;
-        this.times = graph.getConfiguration().getTimestampProvider();
+        this.timestampProvider = graph.getConfiguration().getTimestampProvider();
         this.config = config;
         this.idManager = graph.getIDManager();
         this.attributeHandler = graph.getDataSerializer();
@@ -221,7 +221,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
             newVertexIndexEntries = new SimpleIndexCache();
         } else {
             addedRelations = new ConcurrentBufferAddedRelations();
-            concurrencyLevel = 1; //TODO: should we increase this?
+            concurrencyLevel = 4; // ideally should be equal to number of threads that will try to access this cache
             newTypeCache = new NonBlockingHashMap<>();
             newVertexIndexEntries = new ConcurrentIndexCache();
         }
@@ -652,7 +652,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                     if (multiplicity.isUnique(dir)) {
                         TransactionLock lock = getLock(dir == Direction.OUT ? out : in, type, dir);
                         if (uniqueLock == null) uniqueLock = lock;
-                        else uniqueLock = new CombinerLock(uniqueLock, lock, times);
+                        else uniqueLock = new CombinerLock(uniqueLock, lock, timestampProvider);
                     }
                 }
             }
@@ -767,7 +767,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         TransactionLock uniqueLock = getUniquenessLock(vertex, (InternalRelationType) key, normalizedValue);
         //Add locks for unique indexes
         for (IndexLockTuple lockTuple : uniqueIndexTuples) {
-            uniqueLock = new CombinerLock(uniqueLock, getLock(lockTuple), times);
+            uniqueLock = new CombinerLock(uniqueLock, getLock(lockTuple), timestampProvider);
         }
         uniqueLock.lock(LOCK_TIMEOUT);
         try {
@@ -867,7 +867,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         addProperty(schemaVertex, BaseKey.VertexExists, Boolean.TRUE);
         addProperty(schemaVertex, BaseKey.SchemaCategory, schemaCategory);
         updateSchemaVertex(schemaVertex);
-        addProperty(schemaVertex, BaseKey.SchemaUpdateTime, times.getTime(times.getTime()));
+        addProperty(schemaVertex, BaseKey.SchemaUpdateTime, timestampProvider.getTime(timestampProvider.getTime()));
         for (Map.Entry<TypeDefinitionCategory, Object> def : definition.entrySet()) {
             JanusGraphVertexProperty p = addProperty(schemaVertex, BaseKey.SchemaDefinitionProperty, def.getValue());
             p.property(BaseKey.SchemaDefinitionDesc.name(), TypeDefinitionDescription.of(def.getKey()));
@@ -881,7 +881,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
     }
 
     public void updateSchemaVertex(JanusGraphSchemaVertex schemaVertex) {
-        addProperty(VertexProperty.Cardinality.single, schemaVertex, BaseKey.SchemaUpdateTime, times.getTime(times.getTime()));
+        addProperty(VertexProperty.Cardinality.single, schemaVertex, BaseKey.SchemaUpdateTime, timestampProvider.getTime(timestampProvider.getTime()));
     }
 
     public PropertyKey makePropertyKey(String name, TypeDefinitionMap definition) {
@@ -1186,8 +1186,8 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                 final PredicateCondition<PropertyKey, JanusGraphElement> pc = (PredicateCondition) condition;
                 if (pc.getPredicate() == Cmp.EQUAL && TypeUtil.hasSimpleInternalVertexKeyIndex(pc.getKey())) return pc;
             } else if (condition instanceof And) {
-                for (final Condition<JanusGraphElement> child : condition.getChildren()) {
-                    final PredicateCondition<PropertyKey, JanusGraphElement> p = getEqualityCondition(child);
+                for (Condition<JanusGraphElement> child : condition.getChildren()) {
+                    PredicateCondition<PropertyKey, JanusGraphElement> p = getEqualityCondition(child);
                     if (p != null) return p;
                 }
             }
@@ -1207,7 +1207,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                 PredicateCondition<PropertyKey, JanusGraphElement> standardIndexKey = getEqualityCondition(query.getCondition());
                 Iterator<JanusGraphVertex> vertices;
                 if (standardIndexKey == null) {
-                    final Set<PropertyKey> keys = Sets.newHashSet();
+                    Set<PropertyKey> keys = Sets.newHashSet();
                     ConditionUtil.traversal(query.getCondition(), cond -> {
                         Preconditions.checkArgument(cond.getType() != Condition.Type.LITERAL || cond instanceof PredicateCondition);
                         if (cond instanceof PredicateCondition) {
@@ -1217,7 +1217,7 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                     });
                     Preconditions.checkArgument(!keys.isEmpty(), "Invalid query condition: %s", query.getCondition());
                     Set<JanusGraphVertex> vertexSet = Sets.newHashSet();
-                    for (final JanusGraphRelation r : addedRelations.getView(relation -> keys.contains(relation.getType()))) {
+                    for (JanusGraphRelation r : addedRelations.getView(relation -> keys.contains(relation.getType()))) {
                         vertexSet.add(((JanusGraphVertexProperty) r).element());
                     }
                     for (JanusGraphRelation r : deletedRelations.values()) {
@@ -1231,15 +1231,14 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
                     vertices = com.google.common.collect.Iterators.transform(newVertexIndexEntries.get(standardIndexKey.getValue(), standardIndexKey.getKey()).iterator(), new com.google.common.base.Function<JanusGraphVertexProperty, JanusGraphVertex>() {
                         @Nullable
                         @Override
-                        public JanusGraphVertex apply(final JanusGraphVertexProperty o) {
+                        public JanusGraphVertex apply(JanusGraphVertexProperty o) {
                             return o.element();
                         }
                     });
                 }
 
                 return (Iterator) com.google.common.collect.Iterators.filter(vertices, query::matches);
-            } else if ((query.getResultType() == ElementCategory.EDGE || query.getResultType() == ElementCategory.PROPERTY)
-                    && !addedRelations.isEmpty()) {
+            } else if ((query.getResultType() == ElementCategory.EDGE || query.getResultType() == ElementCategory.PROPERTY) && !addedRelations.isEmpty()) {
                 return (Iterator) addedRelations.getView(relation -> query.getResultType().isInstance(relation) && !relation.isInvisible() && query.matches(relation)).iterator();
             } else return Collections.emptyIterator();
         }

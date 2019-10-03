@@ -259,6 +259,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
         PropertyKey namePropertyKey = tx.getPropertyKey("name");
         vertex1.property(namePropertyKey.name(), "abcd");
+        tx.commit();
         clopen();
 
         // Verify vertex is persisted after closing and reopening graph

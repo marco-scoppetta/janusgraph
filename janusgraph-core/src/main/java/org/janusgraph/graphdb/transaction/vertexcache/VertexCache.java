@@ -29,16 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class VertexCache {
-
-    private static final Logger LOG = LoggerFactory.getLogger(VertexCache.class);
-
-    private final ConcurrentMap<Long, InternalVertex> volatileVertices; // contains either new or modified vertices
+    // volatileVertices Map contains vertices that cannot be evicted from the basic cache, we must keep a reference to them (they're either new or modified vertices)
+    private final ConcurrentMap<Long, InternalVertex> volatileVertices;
     private final Cache<Long, InternalVertex> cache;
 
     public VertexCache(final long maxCacheSize, final int concurrencyLevel, final int initialDirtySize) {
         volatileVertices = new NonBlockingHashMapLong<>(initialDirtySize);
-        LOG.debug("Created dirty vertex map with initial size {}", initialDirtySize);
-
         cache = CacheBuilder.newBuilder()
                 .maximumSize(maxCacheSize)
                 .concurrencyLevel(concurrencyLevel)
@@ -49,8 +45,8 @@ public class VertexCache {
                     }
                     //Should only get evicted based on size constraint or replaced through add
                     assert (notification.getCause() == RemovalCause.SIZE || notification.getCause() == RemovalCause.REPLACED) : "Cause: " + notification.getCause();
-                    final InternalVertex v = notification.getValue();
-                    if (((AbstractVertex) v).isTxOpen() && (v.isModified() || v.isRemoved())) {
+                    InternalVertex v = notification.getValue();
+                    if (((AbstractVertex) v).isTxOpen() && (v.isModified() || v.isRemoved())) { //move vertex to volatile map if we cannot lose track of it
                         volatileVertices.putIfAbsent(notification.getKey(), v);
                     }
                 })
