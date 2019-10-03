@@ -96,7 +96,6 @@ import org.janusgraph.graphdb.internal.InternalVertexLabel;
 import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.QueryUtil;
 import org.janusgraph.graphdb.relations.EdgeDirection;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsTransaction;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphFeatures;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistry;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistryV1d0;
@@ -244,11 +243,11 @@ public class StandardJanusGraph implements JanusGraph {
 
     // Get JanusTransaction which is wrapped inside the TinkerTransaction
     // it opens the JanusTransaction if not initialised yet
-    private JanusGraphBlueprintsTransaction getLocalJanusTransaction() {
+    private StandardJanusGraphTx getLocalJanusTransaction() {
         if (!tinkerTransaction.isOpen()) {
             tinkerTransaction.readWrite(); // creates a new JanusGraphTransaction internally (inside AutomaticLocalTinkerTransaction)
         }
-        JanusGraphBlueprintsTransaction tx = tinkerTransaction.getJanusTransaction();
+        StandardJanusGraphTx tx = tinkerTransaction.getJanusTransaction();
         Preconditions.checkNotNull(tx, "Invalid read-write behavior configured: Should either open transaction or throw exception.");
         return tx;
     }
@@ -445,21 +444,21 @@ public class StandardJanusGraph implements JanusGraph {
     // Also this is public just so that we can use it in tests
     public class AutomaticLocalTinkerTransaction extends AbstractThreadLocalTransaction {
 
-        private ThreadLocal<JanusGraphBlueprintsTransaction> localJanusTransaction = ThreadLocal.withInitial(() -> null);
+        private ThreadLocal<StandardJanusGraphTx> localJanusTransaction = ThreadLocal.withInitial(() -> null);
 
         AutomaticLocalTinkerTransaction() {
             super(StandardJanusGraph.this);
         }
 
-        public JanusGraphBlueprintsTransaction getJanusTransaction() {
+        public StandardJanusGraphTx getJanusTransaction() {
             return localJanusTransaction.get();
         }
 
         @Override
         public void doOpen() {
-            JanusGraphBlueprintsTransaction tx = localJanusTransaction.get();
+            StandardJanusGraphTx tx = localJanusTransaction.get();
             if (tx != null && tx.isOpen()) throw Transaction.Exceptions.transactionAlreadyOpen();
-            tx = (JanusGraphBlueprintsTransaction) newThreadBoundTransaction();
+            tx = (StandardJanusGraphTx) newThreadBoundTransaction();
             localJanusTransaction.set(tx);
         }
 
@@ -484,7 +483,7 @@ public class StandardJanusGraph implements JanusGraph {
                 // Graph has been closed
                 return false;
             }
-            JanusGraphBlueprintsTransaction tx = localJanusTransaction.get();
+            StandardJanusGraphTx tx = localJanusTransaction.get();
             return tx != null && tx.isOpen();
         }
 

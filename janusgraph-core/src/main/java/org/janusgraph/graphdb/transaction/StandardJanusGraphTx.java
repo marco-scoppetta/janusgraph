@@ -21,21 +21,30 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Weigher;
 import com.google.common.collect.*;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.io.Io;
+import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadedTransaction;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.*;
 import org.janusgraph.core.attribute.Cmp;
 import org.janusgraph.core.schema.*;
 import org.janusgraph.diskstorage.BackendException;
 
+import org.janusgraph.diskstorage.util.Hex;
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.diskstorage.BackendTransaction;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
+import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.profile.QueryProfiler;
 import org.janusgraph.graphdb.relations.RelationComparator;
 import org.janusgraph.graphdb.relations.RelationIdentifier;
 import org.janusgraph.graphdb.relations.StandardEdge;
 import org.janusgraph.graphdb.relations.StandardVertexProperty;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphBlueprintsTransaction;
+import org.janusgraph.graphdb.tinkerpop.ElementUtils;
 import org.janusgraph.graphdb.database.EdgeSerializer;
 import org.janusgraph.graphdb.database.IndexSerializer;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
@@ -94,7 +103,7 @@ import java.util.stream.Collectors;
  * @author Matthias Broecheler (me@matthiasb.com)
  */
 
-public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implements TypeInspector, SchemaInspector, VertexFactory {
+public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspector, SchemaInspector, VertexFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(StandardJanusGraphTx.class);
 
@@ -258,6 +267,168 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
 
     }
 
+
+    /**
+     * Returns the graph that this transaction is based on
+     *
+     * @return
+     */
+    @Override
+    public Features features() {
+        return getGraph().features();
+    }
+
+    @Override
+    public Variables variables() {
+        return getGraph().variables();
+    }
+
+    @Override
+    public Configuration configuration() {
+        return getGraph().configuration();
+    }
+
+    @Override
+    public <I extends Io> I io(final Io.Builder<I> builder) {
+        return getGraph().io(builder);
+    }
+
+    @Override
+    public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
+        StandardJanusGraph graph = getGraph();
+        if (isOpen()) commit();
+        return graph.compute(graphComputerClass);
+    }
+
+    @Override
+    public FulgoraGraphComputer compute() throws IllegalArgumentException {
+        StandardJanusGraph graph = getGraph();
+        if (isOpen()) commit();
+        return graph.compute();
+    }
+
+    /**
+     * Creates a new vertex in the graph with the given vertex id.
+     * Note, that an exception is thrown if the vertex id is not a valid JanusGraph vertex id or if a vertex with the given
+     * id already exists. Only accepts long ids - all others are ignored.
+     * <p>
+     * Custom id setting must be enabled via the configuration option {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#ALLOW_SETTING_VERTEX_ID}
+     * and valid JanusGraph vertex ids must be provided. Use {@link org.janusgraph.graphdb.idmanagement.IDManager#toVertexId(long)}
+     * to construct a valid JanusGraph vertex id from a user id, where <code>idManager</code> can be obtained through
+     * {@link org.janusgraph.graphdb.database.StandardJanusGraph#getIDManager()}.
+     * <pre>
+     * <code>long vertexId = ((StandardJanusGraph) graph).getIDManager().toVertexId(userVertexId);</code>
+     * </pre>
+     *
+     * @param keyValues key-value pairs of properties to characterize or attach to the vertex
+     * @return New vertex
+     */
+    @Override
+    public JanusGraphVertex addVertex(Object... keyValues) {
+        ElementHelper.legalPropertyKeyValueArray(keyValues);
+        if (ElementHelper.getIdValue(keyValues).isPresent() && !getGraph().getConfiguration().allowVertexIdSetting()) {
+            throw Vertex.Exceptions.userSuppliedIdsNotSupported();
+        }
+        Object labelValue = null;
+        for (int i = 0; i < keyValues.length; i = i + 2) {
+            if (keyValues[i].equals(T.label)) {
+                labelValue = keyValues[i + 1];
+                Preconditions.checkArgument(labelValue instanceof VertexLabel || labelValue instanceof String,
+                        "Expected a string or VertexLabel as the vertex label argument, but received: %s", labelValue);
+                if (labelValue instanceof String) ElementHelper.validateLabel((String) labelValue);
+            }
+        }
+        VertexLabel label = BaseVertexLabel.DEFAULT_VERTEXLABEL;
+        if (labelValue != null) {
+            label = (labelValue instanceof VertexLabel) ? (VertexLabel) labelValue : getOrCreateVertexLabel((String) labelValue);
+        }
+
+        Long id = ElementHelper.getIdValue(keyValues).map(Number.class::cast).map(Number::longValue).orElse(null);
+        JanusGraphVertex vertex = addVertex(id, label);
+        org.janusgraph.graphdb.util.ElementHelper.attachProperties(vertex, keyValues);
+        return vertex;
+    }
+
+    @Override
+    public Iterator<Vertex> vertices(Object... vertexIds) {
+        if (vertexIds == null || vertexIds.length == 0) return (Iterator) getVertices().iterator();
+        ElementUtils.verifyArgsMustBeEitherIdOrElement(vertexIds);
+        long[] ids = new long[vertexIds.length];
+        int pos = 0;
+        for (Object vertexId : vertexIds) {
+            ids[pos++] = ElementUtils.getVertexId(vertexId);
+        }
+        return (Iterator) getVertices(ids).iterator();
+    }
+
+    @Override
+    public Iterator<Edge> edges(Object... edgeIds) {
+        if (edgeIds == null || edgeIds.length == 0) return (Iterator) getEdges().iterator();
+        ElementUtils.verifyArgsMustBeEitherIdOrElement(edgeIds);
+        RelationIdentifier[] ids = new RelationIdentifier[edgeIds.length];
+        int pos = 0;
+        for (Object edgeId : edgeIds) {
+            ids[pos++] = ElementUtils.getEdgeId(edgeId);
+        }
+        return (Iterator) getEdges(ids).iterator();
+    }
+
+    @Override
+    public String toString() {
+        int ihc = System.identityHashCode(this);
+        String ihcString = String.format("0x%s", Hex.bytesToHex(
+                (byte) (ihc >>> 24 & 0x000000FF),
+                (byte) (ihc >>> 16 & 0x000000FF),
+                (byte) (ihc >>> 8 & 0x000000FF),
+                (byte) (ihc & 0x000000FF)));
+        return StringFactory.graphString(this, ihcString);
+    }
+
+    @Override
+    public Transaction tx() {
+        return new AbstractThreadedTransaction(getGraph()) {
+            @Override
+            public void doOpen() {
+                if (isClosed()) throw new IllegalStateException("Cannot re-open a closed transaction.");
+            }
+
+            @Override
+            public void doCommit() {
+                StandardJanusGraphTx.this.commit();
+            }
+
+            @Override
+            public void doRollback() {
+                StandardJanusGraphTx.this.rollback();
+            }
+
+            @Override
+            public <G extends Graph> G createThreadedTx() {
+                throw new UnsupportedOperationException("JanusGraph does not support nested transactions.");
+            }
+
+            @Override
+            public boolean isOpen() {
+                return StandardJanusGraphTx.this.isOpen();
+            }
+
+            @Override
+            protected void doClose() {
+                if (isOpen()) {
+                    throw Exceptions.openTransactionsOnClose();
+                }
+                super.doClose();
+            }
+        };
+    }
+
+    @Override
+    public void close() {
+        tx().close();
+    }
+
+
+
     /*
      * ------------------------------------ Utility Access Verification methods ------------------------------------
      */
@@ -310,7 +481,6 @@ public class StandardJanusGraphTx extends JanusGraphBlueprintsTransaction implem
         return config;
     }
 
-    @Override
     public StandardJanusGraph getGraph() {
         return graph;
     }
