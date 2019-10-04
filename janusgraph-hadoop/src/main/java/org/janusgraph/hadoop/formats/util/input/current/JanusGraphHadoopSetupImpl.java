@@ -108,7 +108,7 @@ public class JanusGraphHadoopSetupImpl extends JanusGraphHadoopSetupCommon {
     }
 
     @Override
-    public RelationReader getRelationReader(long vertexId) {
+    public RelationReader getRelationReader() {
         return graph.getEdgeSerializer();
     }
 

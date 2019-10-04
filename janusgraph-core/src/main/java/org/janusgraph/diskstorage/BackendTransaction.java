@@ -257,7 +257,7 @@ public class BackendTransaction implements LoggableTransaction {
             Convenience Read Methods
      */
 
-    public EntryList edgeStoreQuery(final KeySliceQuery query) {
+    public EntryList edgeStoreQuery(KeySliceQuery query) {
         return executeRead(new Callable<EntryList>() {
             @Override
             public EntryList call() throws Exception {
@@ -271,7 +271,7 @@ public class BackendTransaction implements LoggableTransaction {
         });
     }
 
-    public Map<StaticBuffer, EntryList> edgeStoreMultiQuery(final List<StaticBuffer> keys, final SliceQuery query) {
+    public Map<StaticBuffer, EntryList> edgeStoreMultiQuery(List<StaticBuffer> keys, SliceQuery query) {
         if (storeFeatures.hasMultiQuery()) {
             return executeRead(new Callable<Map<StaticBuffer, EntryList>>() {
                 @Override
@@ -307,7 +307,6 @@ public class BackendTransaction implements LoggableTransaction {
                     throw new JanusGraphException("Could not successfully complete multi-query. " + failureCount.get() + " individual queries failed.");
                 }
                 for (int i = 0; i < keys.size(); i++) {
-                    assert resultArray[i] != null;
                     results.put(keys.get(i), resultArray[i]);
                 }
             }
@@ -347,7 +346,7 @@ public class BackendTransaction implements LoggableTransaction {
         }
     }
 
-    public KeyIterator edgeStoreKeys(final SliceQuery sliceQuery) {
+    public KeyIterator edgeStoreKeys(SliceQuery sliceQuery) {
         if (!storeFeatures.hasScan())
             throw new UnsupportedOperationException("The configured storage backend does not support global graph operations - use Faunus instead");
 
@@ -366,7 +365,7 @@ public class BackendTransaction implements LoggableTransaction {
         });
     }
 
-    public KeyIterator edgeStoreKeys(final KeyRangeQuery range) {
+    public KeyIterator edgeStoreKeys(KeyRangeQuery range) {
         Preconditions.checkArgument(storeFeatures.hasOrderedScan(), "The configured storage backend does not support ordered scans");
 
         return executeRead(new Callable<KeyIterator>() {
@@ -382,7 +381,7 @@ public class BackendTransaction implements LoggableTransaction {
         });
     }
 
-    public EntryList indexQuery(final KeySliceQuery query) {
+    public EntryList indexQuery(KeySliceQuery query) {
         return executeRead(new Callable<EntryList>() {
             @Override
             public EntryList call() throws Exception {
@@ -399,7 +398,7 @@ public class BackendTransaction implements LoggableTransaction {
     }
 
 
-    public Stream<String> indexQuery(final String index, final IndexQuery query) {
+    public Stream<String> indexQuery(String index, IndexQuery query) {
         final IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new Callable<Stream<String>>() {
             @Override
@@ -414,8 +413,8 @@ public class BackendTransaction implements LoggableTransaction {
         });
     }
 
-    public Stream<RawQuery.Result<String>> rawQuery(final String index, final RawQuery query) {
-        final IndexTransaction indexTx = getIndexTransaction(index);
+    public Stream<RawQuery.Result<String>> rawQuery(String index, RawQuery query) {
+        IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new Callable<Stream<RawQuery.Result<String>>>() {
             @Override
             public Stream<RawQuery.Result<String>> call() throws Exception {
@@ -433,7 +432,7 @@ public class BackendTransaction implements LoggableTransaction {
         final private RawQuery query;
         final private IndexTransaction indexTx;
 
-        public TotalsCallable(final RawQuery query, final IndexTransaction indexTx) {
+        public TotalsCallable(RawQuery query, IndexTransaction indexTx) {
             this.query = query;
             this.indexTx = indexTx;
         }
@@ -449,7 +448,7 @@ public class BackendTransaction implements LoggableTransaction {
         }
     }
 
-    public Long totals(final String index, final RawQuery query) {
+    public Long totals(String index, RawQuery query) {
         final IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new TotalsCallable(query, indexTx));
     }

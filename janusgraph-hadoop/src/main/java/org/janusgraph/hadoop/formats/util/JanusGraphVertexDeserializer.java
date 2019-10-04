@@ -46,10 +46,9 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
     private final SystemTypeInspector systemTypes;
     private final IDManager idManager;
 
-    private static final Logger log =
-            LoggerFactory.getLogger(JanusGraphVertexDeserializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JanusGraphVertexDeserializer.class);
 
-    public JanusGraphVertexDeserializer(final JanusGraphHadoopSetup setup) {
+    public JanusGraphVertexDeserializer(JanusGraphHadoopSetup setup) {
         this.setup = setup;
         this.typeManager = setup.getTypeInspector();
         this.systemTypes = setup.getSystemTypeInspector();
@@ -75,14 +74,14 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
     public TinkerVertex readHadoopVertex(final StaticBuffer key, Iterable<Entry> entries) {
 
         // Convert key to a vertex ID
-        final long vertexId = idManager.getKeyID(key);
+        long vertexId = idManager.getKeyID(key);
         Preconditions.checkArgument(vertexId > 0);
 
         // Partitioned vertex handling
         if (idManager.isPartitionedVertex(vertexId)) {
             Preconditions.checkState(setup.getFilterPartitionedVertices(),
                     "Read partitioned vertex (ID=%s), but partitioned vertex filtering is disabled.", vertexId);
-            log.debug("Skipping partitioned vertex with ID {}", vertexId);
+            LOG.debug("Skipping partitioned vertex with ID {}", vertexId);
             return null;
         }
 
@@ -92,8 +91,8 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         TinkerVertex tv = null;
 
         // Iterate over edgestore columns to find the vertex's label relation
-        for (final Entry data : entries) {
-            RelationReader relationReader = setup.getRelationReader(vertexId);
+        for (Entry data : entries) {
+            RelationReader relationReader = setup.getRelationReader();
             final RelationCache relation = relationReader.parseRelation(data, false, typeManager);
             if (systemTypes.isVertexLabelSystemType(relation.typeId)) {
                 // Found vertex Label
@@ -112,10 +111,10 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         Preconditions.checkNotNull(tv, "Unable to determine vertex label for vertex with ID %s", vertexId);
 
         // Iterate over and decode edgestore columns (relations) on this vertex
-        for (final Entry data : entries) {
+        for (Entry data : entries) {
             try {
-                RelationReader relationReader = setup.getRelationReader(vertexId);
-                final RelationCache relation = relationReader.parseRelation(data, false, typeManager);
+                RelationReader relationReader = setup.getRelationReader();
+                RelationCache relation = relationReader.parseRelation(data, false, typeManager);
 
                 if (systemTypes.isSystemType(relation.typeId)) continue; //Ignore system types
                 final RelationType type = typeManager.getExistingRelationType(relation.typeId);
@@ -137,7 +136,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
                                 "Read edge incident on a partitioned vertex, but partitioned vertex filtering is disabled.  " +
                                 "Relation ID: %s.  This vertex ID: %s.  Other vertex ID: %s.  Edge label: %s.",
                                 relation.relationId, vertexId, relation.getOtherVertexId(), type.name());
-                        log.debug("Skipping edge with ID {} incident on partitioned vertex with ID {} (and nonpartitioned vertex with ID {})",
+                        LOG.debug("Skipping edge with ID {} incident on partitioned vertex with ID {} (and nonpartitioned vertex with ID {})",
                                 relation.relationId, relation.getOtherVertexId(), vertexId);
                         continue;
                     }
@@ -182,7 +181,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         /*Since we are filtering out system relation types, we might end up with vertices that have no incident relations.
          This is especially true for schema vertices. Those are filtered out.     */
         if (!tv.edges(Direction.BOTH).hasNext() && !tv.properties().hasNext()) {
-            log.trace("Vertex {} has no relations", vertexId);
+            LOG.trace("Vertex {} has no relations", vertexId);
             return null;
         }
         return tv;

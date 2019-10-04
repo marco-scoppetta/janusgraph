@@ -87,7 +87,7 @@ public class VertexJobConverter implements ScanJob {
         txb.checkInternalVertexExistence(false);
         txb.dirtyVertexSize(0);
         txb.vertexCacheSize(0);
-        return (StandardJanusGraphTx)txb.start();
+        return txb.start();
     }
 
     @Override

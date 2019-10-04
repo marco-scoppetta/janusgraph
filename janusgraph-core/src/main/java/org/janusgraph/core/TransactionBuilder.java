@@ -16,6 +16,7 @@ package org.janusgraph.core;
 
 import java.time.Instant;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 /**
  * Constructor returned by {@link org.janusgraph.core.JanusGraph#buildTransaction()} to build a new transaction.
@@ -181,6 +182,6 @@ public interface TransactionBuilder {
      *
      * @return A new transaction configured according to this builder
      */
-    JanusGraphTransaction start();
+    StandardJanusGraphTx start();
 
 }

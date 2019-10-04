@@ -197,7 +197,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
     public StandardJanusGraphTx(StandardJanusGraph graph, TransactionConfiguration config) {
         Preconditions.checkNotNull(graph);
-        Preconditions.checkArgument(graph.isOpen());
         Preconditions.checkNotNull(config);
         this.graph = graph;
         this.timestampProvider = graph.getConfiguration().getTimestampProvider();
@@ -206,8 +205,42 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         this.attributeHandler = graph.getDataSerializer();
         this.edgeSerializer = graph.getEdgeSerializer();
         this.indexSerializer = graph.getIndexSerializer();
+        this.temporaryIds = buildTemporaryIDsPool();
+        this.isOpen = true;
 
-        temporaryIds = new IDPool() {
+        boolean preloadedData = config.hasPreloadedData();
+        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence(), preloadedData);
+        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence(), preloadedData);
+        this.existingVertexRetriever = new VertexConstructor(false, preloadedData);
+
+
+        int concurrencyLevel = (config.isSingleThreaded()) ? 1 : 4;
+        this.addedRelations = (config.isSingleThreaded()) ? new SimpleBufferAddedRelations() : new ConcurrentBufferAddedRelations();
+        this.newTypeCache = (config.isSingleThreaded()) ? new HashMap<>() : new NonBlockingHashMap<>();
+        this.newVertexIndexEntries = (config.isSingleThreaded()) ? new SimpleIndexCache() : new ConcurrentIndexCache();
+
+
+        long effectiveVertexCacheSize = Math.max(MIN_VERTEX_CACHE_SIZE, config.getVertexCacheSize()); // this is because of a weird bug with cache, see line 119
+        this.vertexCache = new VertexCache(effectiveVertexCacheSize, concurrencyLevel, config.getDirtyVertexSize());
+        this.indexCache = CacheBuilder.newBuilder().weigher((Weigher<JointIndexQuery.Subquery, List<Object>>) (q, r) -> 2 + r.size()).concurrencyLevel(concurrencyLevel).maximumWeight(config.getIndexCacheWeight()).build();
+
+        this.uniqueLocks = UNINITIALIZED_LOCKS;
+        this.deletedRelations = EMPTY_DELETED_RELATIONS;
+
+        if (null != config.getGroupName()) {
+            MetricManager.INSTANCE.getCounter(config.getGroupName(), "tx", "begin").inc();
+            elementProcessor = new MetricsQueryExecutor<>(config.getGroupName(), "graph", elementProcessorImpl);
+            edgeProcessor = new MetricsQueryExecutor<>(config.getGroupName(), "vertex", edgeProcessorImpl);
+        } else {
+            elementProcessor = elementProcessorImpl;
+            edgeProcessor = edgeProcessorImpl;
+        }
+
+        this.backendTransaction = graph.openBackendTransaction(this); // awkward!
+    }
+
+    private IDPool buildTemporaryIDsPool() {
+        return new IDPool() {
 
             private final AtomicLong counter = new AtomicLong(1);
 
@@ -221,58 +254,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                 //Do nothing
             }
         };
-
-        int concurrencyLevel;
-        if (config.isSingleThreaded()) {
-            addedRelations = new SimpleBufferAddedRelations();
-            concurrencyLevel = 1;
-            newTypeCache = new HashMap<>();
-            newVertexIndexEntries = new SimpleIndexCache();
-        } else {
-            addedRelations = new ConcurrentBufferAddedRelations();
-            concurrencyLevel = 4; // ideally should be equal to number of threads that will try to access this cache
-            newTypeCache = new NonBlockingHashMap<>();
-            newVertexIndexEntries = new ConcurrentIndexCache();
-        }
-
-        boolean preloadedData = config.hasPreloadedData();
-        externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence(), preloadedData);
-        internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence(), preloadedData);
-        existingVertexRetriever = new VertexConstructor(false, preloadedData);
-
-        long effectiveVertexCacheSize = config.getVertexCacheSize();
-        if (!config.isReadOnly()) {
-            effectiveVertexCacheSize = Math.max(MIN_VERTEX_CACHE_SIZE, effectiveVertexCacheSize);
-            LOG.debug("Guava vertex cache size: requested={} effective={} (min={})", config.getVertexCacheSize(), effectiveVertexCacheSize, MIN_VERTEX_CACHE_SIZE);
-        }
-
-        vertexCache = new VertexCache(effectiveVertexCacheSize, concurrencyLevel, config.getDirtyVertexSize());
-
-        indexCache = CacheBuilder.newBuilder().weigher((Weigher<JointIndexQuery.Subquery, List<Object>>) (q, r) -> 2 + r.size()).concurrencyLevel(concurrencyLevel).maximumWeight(config.getIndexCacheWeight()).build();
-
-        uniqueLocks = UNINITIALIZED_LOCKS;
-        deletedRelations = EMPTY_DELETED_RELATIONS;
-
-        this.isOpen = true;
-        if (null != config.getGroupName()) {
-            MetricManager.INSTANCE.getCounter(config.getGroupName(), "tx", "begin").inc();
-            elementProcessor = new MetricsQueryExecutor<>(config.getGroupName(), "graph", elementProcessorImpl);
-            edgeProcessor = new MetricsQueryExecutor<>(config.getGroupName(), "vertex", edgeProcessorImpl);
-        } else {
-            elementProcessor = elementProcessorImpl;
-            edgeProcessor = edgeProcessorImpl;
-        }
-
-        this.backendTransaction = graph.openBackendTransaction(this); // awkward!
-
     }
 
 
-    /**
-     * Returns the graph that this transaction is based on
-     *
-     * @return
-     */
     @Override
     public Features features() {
         return getGraph().features();
@@ -618,7 +602,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             this.createStubVertex = createStubVertex;
         }
 
-        public boolean hasVerifyExistence() {
+        boolean hasVerifyExistence() {
             return verifyExistence;
         }
 
@@ -647,7 +631,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                         vertex = new PropertyKeyVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
                     }
                 } else {
-                    assert idManager.isEdgeLabelId(vertexId);
                     if (IDManager.isSystemRelationTypeId(vertexId)) {
                         vertex = SystemTypeManager.getSystemType(vertexId);
                     } else {
@@ -661,7 +644,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             } else if (idManager.isUserVertexId(vertexId)) {
                 if (createStubVertex) vertex = new PreloadedVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
                 else vertex = new CacheVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
-            } else throw new IllegalArgumentException("ID could not be recognized");
+            } else throw new IllegalArgumentException("ID could not be recognised");
             return vertex;
         }
     }
@@ -741,9 +724,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                 } catch (IllegalArgumentException e) {
                     //Just means that data could not be converted
                 }
-                if (converted == null) throw new SchemaViolationException(
-                        "Value [%s] is not an instance of the expected data type for property key [%s] and cannot be converted. Expected: %s, found: %s", attribute,
-                        key.name(), datatype, attribute.getClass());
+                if (converted == null) {
+                    throw new SchemaViolationException("Value [%s] is not an instance of the expected data type for property key [%s] and cannot be converted. Expected: %s, found: %s", attribute, key.name(), datatype, attribute.getClass());
+                }
                 attribute = converted;
             }
             attributeHandler.verifyAttribute(datatype, attribute);
@@ -800,8 +783,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             Preconditions.checkArgument(!config.isSingleThreaded());
             synchronized (this) {
                 result = uniqueLocks;
-                if (result == UNINITIALIZED_LOCKS)
+                if (result == UNINITIALIZED_LOCKS) {
                     uniqueLocks = result = new ConcurrentHashMap<>();
+                }
             }
         }
         //TODO: clean out no longer used locks from uniqueLocks when it grows to large (use ReadWriteLock to protect against race conditions)

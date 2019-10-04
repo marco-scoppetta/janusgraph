@@ -230,7 +230,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
 
         //2) Restore elements per backing index
         for (final String indexName : indexRestores.keySet()) {
-            final StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
+            StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
             try {
                 BackendTransaction btx = tx.getBackendTransaction();
                 final IndexTransaction indexTx = btx.getIndexTransaction(indexName);

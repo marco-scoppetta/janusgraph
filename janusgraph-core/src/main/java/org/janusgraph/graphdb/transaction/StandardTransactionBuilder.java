@@ -232,7 +232,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     }
 
     @Override
-    public JanusGraphTransaction start() {
+    public StandardJanusGraphTx start() {
         TransactionConfiguration immutable = new ImmutableTxCfg(isReadOnly, hasEnabledBatchLoading,
                 assignIDsImmediately, preloadedData, forceIndexUsage, verifyExternalVertexExistence,
                 verifyInternalVertexExistence, acquireLocks, verifyUniqueness,
