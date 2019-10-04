@@ -17,21 +17,26 @@ package org.janusgraph.graphdb;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.janusgraph.TestCategory;
-import org.janusgraph.core.*;
+import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.attribute.Cmp;
-
-
 import org.janusgraph.core.schema.ConsistencyModifier;
 import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.diskstorage.util.TestLockerManager;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import static org.apache.tinkerpop.gremlin.structure.Direction.*;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -40,8 +45,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 
+import static org.apache.tinkerpop.gremlin.structure.Direction.IN;
+import static org.apache.tinkerpop.gremlin.structure.Direction.OUT;
 import static org.janusgraph.testutil.JanusGraphAssert.assertCount;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -70,8 +83,8 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         //Concurrent index addition
         JanusGraphTransaction tx1 = graph.newTransaction();
         JanusGraphTransaction tx2 = graph.newTransaction();
-        getVertex(tx1, "uid", "v").property(VertexProperty.Cardinality.single, "value",  11);
-        getVertex(tx2, "uid", "v").property(VertexProperty.Cardinality.single, "value",  11);
+        getVertex(tx1, "uid", "v").property(VertexProperty.Cardinality.single, "value", 11);
+        getVertex(tx2, "uid", "v").property(VertexProperty.Cardinality.single, "value", 11);
         tx1.commit();
         tx2.commit();
 
@@ -84,8 +97,8 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
     @Disabled("StoreManager currently does not load global config due to recent custom refactor, re-enable when we fix global configs")
     @Test
     public void testTimestampSetting() {
-        clopen(option(GraphDatabaseConfiguration.STORE_META_TIMESTAMPS,"edgestore"),true,
-                option(GraphDatabaseConfiguration.STORE_META_TTL,"edgestore"),true);
+        clopen(option(GraphDatabaseConfiguration.STORE_META_TIMESTAMPS, "edgestore"), true,
+                option(GraphDatabaseConfiguration.STORE_META_TTL, "edgestore"), true);
 
 
         // Transaction 1: Init graph with two vertices, having set "name" and "age" properties
@@ -105,14 +118,14 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         // Transaction 2: Remove "name" property from v1, set "address" property; create
         // an edge v2 -> v1
         JanusGraphTransaction tx2 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(1000)).start();
-        v1 = getV(tx2,id1);
-        v2 = getV(tx2,id2);
+        v1 = getV(tx2, id1);
+        v2 = getV(tx2, id2);
         for (Iterator<VertexProperty<Object>> propertyIterator = v1.properties(name); propertyIterator.hasNext(); ) {
             VertexProperty prop = propertyIterator.next();
             if (features.hasTimestamps()) {
                 Instant t = prop.value("~timestamp");
-                assertEquals(100,t.getEpochSecond());
-                assertEquals(Instant.ofEpochSecond(0, 1000).getNano(),t.getNano());
+                assertEquals(100, t.getEpochSecond());
+                assertEquals(Instant.ofEpochSecond(0, 1000).getNano(), t.getNano());
             }
             if (features.hasCellTTL()) {
                 Duration d = prop.value("~ttl");
@@ -124,12 +137,13 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         assertEquals(1, v1.query().has("~timestamp", Cmp.GREATER_THAN, Instant.ofEpochSecond(10)).propertyCount());
         assertEquals(1, v1.query().has("~timestamp", Instant.ofEpochSecond(100, 1000)).propertyCount());
         v1.property(name).remove();
-        v1.property(VertexProperty.Cardinality.single, address,  "xyz");
-        Edge edge = v2.addEdge("parent",v1);
+        v1.property(VertexProperty.Cardinality.single, address, "xyz");
+        Edge edge = v2.addEdge("parent", v1);
         tx2.commit();
         Object edgeId = edge.id();
 
-        JanusGraphVertex afterTx2 = getV(graph,id1);
+        JanusGraphTransaction tx3 = graph.newTransaction();
+        JanusGraphVertex afterTx2 = getV(tx3, id1);
 
         // Verify that "name" property is gone
         assertFalse(afterTx2.keys().contains(name));
@@ -138,42 +152,48 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         // Verify that the edge is properly registered with the endpoint vertex
         assertCount(1, afterTx2.query().direction(IN).labels("parent").edges());
         // Verify that edge is registered under the id
-        assertNotNull(getE(graph,edgeId));
-        graph.tx().commit();
-
-        // Transaction 3: Remove "address" property from v1 with earlier timestamp than
-        // when the value was set
-        JanusGraphTransaction tx3 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(200)).start();
-        v1 = getV(tx3,id1);
-        v1.property(address).remove();
+        assertNotNull(getE(tx3, edgeId));
         tx3.commit();
 
-        JanusGraphVertex afterTx3 = getV(graph,id1);
-        graph.tx().commit();
+        // Transaction 4: Remove "address" property from v1 with earlier timestamp than
+        // when the value was set
+        JanusGraphTransaction tx4 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(200)).start();
+        v1 = getV(tx4, id1);
+        v1.property(address).remove();
+        tx4.commit();
+
+        JanusGraphTransaction retrieverTx = graph.newTransaction();
+        JanusGraphVertex afterTx3 = getV(retrieverTx, id1);
+        retrieverTx.commit();
         // Verify that "address" is still set
         assertEquals("xyz", afterTx3.value(address));
 
-        // Transaction 4: Modify "age" property on v2, remove edge between v2 and v1
-        JanusGraphTransaction tx4 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(2000)).start();
-        v2 = getV(tx4,id2);
-        v2.property(VertexProperty.Cardinality.single, age,  "15");
-        getE(tx4,edgeId).remove();
-        tx4.commit();
+        // Transaction 5: Modify "age" property on v2, remove edge between v2 and v1
+        JanusGraphTransaction tx5 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(2000)).start();
+        v2 = getV(tx5, id2);
+        v2.property(VertexProperty.Cardinality.single, age, "15");
+        getE(tx5, edgeId).remove();
+        tx5.commit();
 
-        JanusGraphVertex afterTx4 = getV(graph,id2);
+        retrieverTx = graph.newTransaction();
+        JanusGraphVertex afterTx4 = getV(retrieverTx, id2);
         // Verify that "age" property is modified
         assertEquals("15", afterTx4.value(age));
         // Verify that edge is no longer registered with the endpoint vertex
         assertCount(0, afterTx4.query().direction(OUT).labels("parent").edges());
         // Verify that edge entry disappeared from id registry
-        assertNull(getE(graph,edgeId));
+        assertNull(getE(retrieverTx, edgeId));
+        retrieverTx.commit();
 
-        // Transaction 5: Modify "age" property on v2 with earlier timestamp
-        JanusGraphTransaction tx5 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(1500)).start();
-        v2 = getV(tx5,id2);
-        v2.property(VertexProperty.Cardinality.single, age,  "16");
-        tx5.commit();
-        JanusGraphVertex afterTx5 = getV(graph,id2);
+        // Transaction 6: Modify "age" property on v2 with earlier timestamp
+        JanusGraphTransaction tx6 = graph.buildTransaction().commitTime(Instant.ofEpochSecond(1500)).start();
+        v2 = getV(tx6, id2);
+        v2.property(VertexProperty.Cardinality.single, age, "16");
+        tx6.commit();
+        retrieverTx = graph.newTransaction();
+
+        JanusGraphVertex afterTx5 = getV(retrieverTx, id2);
+        retrieverTx.commit();
 
         // Verify that the property value is unchanged
         assertEquals("15", afterTx5.value(age));
@@ -190,7 +210,7 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         JanusGraphTransaction tx = graph.buildTransaction().commitTime(Instant.ofEpochSecond(100)).start();
         JanusGraphVertex v1 = tx.addVertex();
         JanusGraphVertex v2 = tx.addVertex();
-        Edge e = v1.addEdge("related",v2);
+        Edge e = v1.addEdge("related", v2);
         e.property("time", 25);
         tx.commit();
 
@@ -230,35 +250,35 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
             fail();
         } catch (JanusGraphException e) {
             Throwable cause = e;
-            while (cause.getCause()!=null) cause=cause.getCause();
-            assertEquals(UnsupportedOperationException.class,cause.getClass());
+            while (cause.getCause() != null) cause = cause.getCause();
+            assertEquals(UnsupportedOperationException.class, cause.getClass());
         }
     }
 
     public void testBatchLoadingLocking(boolean batchLoading) {
-        PropertyKey uid = makeKey("uid",Long.class);
-        JanusGraphIndex uidIndex = mgmt.buildIndex("uid",Vertex.class).unique().addKey(uid).buildCompositeIndex();
+        PropertyKey uid = makeKey("uid", Long.class);
+        JanusGraphIndex uidIndex = mgmt.buildIndex("uid", Vertex.class).unique().addKey(uid).buildCompositeIndex();
         mgmt.setConsistency(uid, ConsistencyModifier.LOCK);
-        mgmt.setConsistency(uidIndex,ConsistencyModifier.LOCK);
+        mgmt.setConsistency(uidIndex, ConsistencyModifier.LOCK);
         EdgeLabel knows = mgmt.makeEdgeLabel("knows").multiplicity(Multiplicity.ONE2ONE).make();
-        mgmt.setConsistency(knows,ConsistencyModifier.LOCK);
+        mgmt.setConsistency(knows, ConsistencyModifier.LOCK);
         finishSchema();
 
-        TestLockerManager.ERROR_ON_LOCKING=true;
-        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH),batchLoading,
-                option(GraphDatabaseConfiguration.LOCK_BACKEND),"test");
+        TestLockerManager.ERROR_ON_LOCKING = true;
+        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH), batchLoading,
+                option(GraphDatabaseConfiguration.LOCK_BACKEND), "test");
 
 
         int numV = 10000;
-        for (int i=0;i<numV;i++) {
-            JanusGraphVertex v = tx.addVertex("uid",i+1);
-            v.addEdge("knows",v);
+        for (int i = 0; i < numV; i++) {
+            JanusGraphVertex v = tx.addVertex("uid", i + 1);
+            v.addEdge("knows", v);
         }
         clopen();
 
-        for (int i=0;i<Math.min(numV,300);i++) {
-            assertEquals(1, Iterables.size(graph.query().has("uid", i + 1).vertices()));
-            JanusGraphVertex v = Iterables.getOnlyElement(graph.query().has("uid", i + 1).vertices());
+        for (int i = 0; i < Math.min(numV, 300); i++) {
+            assertEquals(1, Iterables.size(tx.query().has("uid", i + 1).vertices()));
+            JanusGraphVertex v = Iterables.getOnlyElement(tx.query().has("uid", i + 1).vertices());
             assertEquals(1, Iterables.size(v.query().direction(OUT).labels("knows").edges()));
         }
     }
@@ -268,16 +288,16 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
      */
     @Test
     public void testConsistencyModifier() throws InterruptedException {
-        makeKey("sig",Integer.class);
-        makeKey("weight",Double.class);
+        makeKey("sig", Integer.class);
+        makeKey("weight", Double.class);
         mgmt.makePropertyKey("name").dataType(String.class).cardinality(Cardinality.SET).make();
         mgmt.makePropertyKey("value").dataType(Integer.class).cardinality(Cardinality.LIST).make();
         PropertyKey valuef = mgmt.makePropertyKey("valuef").dataType(Integer.class).cardinality(Cardinality.LIST).make();
-        mgmt.setConsistency(valuef,ConsistencyModifier.FORK);
+        mgmt.setConsistency(valuef, ConsistencyModifier.FORK);
 
         mgmt.makeEdgeLabel("em").multiplicity(Multiplicity.MULTI).make();
         EdgeLabel emf = mgmt.makeEdgeLabel("emf").multiplicity(Multiplicity.MULTI).make();
-        mgmt.setConsistency(emf,ConsistencyModifier.FORK);
+        mgmt.setConsistency(emf, ConsistencyModifier.FORK);
         mgmt.makeEdgeLabel("es").multiplicity(Multiplicity.SIMPLE).make();
         mgmt.makeEdgeLabel("o2o").multiplicity(Multiplicity.ONE2ONE).make();
         mgmt.makeEdgeLabel("o2m").multiplicity(Multiplicity.ONE2MANY).make();
@@ -287,16 +307,16 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         JanusGraphVertex u = tx.addVertex(), v = tx.addVertex();
         JanusGraphRelation[] rs = new JanusGraphRelation[9];
         final int transactionId = 1;
-        rs[0]=sign(v.property("weight",5.0),transactionId);
-        rs[1]=sign(v.property("name","John"),transactionId);
-        rs[2]=sign(v.property("value",2),transactionId);
-        rs[3]=sign(v.property("valuef",2),transactionId);
+        rs[0] = sign(v.property("weight", 5.0), transactionId);
+        rs[1] = sign(v.property("name", "John"), transactionId);
+        rs[2] = sign(v.property("value", 2), transactionId);
+        rs[3] = sign(v.property("valuef", 2), transactionId);
 
-        rs[6]=sign(v.addEdge("es",u),transactionId);
-        rs[7]=sign(v.addEdge("o2o",u),transactionId);
-        rs[8]=sign(v.addEdge("o2m",u),transactionId);
-        rs[4]=sign(v.addEdge("em",u),transactionId);
-        rs[5]=sign(v.addEdge("emf",u),transactionId);
+        rs[6] = sign(v.addEdge("es", u), transactionId);
+        rs[7] = sign(v.addEdge("o2o", u), transactionId);
+        rs[8] = sign(v.addEdge("o2m", u), transactionId);
+        rs[4] = sign(v.addEdge("em", u), transactionId);
+        rs[5] = sign(v.addEdge("emf", u), transactionId);
 
         newTx();
         long vid = getId(v), uid = getId(u);
@@ -304,96 +324,93 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         JanusGraphTransaction tx1 = graph.newTransaction();
         JanusGraphTransaction tx2 = graph.newTransaction();
         final int wintx = 20;
-        processTx(tx1,wintx-10,vid,uid);
-        processTx(tx2,wintx,vid,uid);
+        processTx(tx1, wintx - 10, vid, uid);
+        processTx(tx2, wintx, vid, uid);
         tx1.commit();
         Thread.sleep(5);
         tx2.commit(); //tx2 should win using time-based eventual consistency
 
         newTx();
-        v = getV(tx,vid);
-        assertEquals(6.0, v.<Double>value("weight"),0.00001);
+        v = getV(tx, vid);
+        assertEquals(6.0, v.<Double>value("weight"), 0.00001);
         VertexProperty p = getOnlyElement(v.properties("weight"));
-        assertEquals(wintx,p.<Integer>value("sig").intValue());
+        assertEquals(wintx, p.<Integer>value("sig").intValue());
         p = getOnlyElement(v.properties("name"));
-        assertEquals("Bob",p.value());
-        assertEquals(wintx,p.<Integer>value("sig").intValue());
+        assertEquals("Bob", p.value());
+        assertEquals(wintx, p.<Integer>value("sig").intValue());
         p = getOnlyElement(v.properties("value"));
-        assertEquals(rs[2].longId(),getId(p));
-        assertEquals(wintx,p.<Integer>value("sig").intValue());
-        assertCount(2,v.properties("valuef"));
+        assertEquals(rs[2].longId(), getId(p));
+        assertEquals(wintx, p.<Integer>value("sig").intValue());
+        assertCount(2, v.properties("valuef"));
         for (Iterator<VertexProperty<Object>> ppiter = v.properties("valuef"); ppiter.hasNext(); ) {
             VertexProperty pp = ppiter.next();
-            assertNotEquals(rs[3].longId(),getId(pp));
-            assertEquals(2,pp.value());
+            assertNotEquals(rs[3].longId(), getId(pp));
+            assertEquals(2, pp.value());
         }
 
         Edge e = Iterables.getOnlyElement(v.query().direction(OUT).labels("es").edges());
-        assertEquals(wintx,e.<Integer>value("sig").intValue());
-        assertNotEquals(rs[6].longId(),getId(e));
+        assertEquals(wintx, e.<Integer>value("sig").intValue());
+        assertNotEquals(rs[6].longId(), getId(e));
 
         e = Iterables.getOnlyElement(v.query().direction(OUT).labels("o2o").edges());
-        assertEquals(wintx,e.<Integer>value("sig").intValue());
+        assertEquals(wintx, e.<Integer>value("sig").intValue());
         assertEquals(rs[7].longId(), getId(e));
         e = Iterables.getOnlyElement(v.query().direction(OUT).labels("o2m").edges());
-        assertEquals(wintx,e.<Integer>value("sig").intValue());
-        assertNotEquals(rs[8].longId(),getId(e));
+        assertEquals(wintx, e.<Integer>value("sig").intValue());
+        assertNotEquals(rs[8].longId(), getId(e));
         e = Iterables.getOnlyElement(v.query().direction(OUT).labels("em").edges());
-        assertEquals(wintx,e.<Integer>value("sig").intValue());
+        assertEquals(wintx, e.<Integer>value("sig").intValue());
         assertEquals(rs[4].longId(), getId(e));
         for (Object o : v.query().direction(OUT).labels("emf").edges()) {
             Edge ee = (Edge) o;
-            assertNotEquals(rs[5].longId(),getId(ee));
-            assertEquals(uid,ee.inVertex().id());
+            assertNotEquals(rs[5].longId(), getId(ee));
+            assertEquals(uid, ee.inVertex().id());
         }
     }
 
 
     private void processTx(JanusGraphTransaction tx, int transactionId, long vid, long uid) {
-        JanusGraphVertex v = getV(tx,vid);
-        JanusGraphVertex u = getV(tx,uid);
-        assertEquals(5.0, v.<Double>value("weight"),0.00001);
+        JanusGraphVertex v = getV(tx, vid);
+        JanusGraphVertex u = getV(tx, uid);
+        assertEquals(5.0, v.<Double>value("weight"), 0.00001);
         VertexProperty p = getOnlyElement(v.properties("weight"));
-        assertEquals(1,p.<Integer>value("sig").intValue());
-        sign(v.property("weight",6.0),transactionId);
+        assertEquals(1, p.<Integer>value("sig").intValue());
+        sign(v.property("weight", 6.0), transactionId);
         p = getOnlyElement(v.properties("name"));
-        assertEquals(1,p.<Integer>value("sig").intValue());
-        assertEquals("John",p.value());
+        assertEquals(1, p.<Integer>value("sig").intValue());
+        assertEquals("John", p.value());
         p.remove();
-        sign(v.property("name","Bob"),transactionId);
-        for (String pkey : new String[]{"value","valuef"}) {
+        sign(v.property("name", "Bob"), transactionId);
+        for (String pkey : new String[]{"value", "valuef"}) {
             p = getOnlyElement(v.properties(pkey));
-            assertEquals(1,p.<Integer>value("sig").intValue());
-            assertEquals(2,p.value());
-            sign((JanusGraphVertexProperty)p,transactionId);
+            assertEquals(1, p.<Integer>value("sig").intValue());
+            assertEquals(2, p.value());
+            sign((JanusGraphVertexProperty) p, transactionId);
         }
 
         Edge e = Iterables.getOnlyElement(v.query().direction(OUT).labels("es").edges());
-        assertEquals(1,e.<Integer>value("sig").intValue());
+        assertEquals(1, e.<Integer>value("sig").intValue());
         e.remove();
-        sign(v.addEdge("es",u),transactionId);
+        sign(v.addEdge("es", u), transactionId);
         e = Iterables.getOnlyElement(v.query().direction(OUT).labels("o2o").edges());
-        assertEquals(1,e.<Integer>value("sig").intValue());
-        sign((JanusGraphEdge)e,transactionId);
+        assertEquals(1, e.<Integer>value("sig").intValue());
+        sign((JanusGraphEdge) e, transactionId);
         e = Iterables.getOnlyElement(v.query().direction(OUT).labels("o2m").edges());
-        assertEquals(1,e.<Integer>value("sig").intValue());
+        assertEquals(1, e.<Integer>value("sig").intValue());
         e.remove();
-        sign(v.addEdge("o2m",u),transactionId);
-        for (String label : new String[]{"em","emf"}) {
+        sign(v.addEdge("o2m", u), transactionId);
+        for (String label : new String[]{"em", "emf"}) {
             e = Iterables.getOnlyElement(v.query().direction(OUT).labels(label).edges());
-            assertEquals(1,e.<Integer>value("sig").intValue());
-            sign((JanusGraphEdge)e,transactionId);
+            assertEquals(1, e.<Integer>value("sig").intValue());
+            sign((JanusGraphEdge) e, transactionId);
         }
     }
 
 
     private JanusGraphRelation sign(JanusGraphRelation r, int id) {
-        r.property("sig",id);
+        r.property("sig", id);
         return r;
     }
-
-
-
 
 
 }

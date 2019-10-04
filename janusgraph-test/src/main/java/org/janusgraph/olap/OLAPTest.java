@@ -16,11 +16,10 @@ package org.janusgraph.olap;
 
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.JanusGraphComputer;
-import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.Multiplicity;
 import org.janusgraph.core.PropertyKey;
-import org.janusgraph.core.Transaction;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanJob;
 import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
 import org.janusgraph.graphdb.JanusGraphBaseTest;
@@ -302,9 +301,9 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
             System.out.println("Execution time (ms) ["+numV+"|"+numE+"]: " + result.memory().getRuntime());
             assertEquals(2,result.memory().getIteration());
 
-            Transaction gview = null;
+            JanusGraphTransaction gview = null;
             switch (mode) {
-                case LOCALTX: gview = (Transaction) result.graph(); break;
+                case LOCALTX: gview = (JanusGraphTransaction) result.graph(); break;
                 case PERSIST: newTx(); gview = tx; break;
                 case NONE: break;
                 default: throw new AssertionError(mode);

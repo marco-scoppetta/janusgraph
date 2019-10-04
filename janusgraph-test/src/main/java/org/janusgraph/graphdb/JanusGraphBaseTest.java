@@ -28,13 +28,12 @@ import org.janusgraph.core.JanusGraphElement;
 import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.core.JanusGraphQuery;
-import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.JanusGraphVertexProperty;
 import org.janusgraph.core.JanusGraphVertexQuery;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.RelationType;
-import org.janusgraph.core.Transaction;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.diskstorage.Backend;
@@ -59,7 +58,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
-import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -437,16 +435,16 @@ public abstract class JanusGraphBaseTest {
         return result;
     }
 
-    public static void assertMissing(Transaction g, Object vid) {
+    public static void assertMissing(JanusGraphTransaction g, Object vid) {
         assertFalse(g.vertices(vid).hasNext());
     }
 
-    public static JanusGraphVertex getV(Transaction tx, Object vid) {
+    public static JanusGraphVertex getV(JanusGraphTransaction tx, Object vid) {
         if (!tx.vertices(vid).hasNext()) return null;
         return (JanusGraphVertex) tx.vertices(vid).next();
     }
 
-    public static JanusGraphEdge getE(Transaction g, Object eid) {
+    public static JanusGraphEdge getE(JanusGraphTransaction g, Object eid) {
         if (!g.edges(eid).hasNext()) return null;
         return (JanusGraphEdge) g.edges(eid).next();
     }

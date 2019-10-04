@@ -15,12 +15,10 @@
 package org.janusgraph.graphdb.relations;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.EdgeLabel;
-import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.RelationType;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphRelation;
-import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.JanusGraphVertexProperty;
 import org.janusgraph.graphdb.internal.InternalRelation;

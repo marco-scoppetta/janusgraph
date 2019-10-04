@@ -100,7 +100,24 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+ * JanusGraphTransaction defines a transactional context for a {@link JanusGraph}. Since JanusGraph is a transactional graph
+ * database, all interactions with the graph are mitigated by a JanusGraphTransaction.
+ * <p>
+ * All vertex and edge retrievals are channeled by a graph transaction which bundles all such retrievals, creations and
+ * deletions into one transaction. A graph transaction is analogous to a
+ * <a href="https://en.wikipedia.org/wiki/Database_transaction">database transaction</a>.
+ * The isolation level and <a href="https://en.wikipedia.org/wiki/ACID">ACID support</a> are configured through the storage
+ * backend, meaning whatever level of isolation is supported by the storage backend is mirrored by a graph transaction.
+ * <p>
+ * A graph transaction supports:
+ * <ul>
+ * <li>Creating vertices, properties and edges</li>
+ * <li>Creating types</li>
+ * <li>Index-based retrieval of vertices</li>
+ * <li>Querying edges and vertices</li>
+ * <li>Aborting and committing transaction</li>
+ * </ul>
+ *
  */
 
 public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspector, SchemaInspector, VertexFactory {

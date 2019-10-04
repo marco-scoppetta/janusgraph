@@ -35,24 +35,15 @@ import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoVersion;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.Cardinality;
-import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.core.JanusGraphIndexQuery;
-import org.janusgraph.core.JanusGraphMultiVertexQuery;
-import org.janusgraph.core.JanusGraphQuery;
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.Multiplicity;
-import org.janusgraph.core.PropertyKey;
-import org.janusgraph.core.RelationType;
 import org.janusgraph.core.VertexLabel;
 import org.janusgraph.core.schema.ConsistencyModifier;
-import org.janusgraph.core.schema.EdgeLabelMaker;
 import org.janusgraph.core.schema.JanusGraphManagement;
-import org.janusgraph.core.schema.PropertyKeyMaker;
 import org.janusgraph.core.schema.SchemaStatus;
-import org.janusgraph.core.schema.VertexLabelMaker;
 import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.BackendTransaction;
@@ -145,7 +136,6 @@ public class StandardJanusGraph implements JanusGraph {
     private static final Predicate<InternalRelation> NO_SCHEMA_FILTER = internalRelation -> !SCHEMA_FILTER.test(internalRelation);
     private static final Predicate<InternalRelation> NO_FILTER = internalRelation -> true;
 
-
     static {
         TraversalStrategies graphStrategies = TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone()
                 .addStrategies(AdjacentVertexFilterOptimizerStrategy.instance(),
@@ -156,7 +146,6 @@ public class StandardJanusGraph implements JanusGraph {
         TraversalStrategies.GlobalCache.registerStrategies(StandardJanusGraph.class, graphStrategies);
         TraversalStrategies.GlobalCache.registerStrategies(StandardJanusGraphTx.class, graphStrategies);
     }
-
 
     private final GraphDatabaseConfiguration config;
     private final Backend backend;
@@ -176,7 +165,6 @@ public class StandardJanusGraph implements JanusGraph {
 
     //Log
     private final ManagementLogger managementLogger;
-
 
     private volatile boolean isOpen;
     private final AtomicLong txCounter; // used to generate unique transaction IDs
@@ -238,8 +226,6 @@ public class StandardJanusGraph implements JanusGraph {
         shutdownThread = new Thread(this::closeInternal, "StandardJanusGraph-shutdown");
         Runtime.getRuntime().addShutdownHook(shutdownThread);
     }
-
-    // ########## TRANSACTION HANDLING ###########################
 
     // Get JanusTransaction which is wrapped inside the TinkerTransaction
     // it opens the JanusTransaction if not initialised yet
@@ -322,115 +308,6 @@ public class StandardJanusGraph implements JanusGraph {
     public JanusGraphVertex addVertex(String vertexLabel) {
         return getLocalJanusTransaction().addVertex(vertexLabel);
     }
-
-    @Override
-    public JanusGraphQuery<? extends JanusGraphQuery> query() {
-        return getLocalJanusTransaction().query();
-    }
-
-    @Override
-    public JanusGraphIndexQuery indexQuery(String indexName, String query) {
-        return getLocalJanusTransaction().indexQuery(indexName, query);
-    }
-
-    @Override
-    public JanusGraphMultiVertexQuery multiQuery(JanusGraphVertex... vertices) {
-        return getLocalJanusTransaction().multiQuery(vertices);
-    }
-
-    @Override
-    public JanusGraphMultiVertexQuery multiQuery(Collection<JanusGraphVertex> vertices) {
-        return getLocalJanusTransaction().multiQuery(vertices);
-    }
-
-
-    //Schema
-
-    @Override
-    public PropertyKeyMaker makePropertyKey(String name) {
-        return getLocalJanusTransaction().makePropertyKey(name);
-    }
-
-    @Override
-    public EdgeLabelMaker makeEdgeLabel(String name) {
-        return getLocalJanusTransaction().makeEdgeLabel(name);
-    }
-
-    @Override
-    public VertexLabelMaker makeVertexLabel(String name) {
-        return getLocalJanusTransaction().makeVertexLabel(name);
-    }
-
-    @Override
-    public VertexLabel addProperties(VertexLabel vertexLabel, PropertyKey... keys) {
-        return getLocalJanusTransaction().addProperties(vertexLabel, keys);
-    }
-
-    @Override
-    public EdgeLabel addProperties(EdgeLabel edgeLabel, PropertyKey... keys) {
-        return getLocalJanusTransaction().addProperties(edgeLabel, keys);
-    }
-
-    @Override
-    public EdgeLabel addConnection(EdgeLabel edgeLabel, VertexLabel outVLabel, VertexLabel inVLabel) {
-        return getLocalJanusTransaction().addConnection(edgeLabel, outVLabel, inVLabel);
-    }
-
-    @Override
-    public boolean containsPropertyKey(String name) {
-        return getLocalJanusTransaction().containsPropertyKey(name);
-    }
-
-    @Override
-    public PropertyKey getOrCreatePropertyKey(String name) {
-        return getLocalJanusTransaction().getOrCreatePropertyKey(name);
-    }
-
-    @Override
-    public PropertyKey getPropertyKey(String name) {
-        return getLocalJanusTransaction().getPropertyKey(name);
-    }
-
-    @Override
-    public boolean containsEdgeLabel(String name) {
-        return getLocalJanusTransaction().containsEdgeLabel(name);
-    }
-
-    @Override
-    public EdgeLabel getOrCreateEdgeLabel(String name) {
-        return getLocalJanusTransaction().getOrCreateEdgeLabel(name);
-    }
-
-    @Override
-    public EdgeLabel getEdgeLabel(String name) {
-        return getLocalJanusTransaction().getEdgeLabel(name);
-    }
-
-    @Override
-    public boolean containsRelationType(String name) {
-        return getLocalJanusTransaction().containsRelationType(name);
-    }
-
-    @Override
-    public RelationType getRelationType(String name) {
-        return getLocalJanusTransaction().getRelationType(name);
-    }
-
-    @Override
-    public boolean containsVertexLabel(String name) {
-        return getLocalJanusTransaction().containsVertexLabel(name);
-    }
-
-    @Override
-    public VertexLabel getVertexLabel(String name) {
-        return getLocalJanusTransaction().getVertexLabel(name);
-    }
-
-    @Override
-    public VertexLabel getOrCreateVertexLabel(String name) {
-        return getLocalJanusTransaction().getOrCreateVertexLabel(name);
-    }
-
 
     // Tinkerpop wrapper around StandardJanusGraph transaction, automatic transaction used by the graph
     // when user cannot be bother to use manual/explicit transactions,

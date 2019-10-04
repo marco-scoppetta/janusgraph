@@ -34,6 +34,7 @@ public interface InternalElement extends JanusGraphElement {
 
     /**
      * Returns the transaction to which the element is currently bound or should be refreshed into
+     *
      * @return
      */
     StandardJanusGraphTx tx();
@@ -47,13 +48,14 @@ public interface InternalElement extends JanusGraphElement {
     void setId(long id);
 
     /**
-     * @see ElementLifeCycle
      * @return The lifecycle of this element
+     * @see ElementLifeCycle
      */
     byte getLifeCycle();
 
     /**
      * Whether this element is invisible and should only be returned to queries that explicitly ask for invisible elements.
+     *
      * @return
      */
     boolean isInvisible();

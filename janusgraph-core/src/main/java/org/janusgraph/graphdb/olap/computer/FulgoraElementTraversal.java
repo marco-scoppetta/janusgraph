@@ -14,25 +14,25 @@
 
 package org.janusgraph.graphdb.olap.computer;
 
-import org.janusgraph.core.JanusGraphTransaction;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.DefaultGraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.janusgraph.core.JanusGraphTransaction;
 
 import java.util.Optional;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
  */
-public class FulgoraElementTraversal<S, E>  extends DefaultGraphTraversal<S, E> {
+public class FulgoraElementTraversal<S, E> extends DefaultGraphTraversal<S, E> {
 
     private final JanusGraphTransaction graph;
 
-    private FulgoraElementTraversal(final JanusGraphTransaction graph) {
+    private FulgoraElementTraversal(JanusGraphTransaction graph) {
         super(graph);
-        this.graph=graph;
+        this.graph = graph;
     }
 
-    public static<S,E> FulgoraElementTraversal<S,E> of(final JanusGraphTransaction graph) {
+    public static <S, E> FulgoraElementTraversal<S, E> of(JanusGraphTransaction graph) {
         return new FulgoraElementTraversal<>(graph);
     }
 

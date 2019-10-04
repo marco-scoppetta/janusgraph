@@ -35,7 +35,7 @@ public class InMemoryConfigurationTest {
         ModifiableConfiguration config = GraphDatabaseConfiguration.buildGraphConfiguration();
         config.set(GraphDatabaseConfiguration.STORAGE_BACKEND,"inmemory");
         config.set(option,value);
-        graph = (StandardJanusGraph) JanusGraphFactory.open(config);
+        graph = JanusGraphFactory.open(config);
     }
 
     @AfterEach
