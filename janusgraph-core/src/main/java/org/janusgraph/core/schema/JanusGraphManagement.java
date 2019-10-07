@@ -15,6 +15,7 @@
 package org.janusgraph.core.schema;
 
 import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.RelationType;
 import org.janusgraph.core.VertexLabel;
