@@ -133,7 +133,7 @@ public abstract class AbstractIndexManagementIT extends JanusGraphBaseTest {
                 .status(SchemaStatus.ENABLED).call().getSucceeded());
 
         // Run a query that hits the index but erroneously returns nothing because we haven't repaired yet
-        assertFalse(graph.query().has("age", 10000).vertices().iterator().hasNext());
+        assertFalse(tx.query().has("age", 10000).vertices().iterator().hasNext());
 
         // Repair
         MapReduceIndexManagement mri = new MapReduceIndexManagement(graph);
@@ -143,7 +143,7 @@ public abstract class AbstractIndexManagementIT extends JanusGraphBaseTest {
         assertEquals(6, metrics.getCustom(IndexRepairJob.ADDED_RECORDS_COUNT));
 
         // Test the index
-        Iterable<JanusGraphVertex> hits = graph.query().has("age", 4500).vertices();
+        Iterable<JanusGraphVertex> hits = tx.query().has("age", 4500).vertices();
         assertNotNull(hits);
         assertEquals(1, Iterables.size(hits));
         JanusGraphVertex v = Iterables.getOnlyElement(hits);
