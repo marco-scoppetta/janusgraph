@@ -39,7 +39,37 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>janusgraph-all</artifactId>
+            <artifactId>janusgraph-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-cql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-es</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-foundationdb</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-hadoop</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-lucene</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>janusgraph-solr</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -539,7 +569,6 @@
                                         <skip>${skipDefaultDistroIT}</skip>
                                         <failIfNoTests>false</failIfNoTests>
                                         <excludes>
-                                            <exclude>**/*HBase*IT.java</exclude>
                                             <exclude>**/*Cassandra*IT.java</exclude>
                                             <exclude>**/*CompatIT.java</exclude>
                                         </excludes>
@@ -574,21 +603,6 @@
                                         <failIfNoTests>false</failIfNoTests>
                                         <includes>
                                             <include>**/*Cassandra*IT.java</include>
-                                        </includes>
-                                    </configuration>
-                                </execution>
-                                <execution>
-                                    <id>hbase-integration-test</id>
-                                    <phase>integration-test</phase>
-                                    <goals>
-                                        <goal>integration-test</goal>
-                                    </goals>
-                                    <configuration>
-                                        <argLine>-Dtest.hbase.parentdir=${top.level.basedir}/janusgraph-hbase-parent/</argLine>
-                                        <reportNameSuffix>hbase</reportNameSuffix>
-                                        <failIfNoTests>false</failIfNoTests>
-                                        <includes>
-                                            <include>**/*HBase*IT.java</include>
                                         </includes>
                                     </configuration>
                                 </execution>
