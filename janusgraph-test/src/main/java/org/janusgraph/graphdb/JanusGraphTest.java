@@ -2114,19 +2114,18 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         finishSchema();
 
 
-        JanusGraphVertex cartman = tx.addVertex("name", "cartman", "age", 10);
-        tx.addVertex("name", "stan", "age", 8);
+        JanusGraphVertex cartman = graph.addVertex("name", "cartman", "age", 10);
+        graph.addVertex("name", "stan", "age", 8);
 
-        tx.commit();
-        tx = graph.newTransaction();
-
+        graph.tx().commit();
 
         cartman = Iterables.getOnlyElement(tx.query().has("name", "cartman").vertices());
 
-        tx.commit();
+        graph.tx().commit();
 
         JanusGraphVertexProperty p = (JanusGraphVertexProperty) cartman.properties().next();
         assertTrue((p.longId()) > 0);
+        graph.tx().commit();
     }
 
     /**
@@ -5309,7 +5308,8 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         mgmt.makeEdgeLabel("father").multiplicity(Multiplicity.MANY2ONE).make();
         finishSchema();
 
-        JanusGraphVertex v1 = tx.addVertex(), v3 = tx.addVertex("uid", 445);
+        JanusGraphVertex v1 = tx.addVertex();
+        JanusGraphVertex v3 = tx.addVertex("uid", 445);
         Edge e = v3.addEdge("knows", v1, "uid", 111);
         Edge e2 = v1.addEdge("friend", v3);
         assertEquals(111, e.<Integer>value("uid").intValue());
@@ -5317,6 +5317,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         tx = graph.newTransaction();
 
         v3 = getV(tx, v3);
+        v1 = getV(tx, v1);
         assertEquals(445, v3.<Integer>value("uid").intValue());
         e = Iterables.getOnlyElement(v3.query().direction(Direction.OUT).labels("knows").edges());
         assertEquals(111, e.<Integer>value("uid").intValue());
@@ -5354,8 +5355,12 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         tx.commit();
         tx = graph.newTransaction();
 
+        assertTrue(tx.query().edges().iterator().hasNext());
+
+        e = getE(tx, e);
         e.remove();
         tx.commit();
+        tx = graph.newTransaction();
 
         assertFalse(tx.query().edges().iterator().hasNext());
     }
