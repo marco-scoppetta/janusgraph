@@ -1997,9 +1997,9 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         ((StandardEdgeLabelMaker) mgmt.makeEdgeLabel("friend")).sortKey(t).make();
         finishSchema();
 
-        JanusGraphVertex v1 = tx.addVertex("name", "Vertex1", "age", 35);
-        JanusGraphVertex v2 = tx.addVertex("name", "Vertex2", "age", 45);
-        JanusGraphVertex v3 = tx.addVertex("name", "Vertex3", "age", 55);
+        JanusGraphVertex v1 = graph.addVertex("name", "Vertex1", "age", 35);
+        JanusGraphVertex v2 = graph.addVertex("name", "Vertex2", "age", 45);
+        JanusGraphVertex v3 = graph.addVertex("name", "Vertex3", "age", 55);
 
         Edge e1 = v1.addEdge("knows", v2, "time", 5);
         Edge e2 = v2.addEdge("knows", v3, "time", 15);
@@ -2015,8 +2015,10 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         assertEquals(35, e3.<Integer>value("time").intValue());
 
         v1.addEdge("friend", v2, "type", 0);
-        tx.commit();
-        tx = graph.newTransaction();
+        graph.tx().commit(); // commit tx used to create v1, v2 and v3 and yet all these vertices are still
+        // usable, that's because  currently Janus has this amazing feature:
+        // "Once the transaction is closed, all graph elements associated with that transaction become stale and unavailable.
+        // However, JanusGraph will automatically transition vertices and types into the new transactional scope."
         e4.property("type", 2);
         JanusGraphEdge ef = Iterables.getOnlyElement(v1.query().direction(Direction.OUT).labels("friend").edges());
         assertEquals(ef, getOnlyElement(tx.query().has("type", 0).edges()));
@@ -2046,9 +2048,6 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
                     .<Integer>value("time") % 10);
         }
 
-        tx.commit();
-        tx = graph.newTransaction();
-
         VertexProperty prop = v1.properties().next();
         assertTrue(getId(prop) > 0);
         prop = (VertexProperty) ((Iterable) tx.multiQuery(v1).properties().values().iterator().next()).iterator().next();
@@ -2076,6 +2075,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         tx.commit();
         tx = graph.newTransaction();
         v3 = tx.addVertex();
+        v1 = getV(tx, v1);
         Edge e = v1.addEdge("knows", v3);
         assertFalse(e.property("age").isPresent());
         tx.commit();
