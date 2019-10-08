@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 //This test needs to be placed somewhere else once we'll start refactoring Tests
 // as of now it is just used to check we don't forget to remove internal references to automagic transaction that JanusGraph starts
 // whenever doing any operation on the graph like graph.addVertex()
-class TransactionTest {
+class JanusGraphTransactionTest {
 
     @Test
     void whenAutomaticGraphTransactionIsClosed_removeReferenceToInternalJanusTransaction(){

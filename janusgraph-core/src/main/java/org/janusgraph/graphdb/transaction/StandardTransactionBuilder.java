@@ -19,7 +19,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.RO
 import java.time.Instant;
 import com.google.common.base.Preconditions;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
-import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.TransactionBuilder;
 import org.janusgraph.diskstorage.configuration.*;
 
@@ -232,7 +231,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     }
 
     @Override
-    public JanusGraphTransaction start() {
+    public StandardJanusGraphTx start() {
         TransactionConfiguration immutable = new ImmutableTxCfg(isReadOnly, hasEnabledBatchLoading,
                 assignIDsImmediately, preloadedData, forceIndexUsage, verifyExternalVertexExistence,
                 verifyInternalVertexExistence, acquireLocks, verifyUniqueness,

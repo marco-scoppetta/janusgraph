@@ -19,6 +19,7 @@ import com.carrotsearch.hppc.LongSet;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
 
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
@@ -127,9 +128,11 @@ public class VertexIDAssignerTest {
                 JanusGraphVertex old = null;
                 totalRelations+=2*numVertices;
                 totalVertices+=numVertices;
+                JanusGraphTransaction tx = graph.newTransaction();
+
                 try {
                     for (int i = 0; i < numVertices; i++) {
-                        JanusGraphVertex next = graph.addVertex();
+                        JanusGraphVertex next = tx.addVertex();
                         InternalRelation edge = null;
                         if (old != null) {
                             edge = (InternalRelation) old.addEdge("knows", next);
@@ -167,7 +170,7 @@ public class VertexIDAssignerTest {
                     assertTrue(totalRelations>=maxIDAssignments/3*2 || totalVertices>=maxIDAssignments/3*2,
                         "Max Avail: " + maxIDAssignments + " vs. ["+totalVertices+","+totalRelations+"]");
                 } finally {
-                    graph.tx().rollback();
+                    tx.rollback();
                     graph.close();
                 }
 
@@ -210,6 +213,7 @@ public class VertexIDAssignerTest {
             final JanusGraph graph = getInMemoryGraph(true, true, numPartitionsBits);
             int numVertices = 1000;
             final List<JanusGraphVertex> vertices = new ArrayList<>(numVertices);
+            JanusGraphTransaction tx = graph.newTransaction();
             try {
                 for (int i = 0; i < numVertices; i++, count++) {
                     final long userVertexId;
@@ -224,7 +228,7 @@ public class VertexIDAssignerTest {
                             throw new RuntimeException("Unsupported custom id strategy: " + idStrategy);
                     }
                     final long id = idAssigner.getIDManager().toVertexId(userVertexId);
-                    JanusGraphVertex next = graph.addVertex(T.id, id, "user_id", userVertexId);
+                    JanusGraphVertex next = tx.addVertex(T.id, id, "user_id", userVertexId);
                     vertices.add(next);
                 }
 
@@ -237,7 +241,7 @@ public class VertexIDAssignerTest {
                     assertEquals((long) v.value("user_id"), idAssigner.getIDManager().fromVertexId(id));
                 }
             } finally {
-                graph.tx().rollback();
+                tx.rollback();
                 graph.close();
             }
         }

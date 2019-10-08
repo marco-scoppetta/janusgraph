@@ -15,16 +15,12 @@
 package org.janusgraph.graphdb.olap.computer;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.JanusGraphTransaction;
-import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphLocalQueryOptimizerStrategy;
-import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphTraversalUtil;
-import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphVertexStep;
-import org.apache.tinkerpop.gremlin.process.traversal.Step;
-import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.computer.MessageCombiner;
 import org.apache.tinkerpop.gremlin.process.computer.MessageScope;
 import org.apache.tinkerpop.gremlin.process.computer.VertexProgram;
+import org.apache.tinkerpop.gremlin.process.traversal.Step;
+import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
+import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategies;
 import org.apache.tinkerpop.gremlin.process.traversal.step.filter.FilterStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.OrderGlobalStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.OrderLocalStep;
@@ -34,6 +30,10 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.sideEffect.StartStep;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphLocalQueryOptimizerStrategy;
+import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphTraversalUtil;
+import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphVertexStep;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -46,22 +46,18 @@ public class FulgoraUtil {
 
     private final static TraversalStrategies FULGORA_STRATEGIES = TraversalStrategies.GlobalCache.getStrategies(Graph.class).clone().addStrategies(JanusGraphLocalQueryOptimizerStrategy.instance());
 
-    public static JanusGraphVertexStep<Vertex> getReverseJanusGraphVertexStep(final MessageScope.Local<?> scope,
-                                                                       final JanusGraphTransaction graph) {
+    public static JanusGraphVertexStep<Vertex> getReverseJanusGraphVertexStep(MessageScope.Local<?> scope, JanusGraphTransaction graph) {
         FulgoraElementTraversal<Vertex,Edge> result = getReverseTraversal(scope,graph,null);
         result.asAdmin().applyStrategies();
         verifyIncidentTraversal(result);
         return (JanusGraphVertexStep)result.getStartStep();
     }
 
-    public static Traversal<Vertex,Edge> getReverseElementTraversal(final MessageScope.Local<?> scope,
-                                                                    final Vertex start,
-                                                                    final JanusGraphTransaction graph) {
+    public static Traversal<Vertex,Edge> getReverseElementTraversal(MessageScope.Local<?> scope, Vertex start, JanusGraphTransaction graph) {
         return getReverseTraversal(scope,graph,start);
     }
 
-    private static FulgoraElementTraversal<Vertex,Edge> getReverseTraversal(final MessageScope.Local<?> scope,
-                                                      final JanusGraphTransaction graph, @Nullable final Vertex start) {
+    private static FulgoraElementTraversal<Vertex,Edge> getReverseTraversal(MessageScope.Local<?> scope, JanusGraphTransaction graph, @Nullable Vertex start) {
         Traversal.Admin<Vertex,Edge> incident = scope.getIncidentTraversal().get().asAdmin();
         FulgoraElementTraversal<Vertex,Edge> result = FulgoraElementTraversal.of(graph);
 
@@ -95,7 +91,7 @@ public class FulgoraUtil {
     }
 
 
-    private static final MessageCombiner DEFAULT_COMBINER = new ThrowingCombiner<>();
+    private final static MessageCombiner DEFAULT_COMBINER = new ThrowingCombiner<>();
 
     private static class ThrowingCombiner<M> implements MessageCombiner<M> {
 

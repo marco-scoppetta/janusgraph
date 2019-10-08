@@ -14,7 +14,19 @@
 
 package org.janusgraph.graphdb.tinkerpop.optimize;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.tinkerpop.gremlin.process.traversal.Order;
+import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
+import org.apache.tinkerpop.gremlin.process.traversal.step.Profiling;
+import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
+import org.apache.tinkerpop.gremlin.process.traversal.util.MutableMetrics;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphElement;
 import org.janusgraph.core.JanusGraphQuery;
@@ -28,21 +40,6 @@ import org.janusgraph.graphdb.query.graph.GraphCentricQueryBuilder;
 import org.janusgraph.graphdb.query.profile.QueryProfiler;
 import org.janusgraph.graphdb.tinkerpop.profile.TP3ProfileWrapper;
 import org.janusgraph.graphdb.util.MultiDistinctOrderedIterator;
-import org.javatuples.Triplet;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-
-import org.apache.tinkerpop.gremlin.process.traversal.Order;
-import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
-import org.apache.tinkerpop.gremlin.process.traversal.step.Profiling;
-import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
-import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
-import org.apache.tinkerpop.gremlin.process.traversal.util.MutableMetrics;
-import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,22 +63,21 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
     private QueryProfiler queryProfiler = QueryProfiler.NO_OP;
 
 
-    public JanusGraphStep(final GraphStep<S, E> originalStep) {
+    public JanusGraphStep(GraphStep<S, E> originalStep) {
         super(originalStep.getTraversal(), originalStep.getReturnClass(), originalStep.isStartStep(), originalStep.getIds());
         originalStep.getLabels().forEach(this::addLabel);
         this.setIteratorSupplier(() -> {
             if (this.ids == null) {
                 return Collections.emptyIterator();
-            }
-            else if (this.ids.length > 0) {
-                final Graph graph = (Graph)traversal.asAdmin().getGraph().get();
-                return iteratorList((Iterator)graph.vertices(this.ids));
+            } else if (this.ids.length > 0) {
+                final Graph graph = (Graph) traversal.asAdmin().getGraph().get();
+                return iteratorList((Iterator) graph.vertices(this.ids));
             }
             if (hasLocalContainers.isEmpty()) {
                 hasLocalContainers.put(new ArrayList<>(), new QueryInfo(new ArrayList<>(), 0, BaseQuery.NO_LIMIT));
             }
-            final JanusGraphTransaction tx = JanusGraphTraversalUtil.getTx(traversal);
-            final GraphCentricQuery globalQuery = buildGlobalGraphCentricQuery(tx);
+            JanusGraphTransaction tx = JanusGraphTraversalUtil.getTx(traversal);
+            GraphCentricQuery globalQuery = buildGlobalGraphCentricQuery(tx);
 
             final Multimap<Integer, GraphCentricQuery> queries = ArrayListMultimap.create();
             if (globalQuery != null && !globalQuery.getSubQuery(0).getBackendQuery().isEmpty()) {
@@ -92,68 +88,69 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
             final GraphCentricQueryBuilder builder = (GraphCentricQueryBuilder) tx.query();
             final List<Iterator<E>> responses = new ArrayList<>();
-            queries.entries().forEach(q ->  executeGraphCentryQuery(builder, responses, q));
+            queries.entries().forEach(q -> executeGraphCentryQuery(builder, responses, q));
 
             return new MultiDistinctOrderedIterator<E>(lowLimit, highLimit, responses, orders);
         });
     }
 
-    private GraphCentricQuery buildGlobalGraphCentricQuery(final JanusGraphTransaction tx) {
+    private GraphCentricQuery buildGlobalGraphCentricQuery(JanusGraphTransaction tx) {
         //If a query have a local offset or have a local order without a global order and if a query have a limit lower than the global different from other query we can not build globalquery
-        final Iterator<QueryInfo> itQueryInfo =  hasLocalContainers.values().iterator();
+        Iterator<QueryInfo> itQueryInfo = hasLocalContainers.values().iterator();
         QueryInfo queryInfo = itQueryInfo.next();
         if (queryInfo.getLowLimit() > 0 || orders.isEmpty() && !queryInfo.getOrders().isEmpty()) {
             return null;
         }
-        final Integer limit = queryInfo.getHighLimit();
+        Integer limit = queryInfo.getHighLimit();
         while (itQueryInfo.hasNext()) {
             queryInfo = itQueryInfo.next();
             if (queryInfo.getLowLimit() > 0 || (orders.isEmpty() && !queryInfo.getOrders().isEmpty()) || (queryInfo.getHighLimit() < highLimit && !limit.equals(queryInfo.getHighLimit()))) {
                 return null;
             }
         }
-        final JanusGraphQuery query = tx.query();
-        for(final List<HasContainer> localContainers : hasLocalContainers.keySet()) {
-            final JanusGraphQuery localQuery = tx.query();
+        JanusGraphQuery query = tx.query();
+        for (List<HasContainer> localContainers : hasLocalContainers.keySet()) {
+            JanusGraphQuery localQuery = tx.query();
             addConstraint(localQuery, localContainers);
             query.or(localQuery);
         }
-        for (final OrderEntry order : orders) query.orderBy(order.key, order.order);
+        for (OrderEntry order : orders) query.orderBy(order.key, order.order);
         if (highLimit != BaseQuery.NO_LIMIT || limit != BaseQuery.NO_LIMIT) query.limit(Math.min(limit, highLimit));
         Preconditions.checkArgument(query instanceof GraphCentricQueryBuilder);
-        final GraphCentricQueryBuilder centricQueryBuilder = ((GraphCentricQueryBuilder) query);
+        GraphCentricQueryBuilder centricQueryBuilder = ((GraphCentricQueryBuilder) query);
         centricQueryBuilder.profiler(queryProfiler);
-        final GraphCentricQuery graphCentricQuery = centricQueryBuilder.constructQuery(Vertex.class.isAssignableFrom(this.returnClass) ? ElementCategory.VERTEX: ElementCategory.EDGE);
+        GraphCentricQuery graphCentricQuery = centricQueryBuilder.constructQuery(Vertex.class.isAssignableFrom(this.returnClass) ? ElementCategory.VERTEX : ElementCategory.EDGE);
         return graphCentricQuery;
     }
 
-    private void addConstraint(final JanusGraphQuery query, final List<HasContainer> localContainers) {
-        for (final HasContainer condition : hasContainers) {
+    private void addConstraint(JanusGraphQuery query, List<HasContainer> localContainers) {
+        for (HasContainer condition : hasContainers) {
             query.has(condition.getKey(), JanusGraphPredicate.Converter.convert(condition.getBiPredicate()), condition.getValue());
         }
-        for (final HasContainer condition : localContainers) {
+        for (HasContainer condition : localContainers) {
             query.has(condition.getKey(), JanusGraphPredicate.Converter.convert(condition.getBiPredicate()), condition.getValue());
         }
     }
 
-    private GraphCentricQuery buildGraphCentricQuery(final JanusGraphTransaction tx,
-            final Entry<List<HasContainer>, QueryInfo> containers) {
-        final JanusGraphQuery query = tx.query();
+    private GraphCentricQuery buildGraphCentricQuery(JanusGraphTransaction tx,
+                                                     Entry<List<HasContainer>, QueryInfo> containers) {
+        JanusGraphQuery query = tx.query();
         addConstraint(query, containers.getKey());
-        final List<OrderEntry> realOrders = orders.isEmpty() ? containers.getValue().getOrders() : orders;
-        for (final OrderEntry order : realOrders) query.orderBy(order.key, order.order);
-        if (highLimit != BaseQuery.NO_LIMIT || containers.getValue().getHighLimit() != BaseQuery.NO_LIMIT) query.limit(Math.min(containers.getValue().getHighLimit(), highLimit));
+        List<OrderEntry> realOrders = orders.isEmpty() ? containers.getValue().getOrders() : orders;
+        for (OrderEntry order : realOrders) query.orderBy(order.key, order.order);
+        if (highLimit != BaseQuery.NO_LIMIT || containers.getValue().getHighLimit() != BaseQuery.NO_LIMIT)
+            query.limit(Math.min(containers.getValue().getHighLimit(), highLimit));
         Preconditions.checkArgument(query instanceof GraphCentricQueryBuilder);
-        final GraphCentricQueryBuilder centricQueryBuilder = ((GraphCentricQueryBuilder) query);
+        GraphCentricQueryBuilder centricQueryBuilder = ((GraphCentricQueryBuilder) query);
         centricQueryBuilder.profiler(queryProfiler);
-        final GraphCentricQuery graphCentricQuery = centricQueryBuilder.constructQuery(Vertex.class.isAssignableFrom(this.returnClass) ? ElementCategory.VERTEX: ElementCategory.EDGE);
+        GraphCentricQuery graphCentricQuery = centricQueryBuilder.constructQuery(Vertex.class.isAssignableFrom(this.returnClass) ? ElementCategory.VERTEX : ElementCategory.EDGE);
         return graphCentricQuery;
     }
 
-    private void executeGraphCentryQuery(final GraphCentricQueryBuilder builder, final List<Iterator<E>> responses,
-            final Entry<Integer, GraphCentricQuery> query) {
-        final Class<? extends JanusGraphElement> classe = Vertex.class.isAssignableFrom(this.returnClass) ? JanusGraphVertex.class: JanusGraphEdge.class;
-        final Iterator<E> response = (Iterator<E>) builder.iterables(query.getValue(), classe).iterator();
+    private void executeGraphCentryQuery(GraphCentricQueryBuilder builder, List<Iterator<E>> responses,
+                                         Entry<Integer, GraphCentricQuery> query) {
+        Class<? extends JanusGraphElement> classe = Vertex.class.isAssignableFrom(this.returnClass) ? JanusGraphVertex.class : JanusGraphEdge.class;
+        Iterator<E> response = (Iterator<E>) builder.iterables(query.getValue(), classe).iterator();
         long i = 0;
         while (i < query.getKey() && response.hasNext()) {
             response.next();
@@ -164,25 +161,25 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
     @Override
     public String toString() {
-        if (hasLocalContainers.isEmpty() && hasContainers.isEmpty()){
+        if (hasLocalContainers.isEmpty() && hasContainers.isEmpty()) {
             return super.toString();
         }
         if (hasLocalContainers.isEmpty()) {
             return StringFactory.stepString(this, Arrays.toString(this.ids), hasContainers);
         }
-        if (hasLocalContainers.size() == 1){
-            final List<HasContainer> containers = new ArrayList<>(hasContainers);
+        if (hasLocalContainers.size() == 1) {
+            List<HasContainer> containers = new ArrayList<>(hasContainers);
             containers.addAll(hasLocalContainers.keySet().iterator().next());
             return StringFactory.stepString(this, Arrays.toString(this.ids), containers);
         }
-        final StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         if (!hasContainers.isEmpty()) {
             sb.append(StringFactory.stepString(this, Arrays.toString(ids), hasContainers)).append(".");
         }
         sb.append("Or(");
-        final Iterator<List<HasContainer>> itContainers = this.hasLocalContainers.keySet().iterator();
+        Iterator<List<HasContainer>> itContainers = this.hasLocalContainers.keySet().iterator();
         sb.append(StringFactory.stepString(this, Arrays.toString(this.ids), itContainers.next()));
-        while(itContainers.hasNext()){
+        while (itContainers.hasNext()) {
             sb.append(",").append(StringFactory.stepString(this, Arrays.toString(this.ids), itContainers.next()));
         }
         sb.append(")");
@@ -196,7 +193,7 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
     @Override
     public List<HasContainer> addLocalAll(Iterable<HasContainer> has) {
-        final List<HasContainer> containers = HasStepFolder.splitAndP(new ArrayList<>(), has);
+        List<HasContainer> containers = HasStepFolder.splitAndP(new ArrayList<>(), has);
         hasLocalContainers.put(containers, new QueryInfo(new ArrayList<>(), 0, BaseQuery.NO_LIMIT));
         return containers;
     }
@@ -208,7 +205,7 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
     @Override
     public void localOrderBy(List<HasContainer> containers, String key, Order order) {
-       hasLocalContainers.get(containers).getOrders().add(new OrderEntry(key, order));
+        hasLocalContainers.get(containers).getOrders().add(new OrderEntry(key, order));
     }
 
     @Override
@@ -249,13 +246,13 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
 
     @Override
     public List<HasContainer> getHasContainers() {
-        final List<HasContainer> toReturn = new ArrayList<>(this.hasContainers);
+        List<HasContainer> toReturn = new ArrayList<>(this.hasContainers);
         this.hasLocalContainers.keySet().stream().forEach(l -> l.stream().forEach(toReturn::add));
         return toReturn;
     }
 
     @Override
-    public void addHasContainer(final HasContainer hasContainer) {
+    public void addHasContainer(HasContainer hasContainer) {
         this.addAll(Collections.singleton(hasContainer));
     }
 
@@ -263,10 +260,10 @@ public class JanusGraphStep<S, E extends Element> extends GraphStep<S, E> implem
         return orders;
     }
 
-    private <A extends Element> Iterator<A> iteratorList(final Iterator<A> iterator) {
-        final List<A> list = new ArrayList<>();
+    private <A extends Element> Iterator<A> iteratorList(Iterator<A> iterator) {
+        List<A> list = new ArrayList<>();
         while (iterator.hasNext()) {
-            final A e = iterator.next();
+            A e = iterator.next();
             if (HasContainer.testAll(e, this.getHasContainers()))
                 list.add(e);
         }

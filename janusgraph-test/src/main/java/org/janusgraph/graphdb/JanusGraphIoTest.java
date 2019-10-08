@@ -115,8 +115,10 @@ public abstract class JanusGraphIoTest extends JanusGraphBaseTest {
         GraphReader reader = readerMaker.apply(graph);
         ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
         reader.readGraph(inputStream, graph);
+        tx.rollback();
+        tx = graph.newTransaction();
 
-        JanusGraphIndexTest.assertGraphOfTheGods(graph);
+        JanusGraphIndexTest.assertGraphOfTheGods(tx);
         if (makeGeoshape != null) {
             assertGeoshape(makeGeoshape, functionName);
         }

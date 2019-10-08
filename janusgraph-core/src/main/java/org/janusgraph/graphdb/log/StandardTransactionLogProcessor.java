@@ -19,10 +19,10 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.cache.*;
 import com.google.common.collect.*;
+import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.RelationType;
 import org.janusgraph.core.JanusGraphElement;
 import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.log.TransactionRecovery;
 import org.janusgraph.diskstorage.*;
 import org.janusgraph.diskstorage.indexing.IndexEntry;
@@ -230,7 +230,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
 
         //2) Restore elements per backing index
         for (final String indexName : indexRestores.keySet()) {
-            final StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
+            StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
             try {
                 BackendTransaction btx = tx.getBackendTransaction();
                 final IndexTransaction indexTx = btx.getIndexTransaction(indexName);

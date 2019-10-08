@@ -17,17 +17,6 @@ package org.janusgraph.graphdb.olap.computer;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.core.JanusGraphComputer;
-import org.janusgraph.core.JanusGraphTransaction;
-import org.janusgraph.core.schema.JanusGraphManagement;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.configuration.Configuration;
-import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
-import org.janusgraph.diskstorage.keycolumnvalue.scan.StandardScanner;
-import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import org.janusgraph.graphdb.database.StandardJanusGraph;
-import org.janusgraph.graphdb.util.WorkerPool;
 import org.apache.tinkerpop.gremlin.process.computer.ComputerResult;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.computer.GraphFilter;
@@ -39,14 +28,25 @@ import org.apache.tinkerpop.gremlin.process.computer.search.path.ShortestPathVer
 import org.apache.tinkerpop.gremlin.process.computer.util.DefaultComputerResult;
 import org.apache.tinkerpop.gremlin.process.computer.util.GraphComputerHelper;
 import org.apache.tinkerpop.gremlin.process.computer.util.VertexProgramHelper;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
+import org.janusgraph.core.JanusGraphComputer;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.schema.JanusGraphManagement;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
+import org.janusgraph.diskstorage.keycolumnvalue.scan.StandardScanner;
+import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
+import org.janusgraph.graphdb.util.WorkerPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,14 +68,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FulgoraGraphComputer implements JanusGraphComputer {
 
-    private static final Logger log =
-        LoggerFactory.getLogger(FulgoraGraphComputer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FulgoraGraphComputer.class);
 
     private VertexProgram<?> vertexProgram;
     private final Set<MapReduce> mapReduces = new HashSet<>();
 
     private final StandardJanusGraph graph;
-    private final int expectedNumVertices = 10000;
     private FulgoraMemory memory;
     private FulgoraVertexMemory vertexMemory;
     private boolean executed = false;
@@ -205,6 +203,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
     private void executeVertexProgram() {
         if (null == vertexProgram) return;
 
+        int expectedNumVertices = 10000;
         vertexMemory = new FulgoraVertexMemory(expectedNumVertices, graph.getIDManager(), vertexProgram);
         vertexProgram.setup(memory);
 
@@ -266,7 +265,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
         long failures = jobResult.get(ScanMetrics.Metric.FAILURE);
         if (failures > 0) {
             throw new JanusGraphException("Failed to process [" + failures + "] vertices in vertex program iteration " +
-                "[" + iteration + "]. Computer is aborting.");
+                    "[" + iteration + "]. Computer is aborting.");
         }
         return jobResult;
     }
@@ -276,7 +275,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
         long failures = jobResult.getCustom(PartitionedVertexProgramExecutor.PARTITION_VERTEX_POSTFAIL);
         if (failures > 0) {
             throw new JanusGraphException("Failed to process [" + failures + "] partitioned vertices in vertex " +
-                "program iteration [" + iteration + "]. Computer is aborting.");
+                    "program iteration [" + iteration + "]. Computer is aborting.");
         }
     }
 
@@ -335,7 +334,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
                     for (final Map.Entry queueEntry : mapEmitter.reduceMap.entrySet()) {
                         if (null == queueEntry) break;
                         workers.submit(() -> mapReduce.reduce(queueEntry.getKey(),
-                            ((Iterable) queueEntry.getValue()).iterator(), reduceEmitter));
+                                ((Iterable) queueEntry.getValue()).iterator(), reduceEmitter));
                     }
                     workers.submit(() -> mapReduce.workerEnd(MapReduce.Stage.REDUCE));
                 } catch (Exception e) {
@@ -361,7 +360,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
             try {
                 for (VertexComputeKey key : vertexProgram.getVertexComputeKeys()) {
                     if (!management.containsPropertyKey(key.getKey())) {
-                        log.warn("Property key [{}] is not part of the schema and will be created. It is advised to initialize all keys.", key.getKey());
+                        LOG.warn("Property key [{}] is not part of the schema and will be created. It is advised to initialize all keys.", key.getKey());
                     }
                     management.getOrCreatePropertyKey(key.getKey());
                 }
@@ -374,13 +373,13 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
 
             //TODO: Filter based on VertexProgram
             Map<Long, Map<String, Object>> mutatedProperties = Maps.transformValues(vertexMemory.getMutableVertexProperties(),
-                new Function<Map<String, Object>, Map<String, Object>>() {
-                    @Nullable
-                    @Override
-                    public Map<String, Object> apply(final Map<String, Object> o) {
-                        return Maps.filterKeys(o, s -> !VertexProgramHelper.isTransientVertexComputeKey(s, vertexProgram.getVertexComputeKeys()));
-                    }
-                });
+                    new Function<Map<String, Object>, Map<String, Object>>() {
+                        @Nullable
+                        @Override
+                        public Map<String, Object> apply(final Map<String, Object> o) {
+                            return Maps.filterKeys(o, s -> !VertexProgramHelper.isTransientVertexComputeKey(s, vertexProgram.getVertexComputeKeys()));
+                        }
+                    });
 
             if (resultGraphMode == ResultGraph.ORIGINAL) {
                 AtomicInteger failures = new AtomicInteger(0);
@@ -403,7 +402,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
                     throw new JanusGraphException("Exception while attempting to persist result into graph", e);
                 }
                 if (failures.get() > 0) {
-                    throw new JanusGraphException("Could not persist program results to graph. Check log for details.");
+                    throw new JanusGraphException("Could not persist program results to graph. Check LOG for details.");
                 }
             } else if (resultGraphMode == ResultGraph.NEW) {
                 resultgraph = graph.newTransaction();
@@ -411,8 +410,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
                     Vertex v = resultgraph.vertices(vertexProperty.getKey()).next();
                     for (Map.Entry<String, Object> prop : vertexProperty.getValue().entrySet()) {
                         if (prop.getValue() instanceof List) {
-                            ((List) prop.getValue())
-                                .forEach(value -> v.property(VertexProperty.Cardinality.list, prop.getKey(), value));
+                            ((List) prop.getValue()).forEach(value -> v.property(VertexProperty.Cardinality.list, prop.getKey(), value));
                         } else {
                             v.property(VertexProperty.Cardinality.single, prop.getKey(), prop.getValue());
                         }
@@ -450,7 +448,7 @@ public class FulgoraGraphComputer implements JanusGraphComputer {
                 tx.commit();
             } catch (Throwable e) {
                 failures.incrementAndGet();
-                log.error("Encountered exception while trying to write properties: ", e);
+                LOG.error("Encountered exception while trying to write properties: ", e);
             } finally {
                 if (tx != null && tx.isOpen()) tx.rollback();
             }

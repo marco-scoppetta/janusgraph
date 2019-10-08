@@ -85,7 +85,7 @@ import org.apache.tinkerpop.gremlin.util.Gremlin;
         reason = "The test involves serializing and deserializing of vertices, especially of CacheVertex. This class" +
             "is however not serializable and it is non-trivial to enable serialization as the class is tied to a" +
             "transaction. See #1519 for more information.")
-public interface JanusGraph extends Transaction {
+public interface JanusGraph extends Graph {
 
    /* ---------------------------------------------------------------
     * Transactions and general admin
