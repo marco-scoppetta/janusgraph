@@ -15,20 +15,18 @@
 package org.janusgraph.graphdb.transaction;
 
 import com.google.common.base.Preconditions;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.core.EdgeLabel;
-import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.PropertyKey;
 import org.janusgraph.diskstorage.Entry;
-import org.janusgraph.graphdb.database.EdgeSerializer;
 import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.relations.CacheEdge;
 import org.janusgraph.graphdb.relations.CacheVertexProperty;
 import org.janusgraph.graphdb.relations.RelationCache;
-import org.janusgraph.graphdb.types.TypeInspector;
 import org.janusgraph.graphdb.types.TypeUtil;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 
 import java.util.Iterator;
 
@@ -41,10 +39,10 @@ public class RelationConstructor {
         return tx.getEdgeSerializer().readRelation(data, false, tx);
     }
 
-    public static Iterable<JanusGraphRelation> readRelation(final InternalVertex vertex, final Iterable<Entry> data, final StandardJanusGraphTx tx) {
+    public static Iterable<JanusGraphRelation> readRelation(InternalVertex vertex, Iterable<Entry> data, StandardJanusGraphTx tx) {
         return () -> new Iterator<JanusGraphRelation>() {
 
-            private final Iterator<Entry> iterator = data.iterator();
+            private Iterator<Entry> iterator = data.iterator();
             private JanusGraphRelation current = null;
 
             @Override
@@ -54,7 +52,7 @@ public class RelationConstructor {
 
             @Override
             public JanusGraphRelation next() {
-                current = readRelation(vertex, iterator.next(),tx);
+                current = readRelation(vertex, iterator.next(), tx);
                 return current;
             }
 
@@ -66,22 +64,15 @@ public class RelationConstructor {
         };
     }
 
-    public static InternalRelation readRelation(final InternalVertex vertex, final Entry data, final StandardJanusGraphTx tx) {
+    private static InternalRelation readRelation(InternalVertex vertex, Entry data, StandardJanusGraphTx tx) {
         RelationCache relation = tx.getEdgeSerializer().readRelation(data, true, tx);
-        return readRelation(vertex,relation,data,tx,tx);
-    }
-
-    public static InternalRelation readRelation(final InternalVertex vertex, final Entry data,
-                                                final EdgeSerializer serializer, final TypeInspector types,
-                                                final VertexFactory vertexFac) {
-        RelationCache relation = serializer.readRelation(data, true, types);
-        return readRelation(vertex,relation,data,types,vertexFac);
+        return readRelation(vertex, relation, data, tx);
     }
 
 
-    private static InternalRelation readRelation(final InternalVertex vertex, final RelationCache relation,
-                                         final Entry data, final TypeInspector types, final VertexFactory vertexFac) {
-        InternalRelationType type = TypeUtil.getBaseType((InternalRelationType) types.getExistingRelationType(relation.typeId));
+    private static InternalRelation readRelation(InternalVertex vertex, RelationCache relation,
+                                                 Entry data, StandardJanusGraphTx tx) {
+        InternalRelationType type = TypeUtil.getBaseType((InternalRelationType) tx.getExistingRelationType(relation.typeId));
 
         if (type.isPropertyKey()) {
             assert relation.direction == Direction.OUT;
@@ -89,7 +80,7 @@ public class RelationConstructor {
         }
 
         if (type.isEdgeLabel()) {
-            InternalVertex otherVertex = vertexFac.getInternalVertex(relation.getOtherVertexId());
+            InternalVertex otherVertex = tx.getInternalVertex(relation.getOtherVertexId());
             switch (relation.direction) {
                 case IN:
                     return new CacheEdge(relation.relationId, (EdgeLabel) type, otherVertex, vertex, data);
