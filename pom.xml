@@ -125,7 +125,6 @@
     </properties>
     <modules>
         <module>janusgraph-core</module>
-        <module>janusgraph-server</module>
         <module>janusgraph-test</module>
         <module>janusgraph-cql</module>
         <module>janusgraph-hadoop</module>
