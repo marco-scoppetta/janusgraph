@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>janusgraph-foundationdb</artifactId>
+    <name>JanusGraph-FoundationDB: 5 seconds to achieve perfection</name>
 
     <properties>
         <maven.compiler.plugin.version>3.6.2</maven.compiler.plugin.version>

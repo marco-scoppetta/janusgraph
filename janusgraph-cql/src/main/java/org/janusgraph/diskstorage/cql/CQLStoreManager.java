@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.vavr.Tuple;
 import io.vavr.collection.Array;
 import io.vavr.collection.HashMap;
@@ -43,7 +44,7 @@ import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.StoreMetaData.Container;
-import org.janusgraph.diskstorage.common.DistributedStoreManager;
+import org.janusgraph.diskstorage.common.AbstractStoreManager;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
@@ -52,12 +53,13 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
 import org.janusgraph.diskstorage.keycolumnvalue.StandardStoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
-import org.janusgraph.util.system.NetworkUtil;
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -102,13 +104,14 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ME
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_HOSTS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_PORT;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TIMESTAMP_PROVIDER;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
 /**
  * This class creates see {@link CQLKeyColumnValueStore CQLKeyColumnValueStores} and handles Cassandra-backed allocation of vertex IDs for JanusGraph (when so
  * configured).
  */
-public class CQLStoreManager extends DistributedStoreManager implements KeyColumnValueStoreManager {
+public class CQLStoreManager extends AbstractStoreManager implements KeyColumnValueStoreManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CQLStoreManager.class);
 
     private static final String CONSISTENCY_LOCAL_QUORUM = "LOCAL_QUORUM";
@@ -118,12 +121,13 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     private final String keyspace;
     private final int batchSize;
     private final boolean atomicBatch;
+    private final TimestampProvider times;
+
 
     @Resource
     private CqlSession session;
     private final StoreFeatures storeFeatures;
     private final Map<String, CQLKeyColumnValueStore> openStores;
-    private final Deployment deployment;
 
     /**
      * Constructor for the {@link CQLStoreManager} given a JanusGraph {@link Configuration}.
@@ -131,10 +135,12 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
      * @param configuration
      */
     public CQLStoreManager(Configuration configuration) throws PermanentBackendException {
-        super(configuration, DEFAULT_PORT);
+        super(configuration);
         this.keyspace = determineKeyspaceName(configuration);
         this.batchSize = configuration.get(BATCH_STATEMENT_SIZE);
         this.atomicBatch = configuration.get(ATOMIC_BATCH_MUTATE);
+        this.times = configuration.get(TIMESTAMP_PROVIDER);
+
         this.session = initialiseSession();
         initialiseKeyspace();
 
@@ -166,15 +172,10 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
             case "RandomPartitioner":
             case "Murmur3Partitioner": {
                 fb.keyOrdered(false).orderedScan(false).unorderedScan(true);
-                deployment = Deployment.REMOTE;
                 break;
             }
             case "ByteOrderedPartitioner": {
                 fb.keyOrdered(true).orderedScan(true).unorderedScan(false);
-                deployment = (hostnames.length == 1)// mark deployment as local only in case we have byte ordered partitioner and local
-                        // connection
-                        ? (NetworkUtil.isLocalConnection(hostnames[0])) ? Deployment.LOCAL : Deployment.REMOTE
-                        : Deployment.REMOTE;
                 break;
             }
             default: {
@@ -190,7 +191,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         List<InetSocketAddress> contactPoints;
         //TODO the following 2 variables are duplicated in DistributedStoreManager
         String[] hostnames = configuration.get(STORAGE_HOSTS);
-        int port = configuration.has(STORAGE_PORT) ? configuration.get(STORAGE_PORT) : 9042;
+        int port = configuration.has(STORAGE_PORT) ? configuration.get(STORAGE_PORT) : DEFAULT_PORT;
         try {
             contactPoints = Array.of(hostnames)
                     .map(hostName -> hostName.split(":"))
@@ -309,11 +310,6 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     }
 
     @Override
-    public Deployment getDeployment() {
-        return this.deployment;
-    }
-
-    @Override
     public StoreFeatures getFeatures() {
         return this.storeFeatures;
     }
@@ -344,7 +340,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     }
 
     @Override
-    public boolean exists() throws BackendException {
+    public boolean exists() {
         return session.getMetadata().getKeyspace(this.keyspace).isPresent();
     }
 
@@ -395,7 +391,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         } catch (ExecutionException e) {
             throw EXCEPTION_MAPPER.apply(e);
         }
-        sleepAfterWrite(txh, commitTime);
+        sleepAfterWrite(commitTime);
     }
 
     // Create an async un-logged batch per partition key
@@ -441,11 +437,59 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         } catch (ExecutionException e) {
             throw EXCEPTION_MAPPER.apply(e);
         }
-        sleepAfterWrite(txh, commitTime);
+        sleepAfterWrite(commitTime);
     }
 
     private String determineKeyspaceName(Configuration config) {
         if ((!config.has(KEYSPACE) && (config.has(GRAPH_NAME)))) return config.get(GRAPH_NAME);
         return config.get(KEYSPACE);
+    }
+
+    /**
+     * COMMIT MESSAGE SAYS: "Now instead of sleeping for a hardcoded millisecond it sleeps for a time based on its TimestampProvider
+     * (but falls back to 1 ms if no provider is set).
+     * Cassandra could get away without this method in its mutate implementations back when it used nanotime,
+     * but with millisecond resolution (Timestamps.MILLI or .MICRO providers),
+     * some of the tests routinely fail because multiple operations are colliding inside a single millisecond
+     * (MultiWrite especially)."
+     */
+    private void sleepAfterWrite(MaskedTimestamp mustPass) throws BackendException {
+        assert mustPass.getDeletionTime(times) < mustPass.getAdditionTime(times);
+        try {
+            times.sleepPast(mustPass.getAdditionTimeInstant(times));
+        } catch (InterruptedException e) {
+            throw new PermanentBackendException("Unexpected interrupt", e);
+        }
+    }
+
+    /**
+     * Helper class to create the deletion and addition timestamps for a particular transaction.
+     * It needs to be ensured that the deletion time is prior to the addition time since
+     * some storage backends use the time to resolve conflicts.
+     */
+    private class MaskedTimestamp {
+
+        private final Instant t;
+
+        MaskedTimestamp(Instant commitTime) {
+            Preconditions.checkNotNull(commitTime);
+            this.t = commitTime;
+        }
+
+        private MaskedTimestamp(StoreTransaction txh) {
+            this(txh.getConfiguration().getCommitTime());
+        }
+
+        private long getDeletionTime(TimestampProvider times) {
+            return times.getTime(t) & 0xFFFFFFFFFFFFFFFEL; // zero the LSB
+        }
+
+        private long getAdditionTime(TimestampProvider times) {
+            return (times.getTime(t) & 0xFFFFFFFFFFFFFFFEL) | 1L; // force the LSB to 1
+        }
+
+        private Instant getAdditionTimeInstant(TimestampProvider times) {
+            return times.getTime(getAdditionTime(times));
+        }
     }
 }

@@ -77,6 +77,7 @@ import static org.janusgraph.diskstorage.cql.CQLConfigOptions.CF_COMPRESSION_TYP
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.COMPACTION_OPTIONS;
 import static org.janusgraph.diskstorage.cql.CQLConfigOptions.COMPACTION_STRATEGY;
 import static org.janusgraph.diskstorage.cql.CQLTransaction.getTransaction;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.PAGE_SIZE;
 
 /**
  * An implementation of {@link KeyColumnValueStore} which stores the data in a CQL connected backend.
@@ -119,6 +120,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     private final PreparedStatement deleteColumn;
     private final PreparedStatement insertColumn;
     private final PreparedStatement insertColumnWithTTL;
+    private final int pageSize;
 
     /**
      * Creates an instance of the {@link KeyColumnValueStore} that stores the data in a CQL backed table.
@@ -138,6 +140,11 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         // it gets initialised before reading globalConfig, so getMetaDataSchema will probably fail as it need to read configs from `system_properties`)
         // This is a temporary tradeoff so that we dont have to init StoreManager twice!!
         this.getter = new CQLColValGetter(storeManager.getMetaDataSchema(this.tableName)); // NOTE: this is reading only local config (not reading global configs from system_properties as originally designed)
+
+        // Default configured page size for this storage backend. The page size is used to determine
+        // the number of records to request at a time when streaming result data.
+        this.pageSize = configuration.get(PAGE_SIZE);
+
 
         if (shouldInitializeTable()) {
             initialiseTable(this.storeManager.getKeyspaceName(), tableName, configuration);
@@ -361,7 +368,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
                         .setToken(KEY_END_BINDING, tokenMap.newToken(query.getKeyEnd().asByteBuffer()))
                         .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                         .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
-                        .setPageSize(this.storeManager.getPageSize())
+                        .setPageSize(this.pageSize)
                         .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()))))
                 .getOrElseThrow(EXCEPTION_MAPPER);
     }
@@ -378,7 +385,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
                 this.session.execute(this.getKeysAll.bind()
                         .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                         .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
-                        .setPageSize(this.storeManager.getPageSize())
+                        .setPageSize(this.pageSize)
                         .setConsistencyLevel(getTransaction(txh).getReadConsistencyLevel()))))
                 .getOrElseThrow(EXCEPTION_MAPPER);
     }

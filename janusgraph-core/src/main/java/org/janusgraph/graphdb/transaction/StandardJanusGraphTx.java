@@ -120,7 +120,7 @@ import java.util.stream.Collectors;
  *
  */
 
-public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspector, SchemaInspector, VertexFactory {
+public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspector, SchemaInspector {
 
     private static final Logger LOG = LoggerFactory.getLogger(StandardJanusGraphTx.class);
 
