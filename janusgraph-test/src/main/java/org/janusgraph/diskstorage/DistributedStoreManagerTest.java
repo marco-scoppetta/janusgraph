@@ -14,19 +14,18 @@
 
 package org.janusgraph.diskstorage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.janusgraph.TestCategory;
+import org.janusgraph.diskstorage.common.DistributedStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import org.janusgraph.diskstorage.common.DistributedStoreManager;
-import org.janusgraph.diskstorage.common.DistributedStoreManager.Deployment;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
-import org.janusgraph.TestCategory;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class DistributedStoreManagerTest<T extends DistributedStoreManager> {
 
