@@ -42,7 +42,8 @@ public class CQLGraphTest extends JanusGraphTest {
 
     @BeforeAll
     public static void startCassandra() {
-        CassandraStorageSetup.startCleanEmbedded();
+
+//        CassandraStorageSetup.startCleanEmbedded();
     }
 
     @Test

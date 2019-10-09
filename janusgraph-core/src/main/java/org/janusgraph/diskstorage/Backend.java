@@ -109,7 +109,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.US
 
 public class Backend implements LockerProvider, AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(Backend.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Backend.class);
 
     /**
      * These are the names for the edge store and property index databases, respectively.
@@ -126,20 +126,20 @@ public class Backend implements LockerProvider, AutoCloseable {
     public static final String INDEXSTORE_NAME = "graphindex";
 
     public static final String METRICS_STOREMANAGER_NAME = "storeManager";
-    public static final String METRICS_MERGED_STORE = "stores";
-    public static final String METRICS_MERGED_CACHE = "caches";
+    private static final String METRICS_MERGED_STORE = "stores";
+    private static final String METRICS_MERGED_CACHE = "caches";
     public static final String METRICS_CACHE_SUFFIX = ".cache";
     public static final String LOCK_STORE_SUFFIX = "_lock_";
 
     public static final String SYSTEM_TX_LOG_NAME = "txlog";
-    public static final String SYSTEM_MGMT_LOG_NAME = "systemlog";
+    private static final String SYSTEM_MGMT_LOG_NAME = "systemlog";
 
-    public static final double EDGESTORE_CACHE_PERCENT = 0.8;
-    public static final double INDEXSTORE_CACHE_PERCENT = 0.2;
+    private static final double EDGESTORE_CACHE_PERCENT = 0.8;
+    private static final double INDEXSTORE_CACHE_PERCENT = 0.2;
 
     private static final long ETERNAL_CACHE_EXPIRATION = 1000L * 3600 * 24 * 365 * 200; //200 years
 
-    public static final int THREAD_POOL_SIZE_SCALE_FACTOR = 2;
+    private static final int THREAD_POOL_SIZE_SCALE_FACTOR = 2;
 
     private final KeyColumnValueStoreManager storeManager;
     private final KeyColumnValueStoreManager storeManagerLocking;
@@ -210,7 +210,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         if (configuration.get(PARALLEL_BACKEND_OPS)) {
             int poolSize = Runtime.getRuntime().availableProcessors() * THREAD_POOL_SIZE_SCALE_FACTOR;
             threadPool = Executors.newFixedThreadPool(poolSize);
-            log.debug("Initiated backend operations thread pool of size {}", poolSize);
+            LOG.debug("Initiated backend operations thread pool of size {}", poolSize);
         } else {
             threadPool = null;
         }
@@ -260,7 +260,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             //EdgeStore & VertexIndexStore
             KeyColumnValueStore idStore = storeManager.openDatabase(configuration.get(IDS_STORE_NAME));
 
-            idAuthority = null;
             if (storeFeatures.isKeyConsistent()) {
                 idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, configuration);
             } else {
@@ -287,7 +286,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                     Preconditions.checkArgument(cacheSize > 1000, "Cache size is too small: %s", cacheSize);
                     cacheSizeBytes = (long) cacheSize;
                 }
-                log.debug("Configuring total store cache size: {}", cacheSizeBytes);
+                LOG.debug("Configuring total store cache size: {}", cacheSizeBytes);
                 long cleanWaitTime = configuration.get(DB_CACHE_CLEAN_WAIT);
                 Preconditions.checkArgument(EDGESTORE_CACHE_PERCENT + INDEXSTORE_CACHE_PERCENT == 1.0, "Cache percentages don't add up!");
                 long edgeStoreCacheSize = Math.round(cacheSizeBytes * EDGESTORE_CACHE_PERCENT);
@@ -354,7 +353,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         try {
             return txLogManager.openLog(SYSTEM_TX_LOG_NAME);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not re-open transaction log", e);
+            throw new JanusGraphException("Could not re-open transaction LOG", e);
         }
     }
 
@@ -362,7 +361,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         try {
             return managementLogManager.openLog(SYSTEM_MGMT_LOG_NAME);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not re-open management log", e);
+            throw new JanusGraphException("Could not re-open management LOG", e);
         }
     }
 
@@ -432,7 +431,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         ImmutableMap.Builder<String, IndexProvider> builder = ImmutableMap.builder();
         for (String index : config.getContainedNamespaces(INDEX_NS)) {
             Preconditions.checkArgument(StringUtils.isNotBlank(index), "Invalid index name [%s]", index);
-            log.debug("Configuring index [{}]", index);
+            LOG.debug("Configuring index [{}]", index);
             IndexProvider provider = getImplementationClass(config.restrictTo(index), config.get(INDEX_BACKEND, index),
                     StandardIndexProvider.getAllProviderClasses());
             Preconditions.checkNotNull(provider);
@@ -456,7 +455,7 @@ public class Backend implements LockerProvider, AutoCloseable {
      * @return
      */
     public IDAuthority getIDAuthority() {
-        return Preconditions.checkNotNull(idAuthority, "Backend has not yet been initialized");
+        return idAuthority;
     }
 
     /**
@@ -536,7 +535,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                 }
             }
         } else {
-            log.debug("Backend {} has already been closed or cleared", this);
+            LOG.debug("Backend {} has already been closed or cleared", this);
         }
     }
 
@@ -568,7 +567,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                 index.close();
             }
         } else {
-            log.warn("Backend {} has already been closed or cleared", this);
+            LOG.warn("Backend {} has already been closed or cleared", this);
         }
     }
 
@@ -612,7 +611,7 @@ public class Backend implements LockerProvider, AutoCloseable {
     }
 
     public static final Map<String, String> REGISTERED_LOG_MANAGERS = new HashMap<String, String>() {{
-        put("default", "org.janusgraph.diskstorage.log.kcvs.KCVSLogManager");
+        put("default", "org.janusgraph.diskstorage.LOG.kcvs.KCVSLogManager");
     }};
 
     private final Function<String, Locker> CONSISTENT_KEY_LOCKER_CREATOR = new Function<String, Locker>() {

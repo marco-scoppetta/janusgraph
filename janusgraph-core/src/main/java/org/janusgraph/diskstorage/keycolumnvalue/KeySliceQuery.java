@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 
 /**
  * Extends {@link SliceQuery} by a key that identifies the location of the slice in the key-ring.
+ *
  * @author Matthias Broecheler (me@matthiasb.com)
  */
 
@@ -39,7 +40,6 @@ public class KeySliceQuery extends SliceQuery {
     }
 
     /**
-     *
      * @return the key of this query
      */
     public StaticBuffer getKey() {
@@ -54,7 +54,7 @@ public class KeySliceQuery extends SliceQuery {
 
     @Override
     public KeySliceQuery updateLimit(int newLimit) {
-        return new KeySliceQuery(key,this).setLimit(newLimit);
+        return new KeySliceQuery(key, this).setLimit(newLimit);
     }
 
 
@@ -65,10 +65,10 @@ public class KeySliceQuery extends SliceQuery {
 
     @Override
     public boolean equals(Object other) {
-        if (this==other) return true;
-        else if (other==null) return false;
+        if (this == other) return true;
+        else if (other == null) return false;
         else if (!getClass().isInstance(other)) return false;
-        KeySliceQuery oth = (KeySliceQuery)other;
+        KeySliceQuery oth = (KeySliceQuery) other;
         return key.equals(oth.key) && super.equals(oth);
     }
 

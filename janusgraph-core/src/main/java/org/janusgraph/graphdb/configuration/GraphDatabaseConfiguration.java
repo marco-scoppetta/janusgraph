@@ -22,7 +22,6 @@ import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.lang3.ClassUtils;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
-import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.StandardIndexProvider;
 import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
@@ -42,7 +41,6 @@ import org.janusgraph.graphdb.configuration.converter.RegisteredAttributeClasses
 import org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache;
 import org.janusgraph.graphdb.database.cache.SchemaCache;
 import org.janusgraph.graphdb.database.cache.StandardSchemaCache;
-import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
 import org.janusgraph.graphdb.database.serialize.Serializer;
 import org.janusgraph.graphdb.database.serialize.StandardSerializer;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphDefaultSchemaMaker;
@@ -1308,10 +1306,6 @@ public class GraphDatabaseConfiguration {
 
     public boolean isUpgradeAllowed(String name) {
         return configuration.get(ALLOW_UPGRADE) && JanusGraphConstants.UPGRADEABLE_FIXED.contains(name);
-    }
-
-    public VertexIDAssigner getIDAssigner(Backend backend) {
-        return new VertexIDAssigner(configuration, backend.getIDAuthority(), backend.getStoreFeatures());
     }
 
     public String getBackendDescription() {

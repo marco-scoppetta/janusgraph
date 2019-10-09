@@ -50,22 +50,19 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
 @PreInitializeConfigOptions
 public class VertexIDAssigner implements AutoCloseable {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(VertexIDAssigner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VertexIDAssigner.class);
 
     private static final int MAX_PARTITION_RENEW_ATTEMPTS = 1000;
 
     public static final ConfigOption<String> PLACEMENT_STRATEGY = new ConfigOption<>(IDS_NS, "placement",
             "Name of the vertex placement strategy or full class name", ConfigOption.Type.MASKABLE, "simple");
 
-    private static final Map<String, String> REGISTERED_PLACEMENT_STRATEGIES = ImmutableMap.of(
-            "simple", SimpleBulkPlacementStrategy.class.getName()
-    );
+    private static final Map<String, String> REGISTERED_PLACEMENT_STRATEGIES = ImmutableMap.of("simple", SimpleBulkPlacementStrategy.class.getName());
 
 
-    final ConcurrentMap<Integer, PartitionIDPool> idPools;
-    final StandardIDPool schemaIdPool;
-    final StandardIDPool partitionVertexIdPool;
+    private final ConcurrentMap<Integer, PartitionIDPool> idPools;
+    private final StandardIDPool schemaIdPool;
+    private final StandardIDPool partitionVertexIdPool;
 
     private final IDAuthority idAuthority;
     private final IDManager idManager;
@@ -92,7 +89,7 @@ public class VertexIDAssigner implements AutoCloseable {
         placementStrategy = Backend.getImplementationClass(config, config.get(PLACEMENT_STRATEGY),
                 REGISTERED_PLACEMENT_STRATEGIES);
         placementStrategy.injectIDManager(idManager);
-        log.debug("Partition IDs? [{}], Local Partitions? [{}]", true, hasLocalPartitions);
+        LOG.debug("Partition IDs? [{}], Local Partitions? [{}]", true, hasLocalPartitions);
 
         long baseBlockSize = config.get(IDS_BLOCK_SIZE);
         idAuthority.setIDBlockSizer(new SimpleVertexIDBlockSizer(baseBlockSize));
@@ -120,11 +117,11 @@ public class VertexIDAssigner implements AutoCloseable {
             try {
                 partitionRanges = PartitionIDRange.getIDRanges(partitionBits, idAuthority.getLocalIDPartition());
             } catch (Throwable e) {
-                log.error("Could not process local id partitions", e);
+                LOG.error("Could not process local id partitions", e);
             }
 
             if (!partitionRanges.isEmpty()) {
-                log.info("Setting individual partition bounds: {}", partitionRanges);
+                LOG.info("Setting individual partition bounds: {}", partitionRanges);
                 placementStrategy.setLocalPartitionBounds(partitionRanges);
             } else {
                 setLocalPartitionsToGlobal(partitionBits);
@@ -259,7 +256,7 @@ public class VertexIDAssigner implements AutoCloseable {
                     }
                 }
             }
-            log.trace("Bulk id assignment for {} vertices", assignments.size());
+            LOG.trace("Bulk id assignment for {} vertices", assignments.size());
             for (int attempt = 0; attempt < MAX_PARTITION_RENEW_ATTEMPTS && (assignments != null && !assignments.isEmpty()); attempt++) {
                 placementStrategy.getPartitions(assignments);
                 Map<InternalVertex, PartitionAssignment> leftOvers = null;
@@ -277,7 +274,7 @@ public class VertexIDAssigner implements AutoCloseable {
                 }
                 if (leftOvers != null) {
                     while (iterator.hasNext()) leftOvers.put(iterator.next().getKey(), PartitionAssignment.EMPTY);
-                    log.debug("Exhausted ID Pool in bulk assignment. Left-over vertices {}", leftOvers.size());
+                    LOG.debug("Exhausted ID Pool in bulk assignment. Left-over vertices {}", leftOvers.size());
                 }
                 assignments = leftOvers;
             }
@@ -327,14 +324,13 @@ public class VertexIDAssigner implements AutoCloseable {
             if (element instanceof JanusGraphRelation) {
                 idPool = partitionPool.getPool(PoolType.RELATION);
             } else {
-                Preconditions.checkArgument(userVertexIDType != null);
                 idPool = partitionPool.getPool(PoolType.getPoolTypeFor(userVertexIDType));
             }
             try {
                 count = idPool.nextID();
                 partitionPool.accessed();
             } catch (IDPoolExhaustedException e) {
-                log.debug("Pool exhausted for partition id {}", partitionID);
+                LOG.debug("Pool exhausted for partition id {}", partitionID);
                 placementStrategy.exhaustedPartition(partitionID);
                 partitionPool.exhaustedIdPool();
                 throw e;

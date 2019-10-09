@@ -269,7 +269,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public void close() throws BackendException {
+    public void close() {
         this.closer.run();
     }
 
@@ -279,7 +279,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
+    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) {
         ResultSet result = this.session.execute(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
@@ -298,7 +298,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
     private static EntryList fromResultSet(ResultSet resultSet, StaticArrayEntry.GetColVal<Tuple3<StaticBuffer, StaticBuffer, Row>, StaticBuffer> getter) {
         Lazy<ArrayList<Row>> lazyList = Lazy.of(() -> Lists.newArrayList(resultSet));
 
-        // Use the Iterable overload of ofByteBuffer as it's able to allocate
+        // Use the Iterable overload of of ByteBuffer as it's able to allocate
         // the byte array up front.
         // To ensure that the Iterator instance is recreated, it is created
         // within the closure otherwise
