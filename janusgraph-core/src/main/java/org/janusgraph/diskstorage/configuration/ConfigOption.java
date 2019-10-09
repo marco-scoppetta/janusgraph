@@ -18,12 +18,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
 import org.janusgraph.diskstorage.idmanagement.ConflictAvoidanceMode;
-
-
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
 import org.janusgraph.graphdb.database.serialize.StandardSerializer;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,23 +114,23 @@ public class ConfigOption<O> extends ConfigElement {
     private ConfigOption<?> supersededBy;
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, O defaultValue) {
-        this(parent,name,description,type,defaultValue, disallowEmpty((Class<O>) defaultValue.getClass()));
+        this(parent, name, description, type, defaultValue, disallowEmpty((Class<O>) defaultValue.getClass()));
     }
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, O defaultValue, Predicate<O> verificationFct) {
-        this(parent,name,description,type,(Class<O>)defaultValue.getClass(),defaultValue,verificationFct);
+        this(parent, name, description, type, (Class<O>) defaultValue.getClass(), defaultValue, verificationFct);
     }
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, Class<O> dataType) {
-        this(parent,name,description,type,dataType, disallowEmpty(dataType));
+        this(parent, name, description, type, dataType, disallowEmpty(dataType));
     }
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, Class<O> dataType, Predicate<O> verificationFct) {
-        this(parent,name,description,type,dataType,null,verificationFct);
+        this(parent, name, description, type, dataType, null, verificationFct);
     }
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, Class<O> dataType, O defaultValue) {
-        this(parent,name,description,type,dataType,defaultValue,disallowEmpty(dataType));
+        this(parent, name, description, type, dataType, defaultValue, disallowEmpty(dataType));
     }
 
     public ConfigOption(ConfigNamespace parent, String name, String description, Type type, Class<O> dataType, O defaultValue, Predicate<O> verificationFct) {
@@ -179,11 +177,11 @@ public class ConfigOption<O> extends ConfigElement {
     }
 
     public boolean isFixed() {
-        return type==Type.FIXED;
+        return type == Type.FIXED;
     }
 
     public boolean isGlobal() {
-        return type==Type.FIXED || type==Type.GLOBAL_OFFLINE || type==Type.GLOBAL || type==Type.MASKABLE;
+        return type == Type.FIXED || type == Type.GLOBAL_OFFLINE || type == Type.GLOBAL || type == Type.MASKABLE;
     }
 
     /**
@@ -203,7 +201,7 @@ public class ConfigOption<O> extends ConfigElement {
     }
 
     public boolean isLocal() {
-        return type==Type.MASKABLE || type==Type.LOCAL;
+        return type == Type.MASKABLE || type == Type.LOCAL;
     }
 
     public boolean isDeprecated() {
@@ -220,10 +218,10 @@ public class ConfigOption<O> extends ConfigElement {
     }
 
     public O get(Object input) {
-        if (input==null) {
-            input=defaultValue;
+        if (input == null) {
+            input = defaultValue;
         }
-        if (input==null) {
+        if (input == null) {
             Preconditions.checkState(verificationFct.apply((O) input), "Need to set configuration value: %s", this.toString());
             return null;
         } else {
@@ -233,9 +231,9 @@ public class ConfigOption<O> extends ConfigElement {
 
     public O verify(Object input) {
         Preconditions.checkNotNull(input);
-        Preconditions.checkArgument(datatype.isInstance(input),"Invalid class for configuration value [%s]. Expected [%s] but given [%s]",this.toString(),datatype,input.getClass());
-        O result = (O)input;
-        Preconditions.checkArgument(verificationFct.apply(result),"Invalid configuration value for [%s]: %s",this.toString(),input);
+        Preconditions.checkArgument(datatype.isInstance(input), "Invalid class for configuration value [%s]. Expected [%s] but given [%s]", this.toString(), datatype, input.getClass());
+        O result = (O) input;
+        Preconditions.checkArgument(verificationFct.apply(result), "Invalid configuration value for [%s]: %s", this.toString(), input);
         return result;
     }
 
@@ -248,9 +246,9 @@ public class ConfigOption<O> extends ConfigElement {
             return null;
         }
         return Arrays.stream(enumClass.getEnumConstants())
-            .filter(e -> e.toString().equalsIgnoreCase(trimmed))
-            .findAny()
-            .orElseThrow(() -> new IllegalArgumentException("Invalid enum string provided for ["+enumClass+"]: " + trimmed));
+                .filter(e -> e.toString().equalsIgnoreCase(trimmed))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid enum string provided for [" + enumClass + "]: " + trimmed));
     }
 
     public static <O> Predicate<O> disallowEmpty(Class<O> clazz) {
@@ -267,15 +265,15 @@ public class ConfigOption<O> extends ConfigElement {
     }
 
     public static Predicate<Integer> positiveInt() {
-        return num -> num!=null && num>0;
+        return num -> num != null && num > 0;
     }
 
     public static Predicate<Integer> nonnegativeInt() {
-        return num -> num!=null && num>=0;
+        return num -> num != null && num >= 0;
     }
 
     public static Predicate<Long> positiveLong() {
-        return num -> num!=null && num>0;
+        return num -> num != null && num > 0;
     }
 
 

@@ -52,13 +52,13 @@ import org.janusgraph.graphdb.types.typemaker.DisableDefaultSchemaMaker;
 import org.janusgraph.util.stats.MetricManager;
 import org.janusgraph.util.stats.NumberUtil;
 import org.janusgraph.util.system.ConfigurationUtil;
-import org.janusgraph.util.system.NetworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.management.MBeanServerFactory;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -497,7 +497,7 @@ public class GraphDatabaseConfiguration {
     public static final ConfigOption<String[]> STORAGE_HOSTS = new ConfigOption<>(STORAGE_NS, "hostname",
             "The hostname or comma-separated list of hostnames of storage backend servers.  " +
                     "This is only applicable to some storage backends, such as cassandra and hbase.",
-            ConfigOption.Type.LOCAL, new String[]{NetworkUtil.getLoopbackAddress()});
+            ConfigOption.Type.LOCAL, new String[]{InetAddress.getLoopbackAddress().getHostAddress()});
 
     /**
      * Configuration key for the port on which to connect to remote storage backend servers.
@@ -822,7 +822,7 @@ public class GraphDatabaseConfiguration {
     public static final ConfigOption<String[]> INDEX_HOSTS = new ConfigOption<>(INDEX_NS, "hostname",
             "The hostname or comma-separated list of hostnames of index backend servers.  " +
                     "This is only applicable to some index backends, such as elasticsearch and solr.",
-            ConfigOption.Type.MASKABLE, new String[]{NetworkUtil.getLoopbackAddress()});
+            ConfigOption.Type.MASKABLE, new String[]{InetAddress.getLoopbackAddress().getHostAddress()});
 
     public static final ConfigOption<Integer> INDEX_PORT = new ConfigOption<>(INDEX_NS, "port",
             "The port on which to connect to index backend servers",

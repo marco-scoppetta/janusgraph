@@ -46,11 +46,4 @@ public class CQLDistributedStoreManagerTest extends DistributedStoreManagerTest<
             manager.close();
     }
 
-    @Override
-    @Test
-    @Tag(TestCategory.ORDERED_KEY_STORE_TESTS)
-    public void testGetDeployment() {
-        final Deployment deployment = CassandraStorageSetup.HOSTNAME == null ? Deployment.LOCAL : Deployment.REMOTE;
-        assertEquals(deployment, manager.getDeployment());
-    }
 }

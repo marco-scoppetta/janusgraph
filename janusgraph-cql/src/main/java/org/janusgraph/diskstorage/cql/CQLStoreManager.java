@@ -52,7 +52,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
 import org.janusgraph.diskstorage.keycolumnvalue.StandardStoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
-import org.janusgraph.util.system.NetworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +122,6 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     private CqlSession session;
     private final StoreFeatures storeFeatures;
     private final Map<String, CQLKeyColumnValueStore> openStores;
-    private final Deployment deployment;
 
     /**
      * Constructor for the {@link CQLStoreManager} given a JanusGraph {@link Configuration}.
@@ -166,15 +164,10 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
             case "RandomPartitioner":
             case "Murmur3Partitioner": {
                 fb.keyOrdered(false).orderedScan(false).unorderedScan(true);
-                deployment = Deployment.REMOTE;
                 break;
             }
             case "ByteOrderedPartitioner": {
                 fb.keyOrdered(true).orderedScan(true).unorderedScan(false);
-                deployment = (hostnames.length == 1)// mark deployment as local only in case we have byte ordered partitioner and local
-                        // connection
-                        ? (NetworkUtil.isLocalConnection(hostnames[0])) ? Deployment.LOCAL : Deployment.REMOTE
-                        : Deployment.REMOTE;
                 break;
             }
             default: {
@@ -309,11 +302,6 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     }
 
     @Override
-    public Deployment getDeployment() {
-        return this.deployment;
-    }
-
-    @Override
     public StoreFeatures getFeatures() {
         return this.storeFeatures;
     }
@@ -395,7 +383,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         } catch (ExecutionException e) {
             throw EXCEPTION_MAPPER.apply(e);
         }
-        sleepAfterWrite(txh, commitTime);
+        sleepAfterWrite(commitTime);
     }
 
     // Create an async un-logged batch per partition key
@@ -441,7 +429,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         } catch (ExecutionException e) {
             throw EXCEPTION_MAPPER.apply(e);
         }
-        sleepAfterWrite(txh, commitTime);
+        sleepAfterWrite(commitTime);
     }
 
     private String determineKeyspaceName(Configuration config) {

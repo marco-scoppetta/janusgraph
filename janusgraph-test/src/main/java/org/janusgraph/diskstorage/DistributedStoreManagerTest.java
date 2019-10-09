@@ -35,12 +35,6 @@ public abstract class DistributedStoreManagerTest<T extends DistributedStoreMana
 
     @Test
     @Tag(TestCategory.ORDERED_KEY_STORE_TESTS)
-    public void testGetDeployment() {
-        assertEquals(Deployment.LOCAL, manager.getDeployment());
-    }
-
-    @Test
-    @Tag(TestCategory.ORDERED_KEY_STORE_TESTS)
     public void testGetLocalKeyPartition() throws BackendException {
         assumeTrue(manager.getFeatures().hasLocalKeyPartition());
         List<KeyRange> local = manager.getLocalKeyPartition();
