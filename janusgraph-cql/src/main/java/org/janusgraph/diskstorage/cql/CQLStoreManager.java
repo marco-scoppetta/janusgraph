@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.internal.core.ssl.DefaultSslEngineFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.vavr.Tuple;
 import io.vavr.collection.Array;
 import io.vavr.collection.HashMap;
@@ -52,11 +53,13 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
 import org.janusgraph.diskstorage.keycolumnvalue.StandardStoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -332,7 +335,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     }
 
     @Override
-    public boolean exists() throws BackendException {
+    public boolean exists() {
         return session.getMetadata().getKeyspace(this.keyspace).isPresent();
     }
 
@@ -435,5 +438,53 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     private String determineKeyspaceName(Configuration config) {
         if ((!config.has(KEYSPACE) && (config.has(GRAPH_NAME)))) return config.get(GRAPH_NAME);
         return config.get(KEYSPACE);
+    }
+
+    /**
+     * COMMIT MESSAGE SAYS: "Now instead of sleeping for a hardcoded millisecond it sleeps for a time based on its TimestampProvider
+     * (but falls back to 1 ms if no provider is set).
+     * Cassandra could get away without this method in its mutate implementations back when it used nanotime,
+     * but with millisecond resolution (Timestamps.MILLI or .MICRO providers),
+     * some of the tests routinely fail because multiple operations are colliding inside a single millisecond
+     * (MultiWrite especially)."
+     */
+    private void sleepAfterWrite(MaskedTimestamp mustPass) throws BackendException {
+        assert mustPass.getDeletionTime(times) < mustPass.getAdditionTime(times);
+        try {
+            times.sleepPast(mustPass.getAdditionTimeInstant(times));
+        } catch (InterruptedException e) {
+            throw new PermanentBackendException("Unexpected interrupt", e);
+        }
+    }
+
+    /**
+     * Helper class to create the deletion and addition timestamps for a particular transaction.
+     * It needs to be ensured that the deletion time is prior to the addition time since
+     * some storage backends use the time to resolve conflicts.
+     */
+    private class MaskedTimestamp {
+
+        private final Instant t;
+
+        MaskedTimestamp(Instant commitTime) {
+            Preconditions.checkNotNull(commitTime);
+            this.t = commitTime;
+        }
+
+        private MaskedTimestamp(StoreTransaction txh) {
+            this(txh.getConfiguration().getCommitTime());
+        }
+
+        private long getDeletionTime(TimestampProvider times) {
+            return times.getTime(t) & 0xFFFFFFFFFFFFFFFEL; // zero the LSB
+        }
+
+        private long getAdditionTime(TimestampProvider times) {
+            return (times.getTime(t) & 0xFFFFFFFFFFFFFFFEL) | 1L; // force the LSB to 1
+        }
+
+        private Instant getAdditionTimeInstant(TimestampProvider times) {
+            return times.getTime(getAdditionTime(times));
+        }
     }
 }
