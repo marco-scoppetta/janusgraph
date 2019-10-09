@@ -44,7 +44,7 @@ import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.StoreMetaData.Container;
-import org.janusgraph.diskstorage.common.DistributedStoreManager;
+import org.janusgraph.diskstorage.common.AbstractStoreManager;
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
@@ -104,13 +104,14 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ME
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_HOSTS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_PORT;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TIMESTAMP_PROVIDER;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
 /**
  * This class creates see {@link CQLKeyColumnValueStore CQLKeyColumnValueStores} and handles Cassandra-backed allocation of vertex IDs for JanusGraph (when so
  * configured).
  */
-public class CQLStoreManager extends DistributedStoreManager implements KeyColumnValueStoreManager {
+public class CQLStoreManager extends AbstractStoreManager implements KeyColumnValueStoreManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CQLStoreManager.class);
 
     private static final String CONSISTENCY_LOCAL_QUORUM = "LOCAL_QUORUM";
@@ -120,6 +121,8 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
     private final String keyspace;
     private final int batchSize;
     private final boolean atomicBatch;
+    private final TimestampProvider times;
+
 
     @Resource
     private CqlSession session;
@@ -132,10 +135,12 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
      * @param configuration
      */
     public CQLStoreManager(Configuration configuration) throws PermanentBackendException {
-        super(configuration, DEFAULT_PORT);
+        super(configuration);
         this.keyspace = determineKeyspaceName(configuration);
         this.batchSize = configuration.get(BATCH_STATEMENT_SIZE);
         this.atomicBatch = configuration.get(ATOMIC_BATCH_MUTATE);
+        this.times = configuration.get(TIMESTAMP_PROVIDER);
+
         this.session = initialiseSession();
         initialiseKeyspace();
 
@@ -186,7 +191,7 @@ public class CQLStoreManager extends DistributedStoreManager implements KeyColum
         List<InetSocketAddress> contactPoints;
         //TODO the following 2 variables are duplicated in DistributedStoreManager
         String[] hostnames = configuration.get(STORAGE_HOSTS);
-        int port = configuration.has(STORAGE_PORT) ? configuration.get(STORAGE_PORT) : 9042;
+        int port = configuration.has(STORAGE_PORT) ? configuration.get(STORAGE_PORT) : DEFAULT_PORT;
         try {
             contactPoints = Array.of(hostnames)
                     .map(hostName -> hostName.split(":"))

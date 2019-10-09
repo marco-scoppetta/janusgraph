@@ -51,7 +51,7 @@ jobs:
                   key: v1-dependencies-{{ checksum "pom.xml" }}
 
             # run tests!
-            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLDistributedStoreManagerTest,CQLIDAuthorityTest,CQLLockStoreTest,CQLLogTest'
+            - run: mvn -q test -pl janusgraph-cql '-Dtest=CQLIDAuthorityTest,CQLLockStoreTest,CQLLogTest'
 
     test-cql-diskstorage-II:
         docker:
