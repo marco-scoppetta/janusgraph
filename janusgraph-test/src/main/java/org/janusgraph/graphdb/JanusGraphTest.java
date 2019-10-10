@@ -2523,25 +2523,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         assertEquals(1, Iterables.size(mgmt.getRelationIndexes(child)));
         assertEquals(3, Iterables.size(mgmt.getRelationIndexes(connect)));
         assertEquals(0, Iterables.size(mgmt.getRelationIndexes(weight)));
-        try {
-            //Name already exists
-            mgmt.buildEdgeIndex(connect, "weightAsc", Direction.OUT, time);
-            fail();
-        } catch (SchemaViolationException ignored) {
-        }
 
-        try {
-            //Not valid in this direction due to multiplicity constraint
-            mgmt.buildEdgeIndex(child, "blablub", Direction.IN, time);
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        }
-        try {
-            //Not valid in this direction due to unidirectionality
-            mgmt.buildEdgeIndex(link, "blablub", Direction.BOTH, time);
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        }
 
         // ########## END INSPECTION ###########
 
@@ -2566,25 +2548,6 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         assertEquals(1, Iterables.size(mgmt.getRelationIndexes(child)));
         assertEquals(3, Iterables.size(mgmt.getRelationIndexes(connect)));
         assertEquals(0, Iterables.size(mgmt.getRelationIndexes(weight)));
-        try {
-            //Name already exists
-            mgmt.buildEdgeIndex(connect, "weightAsc", Direction.OUT, time);
-            fail();
-        } catch (SchemaViolationException ignored) {
-        }
-
-        try {
-            //Not valid in this direction due to multiplicity constraint
-            mgmt.buildEdgeIndex(child, "blablub", Direction.IN, time);
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        }
-        try {
-            //Not valid in this direction due to unidirectionality
-            mgmt.buildEdgeIndex(link, "blablub", Direction.BOTH, time);
-            fail();
-        } catch (IllegalArgumentException ignored) {
-        }
 
         // ########## END INSPECTION ###########
 
@@ -2870,8 +2833,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         return true;
     }
 
-    public static void evaluateQuery(JanusGraphVertexQuery query, RelationCategory resultType,
-                                     int expectedResults, int numSubQueries, boolean[] subQuerySpecs) {
+    public static void evaluateQuery(JanusGraphVertexQuery query, RelationCategory resultType, int expectedResults, int numSubQueries, boolean[] subQuerySpecs) {
         evaluateQuery(query, resultType, expectedResults, numSubQueries, subQuerySpecs, ImmutableMap.of());
     }
 
