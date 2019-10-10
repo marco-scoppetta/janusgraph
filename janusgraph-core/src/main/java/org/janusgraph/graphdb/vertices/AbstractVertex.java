@@ -38,7 +38,6 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
 
     private final StandardJanusGraphTx tx;
 
-
     AbstractVertex(StandardJanusGraphTx tx, long id) {
         super(id);
         assert tx != null;
@@ -85,7 +84,7 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
         return ElementLifeCycle.isModified(it().getLifeCycle());
     }
 
-    private final void verifyAccess() {
+    private void verifyAccess() {
         if (isRemoved()) {
             throw InvalidElementException.removedException(this);
         }
@@ -155,6 +154,7 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
 
     @Override
     public <V> JanusGraphVertexProperty<V> property(VertexProperty.Cardinality cardinality, String key, V value, Object... keyValues) {
+        //NOTE that cardinality is ignored as we are enforcing these cheks at Grakn level
         JanusGraphVertexProperty<V> p = tx().addProperty(it(), tx().getOrCreatePropertyKey(key, value), value);
         ElementHelper.attachProperties(p,keyValues);
         return p;
@@ -180,8 +180,5 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
         return (Iterator)query().direction(direction).labels(edgeLabels).vertices().iterator();
 
     }
-
-
-
 
 }
