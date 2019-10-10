@@ -186,7 +186,7 @@ public class StandardJanusGraph implements JanusGraph {
 
         // Collaborators:
         this.backend = backend;
-        this.idAssigner = new VertexIDAssigner(config.getConfiguration(), backend.getIDAuthority(), backend.getStoreFeatures());
+        this.idAssigner = new VertexIDAssigner(config.getConfiguration(), backend.getStoreManager(), backend.getStoreFeatures());
         this.idManager = idAssigner.getIDManager();
         this.timestampProvider = configuration.getTimestampProvider();
 

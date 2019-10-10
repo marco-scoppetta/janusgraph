@@ -132,17 +132,15 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
 
     private final String metricsPrefix;
 
-    private IDBlockSizer blockSizer;
-    private volatile boolean isActive;
+    private final IDBlockSizer blockSizer;
 
     private final Random random = new Random();
 
-    public ConsistentKeyIDAuthority(KeyColumnValueStore idStore, StoreManager manager, Configuration config) {
+    public ConsistentKeyIDAuthority(KeyColumnValueStore idStore, StoreManager manager, Configuration config, IDBlockSizer sizer) {
         this.uid = config.get(UNIQUE_INSTANCE_ID);
+        this.blockSizer = sizer;
 
         this.uidBytes = uid.getBytes(UTF8_CHARSET);
-
-        this.isActive = false;
 
         this.idApplicationWaitMS = config.get(GraphDatabaseConfiguration.IDAUTHORITY_WAIT);
 
@@ -192,13 +190,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
     }
 
     @Override
-    public synchronized void setIDBlockSizer(IDBlockSizer sizer) {
-        Preconditions.checkNotNull(sizer);
-        if (isActive) throw new IllegalStateException("IDBlockSizer cannot be changed after IDAuthority is in use");
-        this.blockSizer = sizer;
-    }
-
-    @Override
     public String getUniqueID() {
         return uid;
     }
@@ -210,8 +201,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
      * @return
      */
     private long getBlockSize(final int idNamespace) {
-        Preconditions.checkArgument(blockSizer != null, "Blocksizer has not yet been initialized");
-        isActive = true;
         long blockSize = blockSizer.getBlockSize(idNamespace);
         Preconditions.checkArgument(blockSize > 0, "Invalid block size: %s", blockSize);
         Preconditions.checkArgument(blockSize < getIdUpperBound(idNamespace),
@@ -220,8 +209,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
     }
 
     private long getIdUpperBound(final int idNamespace) {
-        Preconditions.checkArgument(blockSizer != null, "Blocksizer has not yet been initialized");
-        isActive = true;
         long upperBound = blockSizer.getIdUpperBound(idNamespace);
         Preconditions.checkArgument(upperBound > 0, "Invalid upper bound: %s", upperBound);
         return upperBound;

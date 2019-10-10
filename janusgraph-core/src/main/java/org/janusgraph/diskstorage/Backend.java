@@ -40,7 +40,6 @@ import org.janusgraph.diskstorage.indexing.KeyInformation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.ExpirationKCVSCache;
@@ -59,6 +58,7 @@ import org.janusgraph.diskstorage.util.BackendOperation;
 import org.janusgraph.diskstorage.util.MetricInstrumentedStoreManager;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
+import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
 import org.janusgraph.graphdb.transaction.TransactionConfiguration;
 import org.janusgraph.util.system.ConfigurationUtil;
 import org.slf4j.Logger;
@@ -148,7 +148,6 @@ public class Backend implements LockerProvider, AutoCloseable {
     private KCVSCache edgeStore;
     private KCVSCache indexStore;
     private KCVSCache txLogStore;
-    private IDAuthority idAuthority;
     private KCVSConfiguration systemConfig;
     private KCVSConfiguration userConfig;
     private boolean hasAttemptedClose;
@@ -257,15 +256,6 @@ public class Backend implements LockerProvider, AutoCloseable {
      */
     private void initialize() {
         try {
-            //EdgeStore & VertexIndexStore
-            KeyColumnValueStore idStore = storeManager.openDatabase(configuration.get(IDS_STORE_NAME));
-
-            if (storeFeatures.isKeyConsistent()) {
-                idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, configuration);
-            } else {
-                throw new IllegalStateException("Store needs to support consistent key or transactional operations for ID manager to guarantee proper id allocations");
-            }
-
             KeyColumnValueStore edgeStoreRaw = storeManagerLocking.openDatabase(EDGESTORE_NAME);
             KeyColumnValueStore indexStoreRaw = storeManagerLocking.openDatabase(INDEXSTORE_NAME);
 
@@ -450,15 +440,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
 
     /**
-     * Returns the configured {@link IDAuthority}.
-     *
-     * @return
-     */
-    public IDAuthority getIDAuthority() {
-        return idAuthority;
-    }
-
-    /**
      * Returns the {@link StoreFeatures} of the configured backend storage engine.
      *
      * @return
@@ -471,7 +452,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         return storeManager.getClass();
     }
 
-    public StoreManager getStoreManager() {
+    public KeyColumnValueStoreManager getStoreManager() {
         return storeManager;
     }
 
@@ -523,7 +504,6 @@ public class Backend implements LockerProvider, AutoCloseable {
                 scanner.close();
                 if (edgeStore != null) edgeStore.close();
                 if (indexStore != null) indexStore.close();
-                if (idAuthority != null) idAuthority.close();
                 if (systemConfig != null) systemConfig.close();
                 if (userConfig != null) userConfig.close();
                 //Indexes
@@ -556,7 +536,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             scanner.close();
             edgeStore.close();
             indexStore.close();
-            idAuthority.close();
             systemConfig.close();
             userConfig.close();
             storeManager.clearStorage();

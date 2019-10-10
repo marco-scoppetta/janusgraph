@@ -17,7 +17,8 @@ package org.janusgraph.graphdb.database.idassigner;
 import java.time.Duration;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+ * The IDBlockSizer specifies the block size for
+ * each partition guaranteeing that the same partition will always be assigned the same block size.
  */
 
 public interface IDBlockSizer {
