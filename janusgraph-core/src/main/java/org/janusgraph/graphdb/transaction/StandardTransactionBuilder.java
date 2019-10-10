@@ -14,24 +14,27 @@
 
 package org.janusgraph.graphdb.transaction;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
-
-import java.time.Instant;
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.schema.DefaultSchemaMaker;
 import org.janusgraph.core.TransactionBuilder;
-import org.janusgraph.diskstorage.configuration.*;
-
+import org.janusgraph.core.schema.DefaultSchemaMaker;
 import org.janusgraph.diskstorage.BaseTransactionConfig;
+import org.janusgraph.diskstorage.configuration.ConfigElement;
+import org.janusgraph.diskstorage.configuration.ConfigOption;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.configuration.MergedConfiguration;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
-import org.janusgraph.diskstorage.util.time.TimestampProvider;
+
+import java.time.Instant;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
 
 /**
  * Used to configure a {@link org.janusgraph.core.JanusGraphTransaction}.
  *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  * @see org.janusgraph.core.JanusGraphTransaction
  */
 public class StandardTransactionBuilder implements TransactionConfiguration, TransactionBuilder {
@@ -45,8 +48,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     private boolean preloadedData = false;
 
     private final DefaultSchemaMaker defaultSchemaMaker;
-
-    private boolean hasDisabledSchemaConstraints = true;
 
     private boolean verifyExternalVertexExistence = true;
 
@@ -210,7 +211,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     @Override
     public TransactionBuilder restrictedPartitions(int[] partitions) {
         Preconditions.checkNotNull(partitions);
-        this.restrictedPartitions=partitions;
+        this.restrictedPartitions = partitions;
         return this;
     }
 
@@ -224,7 +225,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     public TransactionBuilder customOption(String k, Object v) {
         if (null == writableCustomOptions)
             throw new IllegalStateException("This builder was not constructed with setCustomOption support");
-        writableCustomOptions.set((ConfigOption<Object>)ConfigElement.parse(ROOT_NS, k).element, v);
+        writableCustomOptions.set((ConfigOption<Object>) ConfigElement.parse(ROOT_NS, k).element, v);
         return this;
     }
 
@@ -256,7 +257,9 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     }
 
     @Override
-    public boolean hasPreloadedData() { return preloadedData; }
+    public boolean hasPreloadedData() {
+        return preloadedData;
+    }
 
     @Override
     public final boolean hasForceIndexUsage() {
@@ -286,11 +289,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     @Override
     public final DefaultSchemaMaker getAutoSchemaMaker() {
         return defaultSchemaMaker;
-    }
-
-    @Override
-    public boolean hasDisabledSchemaConstraints() {
-        return hasDisabledSchemaConstraints;
     }
 
     @Override
@@ -339,7 +337,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
     @Override
     public boolean hasRestrictedPartitions() {
-        return restrictedPartitions.length>0;
+        return restrictedPartitions.length > 0;
     }
 
     @Override
@@ -359,7 +357,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
     @Override
     public boolean hasCommitTime() {
-        return userCommitTime!=null;
+        return userCommitTime != null;
     }
 
     @Override
@@ -402,20 +400,20 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         private final BaseTransactionConfig handleConfig;
 
         public ImmutableTxCfg(boolean isReadOnly,
-                boolean hasEnabledBatchLoading,
-                boolean hasAssignIDsImmediately,
-                boolean hasPreloadedData,
-                boolean hasForceIndexUsage,
-                boolean hasVerifyExternalVertexExistence,
-                boolean hasVerifyInternalVertexExistence,
-                boolean hasAcquireLocks, boolean hasVerifyUniqueness,
-                boolean hasPropertyPrefetching, boolean isSingleThreaded,
-                boolean isThreadBound, TimestampProvider times, Instant commitTime,
-                long indexCacheWeight, int vertexCacheSize, int dirtyVertexSize, String logIdentifier,
-                int[] restrictedPartitions,
-                String groupName,
-                DefaultSchemaMaker defaultSchemaMaker,
-                Configuration customOptions) {
+                              boolean hasEnabledBatchLoading,
+                              boolean hasAssignIDsImmediately,
+                              boolean hasPreloadedData,
+                              boolean hasForceIndexUsage,
+                              boolean hasVerifyExternalVertexExistence,
+                              boolean hasVerifyInternalVertexExistence,
+                              boolean hasAcquireLocks, boolean hasVerifyUniqueness,
+                              boolean hasPropertyPrefetching, boolean isSingleThreaded,
+                              boolean isThreadBound, TimestampProvider times, Instant commitTime,
+                              long indexCacheWeight, int vertexCacheSize, int dirtyVertexSize, String logIdentifier,
+                              int[] restrictedPartitions,
+                              String groupName,
+                              DefaultSchemaMaker defaultSchemaMaker,
+                              Configuration customOptions) {
             this.isReadOnly = isReadOnly;
             this.hasEnabledBatchLoading = hasEnabledBatchLoading;
             this.hasAssignIDsImmediately = hasAssignIDsImmediately;
@@ -432,7 +430,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
             this.vertexCacheSize = vertexCacheSize;
             this.dirtyVertexSize = dirtyVertexSize;
             this.logIdentifier = logIdentifier;
-            this.restrictedPartitions=restrictedPartitions;
+            this.restrictedPartitions = restrictedPartitions;
             this.defaultSchemaMaker = defaultSchemaMaker;
             this.hasDisabledSchemaConstraints = hasDisabledSchemaConstraints;
             this.handleConfig = new StandardBaseTransactionConfig.Builder()
@@ -488,11 +486,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         }
 
         @Override
-        public boolean hasDisabledSchemaConstraints() {
-            return hasDisabledSchemaConstraints;
-        }
-
-        @Override
         public boolean hasVerifyUniqueness() {
             return hasVerifyUniqueness;
         }
@@ -539,7 +532,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
         @Override
         public boolean hasRestrictedPartitions() {
-            return restrictedPartitions.length>0;
+            return restrictedPartitions.length > 0;
         }
 
         @Override

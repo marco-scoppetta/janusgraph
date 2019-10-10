@@ -28,14 +28,9 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
-
 public class BackendOperation {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(BackendOperation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BackendOperation.class);
     private static final Random random = new Random();
 
     private static final Duration BASE_REATTEMPT_TIME = Duration.ofMillis(50);
@@ -81,9 +76,8 @@ public class BackendOperation {
                 }
             }
             //Wait and retry
-            assert lastException != null;
             if (System.currentTimeMillis() + waitTime.toMillis() < maxTime) {
-                log.info("Temporary exception during backend operation [" + exe.toString() + "]. Attempting backoff retry.", lastException);
+                LOG.info("Temporary exception during backend operation [" + exe.toString() + "]. Attempting backoff retry.", lastException);
                 try {
                     Thread.sleep(waitTime.toMillis());
                 } catch (InterruptedException r) {

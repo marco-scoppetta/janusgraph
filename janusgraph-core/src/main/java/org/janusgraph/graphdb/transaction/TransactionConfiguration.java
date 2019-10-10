@@ -20,7 +20,6 @@ import org.janusgraph.diskstorage.BaseTransactionConfig;
 /**
  * Provides configuration options for {@link org.janusgraph.core.JanusGraphTransaction}.
  *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  * @see org.janusgraph.core.JanusGraphTransaction
  */
 public interface TransactionConfiguration extends BaseTransactionConfig {
@@ -90,13 +89,6 @@ public interface TransactionConfiguration extends BaseTransactionConfig {
      * @return The default edge type maker used to automatically create not yet existing edge types.
      */
     DefaultSchemaMaker getAutoSchemaMaker();
-
-    /**
-     * Allows to disable schema constraints.
-     *
-     * @return True, if schema constraints should not be applied, else false.
-     */
-    boolean hasDisabledSchemaConstraints();
 
     /**
      * Whether the graph transaction is configured to verify that an added key does not yet exist in the database.
