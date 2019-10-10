@@ -15,8 +15,10 @@
 package org.janusgraph.graphdb.idmanagement;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.diskstorage.*;
-
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.IDAuthority;
+import org.janusgraph.diskstorage.IDBlock;
+import org.janusgraph.diskstorage.TemporaryBackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
 import org.janusgraph.graphdb.database.idassigner.IDBlockSizer;
 import org.janusgraph.graphdb.database.idassigner.IDPoolExhaustedException;
@@ -40,10 +42,6 @@ public class MockIDAuthority implements IDAuthority {
     private final int blockSizeLimit;
     private final int delayAcquisitionMS;
     private List<KeyRange> localPartition = null;
-
-    public MockIDAuthority() {
-        this(100);
-    }
 
     public MockIDAuthority(int blockSize) {
         this(blockSize, BLOCK_SIZE_LIMIT);
@@ -117,11 +115,6 @@ public class MockIDAuthority implements IDAuthority {
     public List<KeyRange> getLocalIDPartition() {
         Preconditions.checkNotNull(localPartition);
         return localPartition;
-    }
-
-    @Override
-    public void setIDBlockSizer(IDBlockSizer sizer) {
-        this.blockSizer = sizer;
     }
 
     @Override

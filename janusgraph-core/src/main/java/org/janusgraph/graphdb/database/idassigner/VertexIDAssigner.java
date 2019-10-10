@@ -80,9 +80,9 @@ public class VertexIDAssigner implements AutoCloseable {
     private final int partitionIdBound;
     private final boolean hasLocalPartitions;
 
-    public VertexIDAssigner(Configuration config, KeyColumnValueStoreManager storeManager, StoreFeatures idAuthFeatures) {
-
+    public VertexIDAssigner(Configuration config, IDAuthority idAuthority, StoreFeatures idAuthFeatures) {
         int partitionBits = NumberUtil.getPowerOf2(config.get(CLUSTER_MAX_PARTITIONS));
+        this.idAuthority = idAuthority;
         idManager = new IDManager(partitionBits);
         Preconditions.checkArgument(idManager.getPartitionBound() <= Integer.MAX_VALUE && idManager.getPartitionBound() > 0);
         this.partitionIdBound = (int) idManager.getPartitionBound();
@@ -92,15 +92,6 @@ public class VertexIDAssigner implements AutoCloseable {
         placementStrategy.injectIDManager(idManager);
         LOG.debug("Partition IDs? [{}], Local Partitions? [{}]", true, hasLocalPartitions);
 
-        long baseBlockSize = config.get(IDS_BLOCK_SIZE);
-        SimpleVertexIDBlockSizer vertexIDBlockSizer = new SimpleVertexIDBlockSizer(baseBlockSize);
-        try {
-            KeyColumnValueStore idStore = storeManager.openDatabase(config.get(IDS_STORE_NAME));
-            this.idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, config, vertexIDBlockSizer);
-        } catch (BackendException e) {
-            // TODO handle better, or potentially pass the open store as Constructor parameter
-            throw new RuntimeException("Error while trying to open IDs store.", e);
-        }
 
         renewTimeoutMS = config.get(IDS_RENEW_TIMEOUT);
         renewBufferPercentage = config.get(IDS_RENEW_BUFFER_PERCENTAGE);
@@ -111,6 +102,40 @@ public class VertexIDAssigner implements AutoCloseable {
         partitionVertexIdPool = new StandardIDPool(idAuthority, IDManager.PARTITIONED_VERTEX_PARTITION, PoolType.PARTITIONED_VERTEX.getIDNamespace(),
                 PoolType.PARTITIONED_VERTEX.getCountBound(idManager), renewTimeoutMS, renewBufferPercentage);
         setLocalPartitions(partitionBits);
+    }
+
+
+    //TODO remove one of the 2 constructors, for now we need 2 to make VertexIDAssignerTest happy
+    public VertexIDAssigner(Configuration config, KeyColumnValueStoreManager storeManager, StoreFeatures idAuthFeatures) {
+        try {
+            long baseBlockSize = config.get(IDS_BLOCK_SIZE);
+            SimpleVertexIDBlockSizer vertexIDBlockSizer = new SimpleVertexIDBlockSizer(baseBlockSize);
+            KeyColumnValueStore idStore = storeManager.openDatabase(config.get(IDS_STORE_NAME));
+            this.idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, config, vertexIDBlockSizer);
+            int partitionBits = NumberUtil.getPowerOf2(config.get(CLUSTER_MAX_PARTITIONS));
+            idManager = new IDManager(partitionBits);
+            Preconditions.checkArgument(idManager.getPartitionBound() <= Integer.MAX_VALUE && idManager.getPartitionBound() > 0);
+            this.partitionIdBound = (int) idManager.getPartitionBound();
+            hasLocalPartitions = idAuthFeatures.hasLocalKeyPartition();
+
+            placementStrategy = Backend.getImplementationClass(config, config.get(PLACEMENT_STRATEGY), REGISTERED_PLACEMENT_STRATEGIES);
+            placementStrategy.injectIDManager(idManager);
+            LOG.debug("Partition IDs? [{}], Local Partitions? [{}]", true, hasLocalPartitions);
+
+
+            renewTimeoutMS = config.get(IDS_RENEW_TIMEOUT);
+            renewBufferPercentage = config.get(IDS_RENEW_BUFFER_PERCENTAGE);
+
+            idPools = new ConcurrentHashMap<>(partitionIdBound);
+            schemaIdPool = new StandardIDPool(idAuthority, IDManager.SCHEMA_PARTITION, PoolType.SCHEMA.getIDNamespace(),
+                    IDManager.getSchemaCountBound(), renewTimeoutMS, renewBufferPercentage);
+            partitionVertexIdPool = new StandardIDPool(idAuthority, IDManager.PARTITIONED_VERTEX_PARTITION, PoolType.PARTITIONED_VERTEX.getIDNamespace(),
+                    PoolType.PARTITIONED_VERTEX.getCountBound(idManager), renewTimeoutMS, renewBufferPercentage);
+            setLocalPartitions(partitionBits);
+        } catch (BackendException e) {
+            // TODO handle better, or potentially pass the open store as Constructor parameter
+            throw new RuntimeException("Error while trying to open IDs store.", e);
+        }
     }
 
     private void setLocalPartitionsToGlobal(int partitionBits) {
