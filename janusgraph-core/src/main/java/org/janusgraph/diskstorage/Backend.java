@@ -31,7 +31,6 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.KCVSConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
-import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
 import org.janusgraph.diskstorage.indexing.IndexFeatures;
 import org.janusgraph.diskstorage.indexing.IndexInformation;
 import org.janusgraph.diskstorage.indexing.IndexProvider;
@@ -40,7 +39,6 @@ import org.janusgraph.diskstorage.indexing.KeyInformation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.ExpirationKCVSCache;
@@ -81,7 +79,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_CLEAN_WAIT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_SIZE;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_TIME;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_STORE_NAME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_NS;
@@ -109,7 +106,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.US
 
 public class Backend implements LockerProvider, AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(Backend.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Backend.class);
 
     /**
      * These are the names for the edge store and property index databases, respectively.
@@ -126,20 +123,20 @@ public class Backend implements LockerProvider, AutoCloseable {
     public static final String INDEXSTORE_NAME = "graphindex";
 
     public static final String METRICS_STOREMANAGER_NAME = "storeManager";
-    public static final String METRICS_MERGED_STORE = "stores";
-    public static final String METRICS_MERGED_CACHE = "caches";
+    private static final String METRICS_MERGED_STORE = "stores";
+    private static final String METRICS_MERGED_CACHE = "caches";
     public static final String METRICS_CACHE_SUFFIX = ".cache";
     public static final String LOCK_STORE_SUFFIX = "_lock_";
 
     public static final String SYSTEM_TX_LOG_NAME = "txlog";
-    public static final String SYSTEM_MGMT_LOG_NAME = "systemlog";
+    private static final String SYSTEM_MGMT_LOG_NAME = "systemlog";
 
-    public static final double EDGESTORE_CACHE_PERCENT = 0.8;
-    public static final double INDEXSTORE_CACHE_PERCENT = 0.2;
+    private static final double EDGESTORE_CACHE_PERCENT = 0.8;
+    private static final double INDEXSTORE_CACHE_PERCENT = 0.2;
 
     private static final long ETERNAL_CACHE_EXPIRATION = 1000L * 3600 * 24 * 365 * 200; //200 years
 
-    public static final int THREAD_POOL_SIZE_SCALE_FACTOR = 2;
+    private static final int THREAD_POOL_SIZE_SCALE_FACTOR = 2;
 
     private final KeyColumnValueStoreManager storeManager;
     private final KeyColumnValueStoreManager storeManagerLocking;
@@ -148,7 +145,6 @@ public class Backend implements LockerProvider, AutoCloseable {
     private KCVSCache edgeStore;
     private KCVSCache indexStore;
     private KCVSCache txLogStore;
-    private IDAuthority idAuthority;
     private KCVSConfiguration systemConfig;
     private KCVSConfiguration userConfig;
     private boolean hasAttemptedClose;
@@ -188,7 +184,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         txLogManager = getKCVSLogManager(TRANSACTION_LOG);
         userLogManager = getLogManager(USER_LOG);
 
-
         cacheEnabled = !configuration.get(STORAGE_BATCH) && configuration.get(DB_CACHE);
 
         int bufferSizeTmp = configuration.get(BUFFER_SIZE);
@@ -210,7 +205,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         if (configuration.get(PARALLEL_BACKEND_OPS)) {
             int poolSize = Runtime.getRuntime().availableProcessors() * THREAD_POOL_SIZE_SCALE_FACTOR;
             threadPool = Executors.newFixedThreadPool(poolSize);
-            log.debug("Initiated backend operations thread pool of size {}", poolSize);
+            LOG.debug("Initiated backend operations thread pool of size {}", poolSize);
         } else {
             threadPool = null;
         }
@@ -257,16 +252,6 @@ public class Backend implements LockerProvider, AutoCloseable {
      */
     private void initialize() {
         try {
-            //EdgeStore & VertexIndexStore
-            KeyColumnValueStore idStore = storeManager.openDatabase(configuration.get(IDS_STORE_NAME));
-
-            idAuthority = null;
-            if (storeFeatures.isKeyConsistent()) {
-                idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, configuration);
-            } else {
-                throw new IllegalStateException("Store needs to support consistent key or transactional operations for ID manager to guarantee proper id allocations");
-            }
-
             KeyColumnValueStore edgeStoreRaw = storeManagerLocking.openDatabase(EDGESTORE_NAME);
             KeyColumnValueStore indexStoreRaw = storeManagerLocking.openDatabase(INDEXSTORE_NAME);
 
@@ -287,7 +272,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                     Preconditions.checkArgument(cacheSize > 1000, "Cache size is too small: %s", cacheSize);
                     cacheSizeBytes = (long) cacheSize;
                 }
-                log.debug("Configuring total store cache size: {}", cacheSizeBytes);
+                LOG.debug("Configuring total store cache size: {}", cacheSizeBytes);
                 long cleanWaitTime = configuration.get(DB_CACHE_CLEAN_WAIT);
                 Preconditions.checkArgument(EDGESTORE_CACHE_PERCENT + INDEXSTORE_CACHE_PERCENT == 1.0, "Cache percentages don't add up!");
                 long edgeStoreCacheSize = Math.round(cacheSizeBytes * EDGESTORE_CACHE_PERCENT);
@@ -318,10 +303,11 @@ public class Backend implements LockerProvider, AutoCloseable {
                 }
 
                 @Override
-                public void close() throws BackendException {
+                public void close() {
                     //Do nothing, storeManager is closed explicitly by Backend
                 }
             }, systemConfigStore, configuration);
+
             userConfig = kcvsConfigurationBuilder.buildUserConfiguration(new BackendOperation.TransactionalProvider() {
                 @Override
                 public StoreTransaction openTx() throws BackendException {
@@ -354,7 +340,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         try {
             return txLogManager.openLog(SYSTEM_TX_LOG_NAME);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not re-open transaction log", e);
+            throw new JanusGraphException("Could not re-open transaction LOG", e);
         }
     }
 
@@ -362,7 +348,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         try {
             return managementLogManager.openLog(SYSTEM_MGMT_LOG_NAME);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not re-open management log", e);
+            throw new JanusGraphException("Could not re-open management LOG", e);
         }
     }
 
@@ -395,7 +381,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         return userLogManager.openLog(getUserLogName(identifier));
     }
 
-    public static String getUserLogName(String identifier) {
+    private static String getUserLogName(String identifier) {
         Preconditions.checkArgument(StringUtils.isNotBlank(identifier));
         return USER_LOG_PREFIX + identifier;
     }
@@ -413,12 +399,12 @@ public class Backend implements LockerProvider, AutoCloseable {
         return configuration.get(METRICS_MERGE_STORES) ? METRICS_MERGED_CACHE : storeName + METRICS_CACHE_SUFFIX;
     }
 
-    public KCVSLogManager getKCVSLogManager(String logName) {
+    private KCVSLogManager getKCVSLogManager(String logName) {
         Preconditions.checkArgument(configuration.restrictTo(logName).get(LOG_BACKEND).equalsIgnoreCase(LOG_BACKEND.getDefaultValue()));
         return (KCVSLogManager) getLogManager(logName);
     }
 
-    public LogManager getLogManager(String logName) {
+    private LogManager getLogManager(String logName) {
         Configuration logConfig = configuration.restrictTo(logName);
         String backend = logConfig.get(LOG_BACKEND);
         if (backend.equalsIgnoreCase(LOG_BACKEND.getDefaultValue())) {
@@ -432,7 +418,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         ImmutableMap.Builder<String, IndexProvider> builder = ImmutableMap.builder();
         for (String index : config.getContainedNamespaces(INDEX_NS)) {
             Preconditions.checkArgument(StringUtils.isNotBlank(index), "Invalid index name [%s]", index);
-            log.debug("Configuring index [{}]", index);
+            LOG.debug("Configuring index [{}]", index);
             IndexProvider provider = getImplementationClass(config.restrictTo(index), config.get(INDEX_BACKEND, index),
                     StandardIndexProvider.getAllProviderClasses());
             Preconditions.checkNotNull(provider);
@@ -449,21 +435,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         return ConfigurationUtil.instantiate(className, new Object[]{config}, new Class[]{Configuration.class});
     }
 
-
-    /**
-     * Returns the configured {@link IDAuthority}.
-     *
-     * @return
-     */
-    public IDAuthority getIDAuthority() {
-        return Preconditions.checkNotNull(idAuthority, "Backend has not yet been initialized");
-    }
-
-    /**
-     * Returns the {@link StoreFeatures} of the configured backend storage engine.
-     *
-     * @return
-     */
     public StoreFeatures getStoreFeatures() {
         return storeFeatures;
     }
@@ -472,7 +443,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         return storeManager.getClass();
     }
 
-    public StoreManager getStoreManager() {
+    public KeyColumnValueStoreManager getStoreManager() {
         return storeManager;
     }
 
@@ -524,7 +495,6 @@ public class Backend implements LockerProvider, AutoCloseable {
                 scanner.close();
                 if (edgeStore != null) edgeStore.close();
                 if (indexStore != null) indexStore.close();
-                if (idAuthority != null) idAuthority.close();
                 if (systemConfig != null) systemConfig.close();
                 if (userConfig != null) userConfig.close();
                 //Indexes
@@ -536,7 +506,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                 }
             }
         } else {
-            log.debug("Backend {} has already been closed or cleared", this);
+            LOG.debug("Backend {} has already been closed or cleared", this);
         }
     }
 
@@ -557,7 +527,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             scanner.close();
             edgeStore.close();
             indexStore.close();
-            idAuthority.close();
             systemConfig.close();
             userConfig.close();
             storeManager.clearStorage();
@@ -568,7 +537,7 @@ public class Backend implements LockerProvider, AutoCloseable {
                 index.close();
             }
         } else {
-            log.warn("Backend {} has already been closed or cleared", this);
+            LOG.warn("Backend {} has already been closed or cleared", this);
         }
     }
 
@@ -585,15 +554,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     static {
         final Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
-
-//        m.put(StandardStoreManager.BDB_JE, STORAGE_DIRECTORY);
-//        m.put(StandardStoreManager.CASSANDRA_ASTYANAX, STORAGE_HOSTS);
-//        m.put(StandardStoreManager.CASSANDRA_EMBEDDED, STORAGE_CONF_FILE);
-//        m.put(StandardStoreManager.CASSANDRA_THRIFT, STORAGE_HOSTS);
-//        m.put(StandardStoreManager.HBASE, STORAGE_HOSTS);
-        //m.put(StandardStorageBackend.IN_MEMORY, null);
-
-        //STORE_SHORTHAND_OPTIONS = Maps.immutableEnumMap(m);
         STORE_SHORTHAND_OPTIONS = ImmutableMap.copyOf(m);
     }
 
@@ -612,7 +572,7 @@ public class Backend implements LockerProvider, AutoCloseable {
     }
 
     public static final Map<String, String> REGISTERED_LOG_MANAGERS = new HashMap<String, String>() {{
-        put("default", "org.janusgraph.diskstorage.log.kcvs.KCVSLogManager");
+        put("default", "org.janusgraph.diskstorage.LOG.kcvs.KCVSLogManager");
     }};
 
     private final Function<String, Locker> CONSISTENT_KEY_LOCKER_CREATOR = new Function<String, Locker>() {

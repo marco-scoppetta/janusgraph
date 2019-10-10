@@ -104,7 +104,7 @@ public class CQLGraphTest extends JanusGraphTest {
 
         graph = JanusGraphFactory.open(config);
 
-        StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.buildTransaction()
+        StandardJanusGraphTx tx = graph.buildTransaction()
                 .customOption(ConfigElement.getPath(READ_CONSISTENCY), "ONE")
                 .customOption(ConfigElement.getPath(WRITE_CONSISTENCY), "TWO").start();
 

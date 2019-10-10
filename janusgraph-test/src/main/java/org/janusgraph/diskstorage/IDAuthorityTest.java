@@ -18,25 +18,22 @@ import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongSet;
 import com.google.common.base.Preconditions;
 import org.janusgraph.StorageSetup;
-
 import org.janusgraph.diskstorage.configuration.Configuration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.diskstorage.idmanagement.ConflictAvoidanceMode;
 import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 import org.janusgraph.graphdb.JanusGraphBaseTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
-
 import org.janusgraph.graphdb.database.idassigner.IDBlockSizer;
 import org.janusgraph.graphdb.database.idassigner.IDPoolExhaustedException;
 import org.janusgraph.graphdb.idmanagement.UniqueInstanceIdRetriever;
 import org.janusgraph.testutil.TestGraphConfigs;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -47,7 +44,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
@@ -55,6 +56,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_CAV_BITS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_CAV_RETRIES;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_CAV_TAG;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_CONFLICT_AVOIDANCE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_WAIT;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_BLOCK_SIZE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -69,7 +84,7 @@ public abstract class IDAuthorityTest {
     public static final Duration GET_ID_BLOCK_TIMEOUT = Duration.ofMillis(300000L);
 
     @BeforeEach
-    public void print(TestInfo testInfo){
+    public void print(TestInfo testInfo) {
         JanusGraphBaseTest.fancyPrintOut(testInfo);
     }
 
@@ -85,21 +100,22 @@ public abstract class IDAuthorityTest {
         configurations.add(arguments(checkAndReturnWriteConfiguration(c)));
 
         c = getBasicConfig();
-        c.set(IDAUTHORITY_CAV_BITS,9);
-        c.set(IDAUTHORITY_CAV_TAG,511);
+        c.set(IDAUTHORITY_CAV_BITS, 9);
+        c.set(IDAUTHORITY_CAV_TAG, 511);
         configurations.add(arguments(checkAndReturnWriteConfiguration(c)));
 
         c = getBasicConfig();
-        c.set(IDAUTHORITY_CAV_RETRIES,10);
+        c.set(IDAUTHORITY_CAV_RETRIES, 10);
         c.set(IDAUTHORITY_WAIT, Duration.ofMillis(10L));
-        c.set(IDAUTHORITY_CAV_BITS,7);
+        c.set(IDAUTHORITY_CAV_BITS, 7);
         //c.set(IDAUTHORITY_RANDOMIZE_UNIQUEID,true);
         c.set(IDAUTHORITY_CONFLICT_AVOIDANCE, ConflictAvoidanceMode.GLOBAL_AUTO);
         configurations.add(arguments(checkAndReturnWriteConfiguration(c)));
 
         return configurations.stream();
     }
-    private static WriteConfiguration checkAndReturnWriteConfiguration(ModifiableConfiguration baseConfig){
+
+    private static WriteConfiguration checkAndReturnWriteConfiguration(ModifiableConfiguration baseConfig) {
         WriteConfiguration writeConfiguration = baseConfig.getConfiguration();
         Preconditions.checkNotNull(writeConfiguration);
         TestGraphConfigs.applyOverrides(writeConfiguration);
@@ -109,7 +125,7 @@ public abstract class IDAuthorityTest {
     public static ModifiableConfiguration getBasicConfig() {
         ModifiableConfiguration c = GraphDatabaseConfiguration.buildGraphConfiguration();
         c.set(IDAUTHORITY_WAIT, Duration.ofMillis(100L));
-        c.set(IDS_BLOCK_SIZE,400);
+        c.set(IDS_BLOCK_SIZE, 400);
         return c;
     }
 
@@ -117,6 +133,7 @@ public abstract class IDAuthorityTest {
     private IDAuthority[] idAuthorities;
 
     private WriteConfiguration baseStoreConfiguration;
+    private ModifiableConfiguration sc;
 
     private int uidBitWidth;
     private boolean hasFixedUid;
@@ -129,9 +146,8 @@ public abstract class IDAuthorityTest {
         this.baseStoreConfiguration = baseConfig;
         Configuration config = StorageSetup.getConfig(baseConfig);
         uidBitWidth = config.get(IDAUTHORITY_CAV_BITS);
-        //hasFixedUid = !config.get(IDAUTHORITY_RANDOMIZE_UNIQUEID);
         hasFixedUid = !ConflictAvoidanceMode.GLOBAL_AUTO.equals(config.get(IDAUTHORITY_CONFLICT_AVOIDANCE));
-        hasEmptyUid = uidBitWidth==0;
+        hasEmptyUid = uidBitWidth == 0;
         blockSize = config.get(IDS_BLOCK_SIZE);
         StoreManager m = openStorageManager();
         m.clearStorage();
@@ -147,25 +163,25 @@ public abstract class IDAuthorityTest {
 
         for (int i = 0; i < CONCURRENCY; i++) {
 
-            ModifiableConfiguration sc = StorageSetup.getConfig(baseStoreConfiguration.copy());
+            sc = StorageSetup.getConfig(baseStoreConfiguration.copy());
             //sc.set(GraphDatabaseConfiguration.INSTANCE_RID_SHORT,(short)i);
-            sc.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID_SUFFIX, (short)i);
+            sc.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID_SUFFIX, (short) i);
             if (!sc.has(UNIQUE_INSTANCE_ID)) {
                 String uniqueGraphId = UniqueInstanceIdRetriever.getInstance().getOrGenerateUniqueInstanceId(sc);
                 log.debug("Setting unique instance id: {}", uniqueGraphId);
                 sc.set(UNIQUE_INSTANCE_ID, uniqueGraphId);
             }
-            sc.set(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS,MAX_NUM_PARTITIONS);
+            sc.set(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS, MAX_NUM_PARTITIONS);
 
             manager[i] = openStorageManager();
             StoreFeatures storeFeatures = manager[i].getFeatures();
             KeyColumnValueStore idStore = manager[i].openDatabase("ids");
-            if (storeFeatures.isKeyConsistent())
-                idAuthorities[i] = new ConsistentKeyIDAuthority(idStore, manager[i], sc);
-            else throw new IllegalArgumentException("Cannot open id store");
+            if (storeFeatures.isKeyConsistent()) {
+                IDBlockSizer blockSizer = new InnerIDBlockSizer();
+                idAuthorities[i] = new ConsistentKeyIDAuthority(idStore, manager[i], sc, blockSizer);
+            } else throw new IllegalArgumentException("Cannot open id store");
         }
     }
-
 
 
     public void close() throws BackendException {
@@ -189,22 +205,23 @@ public abstract class IDAuthorityTest {
     }
 
     private void checkBlock(IDBlock block, LongSet ids) {
-        assertEquals(blockSize,block.numIds());
-        for (int i=0;i<blockSize;i++) {
+        assertEquals(blockSize, block.numIds());
+        for (int i = 0; i < blockSize; i++) {
             long id = block.getId(i);
-            assertEquals(id,block.getId(i));
+            assertEquals(id, block.getId(i));
             assertFalse(ids.contains(id));
-            assertTrue(id<idUpperBound);
-            assertTrue(id>0);
+            assertTrue(id < idUpperBound);
+            assertTrue(id > 0);
             ids.add(id);
         }
         if (hasEmptyUid) {
-            assertEquals(blockSize-1,block.getId(block.numIds()-1)-block.getId(0));
+            assertEquals(blockSize - 1, block.getId(block.numIds() - 1) - block.getId(0));
         }
         try {
             block.getId(blockSize);
             fail();
-        } catch (ArrayIndexOutOfBoundsException ignored) {}
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+        }
     }
 
     @ParameterizedTest
@@ -215,8 +232,8 @@ public abstract class IDAuthorityTest {
          * values reflect a problem in either this test or the
          * implementation-under-test.
          */
-        final Set<String> uniqueIds = new HashSet<>();
-        final String uidErrorMessage = "Uniqueness failure detected for config option " + UNIQUE_INSTANCE_ID.getName();
+        Set<String> uniqueIds = new HashSet<>();
+        String uidErrorMessage = "Uniqueness failure detected for config option " + UNIQUE_INSTANCE_ID.getName();
         for (int i = 0; i < CONCURRENCY; i++) {
             String uid = idAuthorities[i].getUniqueID();
             assertTrue(!uniqueIds.contains(uid), uidErrorMessage);
@@ -229,31 +246,30 @@ public abstract class IDAuthorityTest {
     @MethodSource("configs")
     public void testSimpleIDAcquisition(WriteConfiguration baseConfig) throws Exception {
         setUp(baseConfig);
-        final IDBlockSizer blockSizer = new InnerIDBlockSizer();
-        idAuthorities[0].setIDBlockSizer(blockSizer);
         int numTrials = 100;
-        LongSet ids = new LongHashSet((int)blockSize*numTrials);
+        LongSet ids = new LongHashSet((int) blockSize * numTrials);
         long previous = 0;
-        for (int i=0;i<numTrials;i++) {
+        for (int i = 0; i < numTrials; i++) {
             IDBlock block = idAuthorities[0].getIDBlock(0, 0, GET_ID_BLOCK_TIMEOUT);
-            checkBlock(block,ids);
+            checkBlock(block, ids);
             if (hasEmptyUid) {
-                if (previous!=0)
-                    assertEquals(previous+1, block.getId(0));
-                previous=block.getId(block.numIds()-1);
+                if (previous != 0)
+                    assertEquals(previous + 1, block.getId(0));
+                previous = block.getId(block.numIds() - 1);
             }
         }
     }
+
 
     @ParameterizedTest
     @MethodSource("configs")
     public void testIDExhaustion(WriteConfiguration baseConfig) throws Exception {
         setUp(baseConfig);
-        final int chunks = 30;
-        final IDBlockSizer blockSizer = new IDBlockSizer() {
+        int chunks = 30;
+        IDBlockSizer blockSizer = new IDBlockSizer() {
             @Override
             public long getBlockSize(int idNamespace) {
-                return ((1L <<(idUpperBoundBitWidth-uidBitWidth))-1)/chunks;
+                return ((1L << (idUpperBoundBitWidth - uidBitWidth)) - 1) / chunks;
             }
 
             @Override
@@ -261,25 +277,30 @@ public abstract class IDAuthorityTest {
                 return idUpperBound;
             }
         };
-        idAuthorities[0].setIDBlockSizer(blockSizer);
+        KeyColumnValueStoreManager storeManager = openStorageManager();
+        StoreFeatures storeFeatures = storeManager.getFeatures();
+        KeyColumnValueStore idStore = storeManager.openDatabase("ids");
+        ConsistentKeyIDAuthority idAuthority = new ConsistentKeyIDAuthority(idStore, storeManager, sc, blockSizer);
         if (hasFixedUid) {
-            for (int i=0;i<chunks;i++) {
-                idAuthorities[0].getIDBlock(0,0,GET_ID_BLOCK_TIMEOUT);
+            for (int i = 0; i < chunks; i++) {
+                idAuthority.getIDBlock(0, 0, GET_ID_BLOCK_TIMEOUT);
             }
             try {
-                idAuthorities[0].getIDBlock(0,0,GET_ID_BLOCK_TIMEOUT);
+                idAuthority.getIDBlock(0, 0, GET_ID_BLOCK_TIMEOUT);
                 fail();
-            } catch (IDPoolExhaustedException ignored) {}
+            } catch (IDPoolExhaustedException ignored) {
+            }
         } else {
-            for (int i=0;i<(chunks*Math.max(1,(1<<uidBitWidth)/10));i++) {
-                idAuthorities[0].getIDBlock(0,0,GET_ID_BLOCK_TIMEOUT);
+            for (int i = 0; i < (chunks * Math.max(1, (1 << uidBitWidth) / 10)); i++) {
+                idAuthority.getIDBlock(0, 0, GET_ID_BLOCK_TIMEOUT);
             }
             try {
-                for (int i=0;i<(chunks*Math.max(1,(1<<uidBitWidth)*9/10));i++) {
-                    idAuthorities[0].getIDBlock(0,0,GET_ID_BLOCK_TIMEOUT);
+                for (int i = 0; i < (chunks * Math.max(1, (1 << uidBitWidth) * 9 / 10)); i++) {
+                    idAuthority.getIDBlock(0, 0, GET_ID_BLOCK_TIMEOUT);
                 }
                 fail();
-            } catch (IDPoolExhaustedException ignored) {}
+            } catch (IDPoolExhaustedException ignored) {
+            }
         }
     }
 
@@ -311,14 +332,13 @@ public abstract class IDAuthorityTest {
 
         ExecutorService es = Executors.newFixedThreadPool(CONCURRENCY);
 
-        final IDAuthority targetAuthority = idAuthorities[0];
-        targetAuthority.setIDBlockSizer(new InnerIDBlockSizer());
-        final int targetPartition = 0;
-        final int targetNamespace = 2;
+        IDAuthority targetAuthority = idAuthorities[0];
+        int targetPartition = 0;
+        int targetNamespace = 2;
 
-        final ConcurrentLinkedQueue<IDBlock> blocks = new ConcurrentLinkedQueue<>();
-        final int blocksPerThread = 40;
-        final List <Future<Void>> futures = new ArrayList<>(CONCURRENCY);
+        ConcurrentLinkedQueue<IDBlock> blocks = new ConcurrentLinkedQueue<>();
+        int blocksPerThread = 40;
+        List<Future<Void>> futures = new ArrayList<>(CONCURRENCY);
 
         // Start some concurrent threads getting blocks the same ID authority and same partition in that authority
         for (int c = 0; c < CONCURRENCY; c++) {
@@ -335,8 +355,8 @@ public abstract class IDAuthorityTest {
 
                 private void getBlock() throws BackendException {
                     for (int i = 0; i < blocksPerThread; i++) {
-                        IDBlock block = targetAuthority.getIDBlock(targetPartition,targetNamespace,
-                            GET_ID_BLOCK_TIMEOUT);
+                        IDBlock block = targetAuthority.getIDBlock(targetPartition, targetNamespace,
+                                GET_ID_BLOCK_TIMEOUT);
                         assertNotNull(block);
                         blocks.add(block);
                     }
@@ -351,33 +371,31 @@ public abstract class IDAuthorityTest {
         es.shutdownNow();
 
         assertEquals(blocksPerThread * CONCURRENCY, blocks.size());
-        LongSet ids = new LongHashSet((int)blockSize*blocksPerThread*CONCURRENCY);
-        for (IDBlock block : blocks) checkBlock(block,ids);
+        LongSet ids = new LongHashSet((int) blockSize * blocksPerThread * CONCURRENCY);
+        for (IDBlock block : blocks) checkBlock(block, ids);
     }
 
     @ParameterizedTest
     @MethodSource("configs")
     public void testMultiIDAcquisition(WriteConfiguration baseConfig) throws Throwable {
         setUp(baseConfig);
-        final int numPartitions = MAX_NUM_PARTITIONS;
-        final int numAcquisitionsPerThreadPartition = 100;
-        final IDBlockSizer blockSizer = new InnerIDBlockSizer();
-        for (int i = 0; i < CONCURRENCY; i++) idAuthorities[i].setIDBlockSizer(blockSizer);
-        final List<ConcurrentLinkedQueue<IDBlock>> ids = new ArrayList<>(numPartitions);
+        int numPartitions = MAX_NUM_PARTITIONS;
+        int numAcquisitionsPerThreadPartition = 100;
+        List<ConcurrentLinkedQueue<IDBlock>> ids = new ArrayList<>(numPartitions);
         for (int i = 0; i < numPartitions; i++) {
             ids.add(new ConcurrentLinkedQueue<>());
         }
 
-        final int maxIterations = numAcquisitionsPerThreadPartition * numPartitions * 2;
-        final Collection<Future<?>> futures = new ArrayList<>(CONCURRENCY);
+        int maxIterations = numAcquisitionsPerThreadPartition * numPartitions * 2;
+        Collection<Future<?>> futures = new ArrayList<>(CONCURRENCY);
         ExecutorService es = Executors.newFixedThreadPool(CONCURRENCY);
 
-        final Set<String> uniqueIds = new HashSet<>(CONCURRENCY);
+        Set<String> uniqueIds = new HashSet<>(CONCURRENCY);
         for (int i = 0; i < CONCURRENCY; i++) {
-            final IDAuthority idAuthority = idAuthorities[i];
-            final IDStressor stressRunnable = new IDStressor(
-                numAcquisitionsPerThreadPartition, numPartitions,
-                maxIterations, idAuthority, ids);
+            IDAuthority idAuthority = idAuthorities[i];
+            IDStressor stressRunnable = new IDStressor(
+                    numAcquisitionsPerThreadPartition, numPartitions,
+                    maxIterations, idAuthority, ids);
             uniqueIds.add(idAuthority.getUniqueID());
             futures.add(es.submit(stressRunnable));
         }
@@ -397,8 +415,8 @@ public abstract class IDAuthorityTest {
         for (int i = 0; i < numPartitions; i++) {
             ConcurrentLinkedQueue<IDBlock> list = ids.get(i);
             assertEquals(numAcquisitionsPerThreadPartition * CONCURRENCY, list.size());
-            LongSet idSet = new LongHashSet((int)blockSize*list.size());
-            for (IDBlock block : list) checkBlock(block,idSet);
+            LongSet idSet = new LongHashSet((int) blockSize * list.size());
+            for (IDBlock block : list) checkBlock(block, idSet);
         }
 
         es.shutdownNow();
@@ -454,8 +472,8 @@ public abstract class IDAuthorityTest {
                         if (hasEmptyUid) {
                             long start = block.getId(0);
                             assertTrue(lastStart[p] <= start,
-                                "Previous block start " + lastStart[p] + " exceeds next block start "
-                                    + start);
+                                    "Previous block start " + lastStart[p] + " exceeds next block start "
+                                            + start);
                             lastStart[p] = start;
                         }
                     }
@@ -467,7 +485,7 @@ public abstract class IDAuthorityTest {
 
             IDBlock block;
             try {
-                block = authority.getIDBlock(partitionIndex,partitionIndex,GET_ID_BLOCK_TIMEOUT);
+                block = authority.getIDBlock(partitionIndex, partitionIndex, GET_ID_BLOCK_TIMEOUT);
             } catch (BackendException e) {
                 log.error("Unexpected exception while getting ID block", e);
                 return null;
@@ -479,7 +497,7 @@ public abstract class IDAuthorityTest {
              * block claim even though a subsequent getIDBlock() does not.
              */
 //            assertTrue(nextId <= block[0]);
-            if (hasEmptyUid) assertEquals(block.getId(0)+ blockSize-1, block.getId(blockSize-1));
+            if (hasEmptyUid) assertEquals(block.getId(0) + blockSize - 1, block.getId(blockSize - 1));
             log.trace("Obtained ID block {}", block);
 
             return block;
@@ -487,8 +505,8 @@ public abstract class IDAuthorityTest {
 
         private void throwIterationsExceededException() {
             throw new RuntimeException(
-                "Exceeded maximum ID allocation iteration count ("
-                    + maxIterations + "); too many timeouts?");
+                    "Exceeded maximum ID allocation iteration count ("
+                            + maxIterations + "); too many timeouts?");
         }
     }
 

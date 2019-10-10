@@ -27,7 +27,7 @@ public class BaseQuery implements Query {
         this(NO_LIMIT);
     }
 
-    public BaseQuery(final int limit) {
+    public BaseQuery(int limit) {
         assert limit >= 0;
         this.limit = limit;
     }
@@ -37,7 +37,7 @@ public class BaseQuery implements Query {
      * @param limit
      * @return
      */
-    public BaseQuery setLimit(final int limit) {
+    public BaseQuery setLimit(int limit) {
         assert limit >= 0;
         this.limit = limit;
         return this;

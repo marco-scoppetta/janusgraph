@@ -43,14 +43,14 @@ public class SliceQuery extends BaseQuery implements BackendQuery<SliceQuery> {
     private final StaticBuffer sliceStart;
     private final StaticBuffer sliceEnd;
 
-    public SliceQuery(final StaticBuffer sliceStart, final StaticBuffer sliceEnd) {
+    public SliceQuery(StaticBuffer sliceStart, StaticBuffer sliceEnd) {
         assert sliceStart != null && sliceEnd != null;
 
         this.sliceStart = sliceStart;
         this.sliceEnd = sliceEnd;
     }
 
-    public SliceQuery(final SliceQuery query) {
+    public SliceQuery(SliceQuery query) {
         this(query.getSliceStart(), query.getSliceEnd());
         setLimit(query.getLimit());
     }
@@ -103,12 +103,12 @@ public class SliceQuery extends BaseQuery implements BackendQuery<SliceQuery> {
     }
 
     //TODO: make this more efficient by using reuseIterator() on otherResult
-    public EntryList getSubset(final SliceQuery otherQuery, final EntryList otherResult) {
+    public EntryList getSubset(SliceQuery otherQuery, EntryList otherResult) {
         assert otherQuery.subsumes(this);
         int pos = Collections.binarySearch(otherResult, sliceStart);
         if (pos < 0) pos = -pos - 1;
 
-        final List<Entry> result = new ArrayList<>();
+        List<Entry> result = new ArrayList<>();
         for (; pos < otherResult.size() && result.size() < getLimit(); pos++) {
             Entry e = otherResult.get(pos);
             if (e.getColumnAs(StaticBuffer.STATIC_FACTORY).compareTo(sliceEnd) < 0) result.add(e);

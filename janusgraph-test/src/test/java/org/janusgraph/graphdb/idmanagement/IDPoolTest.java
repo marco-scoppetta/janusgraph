@@ -39,13 +39,8 @@ import org.janusgraph.graphdb.database.idassigner.StandardIDPool;
 import org.janusgraph.util.datastructures.IntHashSet;
 import org.janusgraph.util.datastructures.IntSet;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 
 public class IDPoolTest {
-
-
 
     @Test
     public void testStandardIDPool1() throws InterruptedException {
@@ -144,11 +139,6 @@ public class IDPoolTest {
 
             @Override
             public List<KeyRange> getLocalIDPartition() {
-                throw new IllegalArgumentException();
-            }
-
-            @Override
-            public void setIDBlockSizer(IDBlockSizer sizer) {
                 throw new IllegalArgumentException();
             }
 
