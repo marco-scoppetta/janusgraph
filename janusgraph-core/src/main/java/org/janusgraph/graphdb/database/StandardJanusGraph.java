@@ -154,8 +154,8 @@ public class StandardJanusGraph implements JanusGraph {
     private final TimestampProvider timestampProvider;
 
     //Serializers
-    protected final IndexSerializer indexSerializer;
-    protected final EdgeSerializer edgeSerializer;
+    private final IndexSerializer indexSerializer;
+    private final EdgeSerializer edgeSerializer;
     protected final Serializer serializer;
 
     //Caches

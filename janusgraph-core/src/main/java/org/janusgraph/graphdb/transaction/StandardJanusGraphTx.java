@@ -313,8 +313,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
      * Note, that an exception is thrown if the vertex id is not a valid JanusGraph vertex id or if a vertex with the given
      * id already exists. Only accepts long ids - all others are ignored.
      * <p>
-     * Custom id setting must be enabled via the configuration option {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#ALLOW_SETTING_VERTEX_ID}
-     * and valid JanusGraph vertex ids must be provided. Use {@link org.janusgraph.graphdb.idmanagement.IDManager#toVertexId(long)}
+     * A valid JanusGraph vertex ids must be provided. Use {@link org.janusgraph.graphdb.idmanagement.IDManager#toVertexId(long)}
      * to construct a valid JanusGraph vertex id from a user id, where <code>idManager</code> can be obtained through
      * {@link org.janusgraph.graphdb.database.StandardJanusGraph#getIDManager()}.
      * <pre>
@@ -327,9 +326,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     @Override
     public JanusGraphVertex addVertex(Object... keyValues) {
         ElementHelper.legalPropertyKeyValueArray(keyValues);
-        if (ElementHelper.getIdValue(keyValues).isPresent() && !getGraph().getConfiguration().allowVertexIdSetting()) {
-            throw Vertex.Exceptions.userSuppliedIdsNotSupported();
-        }
         Object labelValue = null;
         for (int i = 0; i < keyValues.length; i = i + 2) {
             if (keyValues[i].equals(T.label)) {
@@ -670,11 +666,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     public JanusGraphVertex addVertex(Long vertexId, VertexLabel label) {
         verifyWriteAccess();
         if (label == null) label = BaseVertexLabel.DEFAULT_VERTEXLABEL;
-        if (vertexId != null && !graph.getConfiguration().allowVertexIdSetting()) {
-            LOG.info("Provided vertex id [{}] is ignored because vertex id setting is not enabled", vertexId);
-            vertexId = null;
-        }
-        Preconditions.checkArgument(vertexId != null || !graph.getConfiguration().allowVertexIdSetting(), "Must provide vertex id");
         Preconditions.checkArgument(vertexId == null || IDManager.VertexIDType.NormalVertex.is(vertexId), "Not a valid vertex id: %s", vertexId);
         Preconditions.checkArgument(vertexId == null || ((InternalVertexLabel) label).hasDefaultConfiguration(), "Cannot only use default vertex labels: %s", label);
         Preconditions.checkArgument(vertexId == null || !config.hasVerifyExternalVertexExistence() || !containsVertex(vertexId), "Vertex with given id already exists: %s", vertexId);
@@ -831,47 +822,10 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         return uniqueLock;
     }
 
-    private void checkPropertyConstraintForVertexOrCreatePropertyConstraint(JanusGraphVertex vertex, PropertyKey key) {
-        if (config.hasDisabledSchemaConstraints()) return;
-        VertexLabel vertexLabel = vertex.vertexLabel();
-        if (vertexLabel instanceof BaseVertexLabel) return;
-        Collection<PropertyKey> propertyKeys = vertexLabel.mappedProperties();
-        if (propertyKeys.contains(key)) return;
-        config.getAutoSchemaMaker().makePropertyConstraintForVertex(vertexLabel, key, this);
-    }
-
-    public void checkPropertyConstraintForEdgeOrCreatePropertyConstraint(StandardEdge edge, PropertyKey key) {
-        if (config.hasDisabledSchemaConstraints()) return;
-        EdgeLabel edgeLabel = edge.edgeLabel();
-        if (edgeLabel instanceof BaseLabel) return;
-        Collection<PropertyKey> propertyKeys = edgeLabel.mappedProperties();
-        if (propertyKeys.contains(key)) return;
-        config.getAutoSchemaMaker().makePropertyConstraintForEdge(edgeLabel, key, this);
-    }
-
-    private void checkConnectionConstraintOrCreateConnectionConstraint(JanusGraphVertex outVertex, JanusGraphVertex inVertex, EdgeLabel edgeLabel) {
-        if (config.hasDisabledSchemaConstraints()) return;
-
-        VertexLabel outVertexLabel = outVertex.vertexLabel();
-        if (outVertexLabel instanceof BaseVertexLabel) return;
-
-        VertexLabel inVertexLabel = inVertex.vertexLabel();
-        if (inVertexLabel instanceof BaseVertexLabel) return;
-
-        Collection<Connection> connections = outVertexLabel.mappedConnections();
-        for (Connection connection : connections) {
-            if (connection.getIncomingVertexLabel() != inVertexLabel) continue;
-            if (connection.getEdgeLabel().equals(edgeLabel.name())) return;
-        }
-        config.getAutoSchemaMaker().makeConnectionConstraint(edgeLabel, outVertexLabel, inVertexLabel, this);
-    }
-
     public JanusGraphEdge addEdge(JanusGraphVertex outVertex, JanusGraphVertex inVertex, EdgeLabel label) {
         verifyWriteAccess(outVertex, inVertex);
         outVertex = ((InternalVertex) outVertex).it();
         inVertex = ((InternalVertex) inVertex).it();
-        Preconditions.checkNotNull(label);
-        checkConnectionConstraintOrCreateConnectionConstraint(outVertex, inVertex, label);
         Multiplicity multiplicity = label.multiplicity();
         TransactionLock uniqueLock = getUniquenessLock(outVertex, (InternalRelationType) label, inVertex);
         uniqueLock.lock(LOCK_TIMEOUT);
@@ -924,7 +878,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         Preconditions.checkArgument(!(key instanceof ImplicitKey), "Cannot create a property of implicit type: %s", key.name());
         vertex = ((InternalVertex) vertex).it();
         Preconditions.checkNotNull(key);
-        checkPropertyConstraintForVertexOrCreatePropertyConstraint(vertex, key);
         Object normalizedValue = verifyAttribute(key, value);
         Cardinality keyCardinality = key.cardinality();
 

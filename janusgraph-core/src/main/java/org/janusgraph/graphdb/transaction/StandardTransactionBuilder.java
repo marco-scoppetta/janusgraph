@@ -94,7 +94,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         if (graphConfig.isBatchLoading()) enableBatchLoading();
         this.graph = graph;
         this.defaultSchemaMaker = graphConfig.getDefaultSchemaMaker();
-        this.hasDisabledSchemaConstraints = graphConfig.hasDisabledSchemaConstraints();
         this.assignIDsImmediately = graphConfig.hasFlushIDs();
         this.forceIndexUsage = graphConfig.hasForceIndexUsage();
         this.groupName = graphConfig.getMetricsPrefix();
@@ -113,7 +112,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         if (graphConfig.isBatchLoading()) enableBatchLoading();
         this.graph = graph;
         this.defaultSchemaMaker = graphConfig.getDefaultSchemaMaker();
-        this.hasDisabledSchemaConstraints = graphConfig.hasDisabledSchemaConstraints();
         this.assignIDsImmediately = graphConfig.hasFlushIDs();
         this.forceIndexUsage = graphConfig.hasForceIndexUsage();
         this.groupName = graphConfig.getMetricsPrefix();
@@ -238,7 +236,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
                 propertyPrefetching, singleThreaded, threadBound, getTimestampProvider(), userCommitTime,
                 indexCacheWeight, getVertexCacheSize(), getDirtyVertexSize(),
                 logIdentifier, restrictedPartitions, groupName,
-                defaultSchemaMaker, hasDisabledSchemaConstraints, customOptions);
+                defaultSchemaMaker, customOptions);
         return graph.newTransaction(immutable);
     }
 
@@ -417,7 +415,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
                 int[] restrictedPartitions,
                 String groupName,
                 DefaultSchemaMaker defaultSchemaMaker,
-                boolean hasDisabledSchemaConstraints,
                 Configuration customOptions) {
             this.isReadOnly = isReadOnly;
             this.hasEnabledBatchLoading = hasEnabledBatchLoading;

@@ -176,7 +176,7 @@ public class JanusGraphFeatures implements Graph.Features {
 
         @Override
         public boolean supportsUserSuppliedIds() {
-            return JanusGraphFeatures.this.graph.getConfiguration().allowVertexIdSetting();
+            return false;
         }
 
         @Override

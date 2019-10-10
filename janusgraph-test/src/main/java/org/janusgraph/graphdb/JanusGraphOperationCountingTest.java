@@ -19,7 +19,6 @@ import com.codahale.metrics.MetricFilter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -47,6 +46,7 @@ import org.janusgraph.graphdb.internal.InternalVertexLabel;
 import org.janusgraph.graphdb.types.CompositeIndexType;
 import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.util.stats.MetricManager;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +74,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_STORE_NAME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_MERGE_STORES;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.PROPERTY_PREFETCHING;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.SCHEMA_CONSTRAINTS;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_NAME;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_RELATIONS;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_TYPENAME;
@@ -256,45 +255,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
 
 
     }
-
-    @Test
-    public void testSettingProperty() {
-        metricsPrefix = "testSettingProperty";
-
-        mgmt.makePropertyKey("foo").dataType(String.class).cardinality(Cardinality.SINGLE).make();
-        finishSchema();
-
-        clopen(option(SCHEMA_CONSTRAINTS), true);
-
-        JanusGraphVertex v = tx.addVertex();
-        v.property("foo", "bar");
-        tx.commit();
-
-
-        JanusGraphTransaction tx = graph.buildTransaction().checkExternalVertexExistence(false).groupName(metricsPrefix).start();
-        v = tx.getVertex(v.longId());
-        v.property("foo", "bus");
-        long numLookupPropertyConstraints = 1;
-        //printAllMetrics(metricsPrefix);
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, numLookupPropertyConstraints));
-        verifyStoreMetrics(INDEXSTORE_NAME);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L));
-
-        tx = graph.buildTransaction().checkExternalVertexExistence(false).groupName(metricsPrefix).start();
-        v = tx.getVertex(v.longId());
-        v.property("foo", "band");
-        numLookupPropertyConstraints += 1;
-        assertEquals("band", v.property("foo").value());
-        assertEquals(1, Iterators.size(v.properties("foo")));
-        assertEquals(1, Iterators.size(v.properties()));
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 2L + numLookupPropertyConstraints));
-        verifyStoreMetrics(INDEXSTORE_NAME);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 2L));
-        verifyStoreMetrics(getConfig().get(IDS_STORE_NAME));
-    }
-
 
     @Test
     public void testKCVSAccess1() {
@@ -495,6 +455,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         }
     }
 
+    @Disabled("Currently disabled as we have removed schema constraint checks in Janus, and this test relies on it.")
     @Test
     public void testCacheConcurrency() throws InterruptedException {
         metricsPrefix = "tCC";
@@ -504,8 +465,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
                 option(GraphDatabaseConfiguration.DB_CACHE_SIZE), 0.25,
                 option(GraphDatabaseConfiguration.BASIC_METRICS), true,
                 option(GraphDatabaseConfiguration.METRICS_MERGE_STORES), false,
-                option(GraphDatabaseConfiguration.METRICS_PREFIX), metricsPrefix,
-                option(GraphDatabaseConfiguration.SCHEMA_CONSTRAINTS), true};
+                option(GraphDatabaseConfiguration.METRICS_PREFIX), metricsPrefix};
         clopen(newConfig);
         final String prop = "someProp";
         makeKey(prop, Integer.class);

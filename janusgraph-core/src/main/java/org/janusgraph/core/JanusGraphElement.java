@@ -52,8 +52,7 @@ public interface JanusGraphElement extends Element, Idfiable, Removable {
      * Some entities are never assigned a unique identifier if they depend on a parent entity.
      * <p>
      * JanusGraph allocates blocks of identifiers and automatically assigns identifiers to elements
-     * automatically be default.  This behavior can be partially overridden by setting
-     * {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#ALLOW_SETTING_VERTEX_ID}
+     * automatically be default.
      *
      * @return The unique identifier for this entity
      * @throws IllegalStateException if the entity does not (yet) have a unique identifier
