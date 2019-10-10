@@ -79,23 +79,9 @@ public interface TransactionConfiguration extends BaseTransactionConfig {
     boolean hasVerifyInternalVertexExistence();
 
     /**
-     * Whether the persistence layer should acquire locks for this transaction during persistence.
-     *
-     * @return True, if locks should be acquired, else false
-     */
-    boolean hasAcquireLocks();
-
-    /**
      * @return The default edge type maker used to automatically create not yet existing edge types.
      */
     DefaultSchemaMaker getAutoSchemaMaker();
-
-    /**
-     * Whether the graph transaction is configured to verify that an added key does not yet exist in the database.
-     *
-     * @return True, if vertex existence is verified, else false
-     */
-    boolean hasVerifyUniqueness();
 
     /**
      * Whether this transaction loads all properties on a vertex when a single property is requested. This can be highly beneficial

@@ -95,16 +95,6 @@ public interface TransactionBuilder {
      */
     TransactionBuilder checkExternalVertexExistence(boolean enabled);
 
-
-    /**
-     * Enables/disables consistency checking and locking for this transaction. Disabling consistency checks improves
-     * performance but requires that the user ensures consistency at the application level. Use with great care.
-     *
-     * @param enabled Enable or disable consistency check and locking
-     * @return Object with the consistency check settings
-     */
-    TransactionBuilder consistencyChecks(boolean enabled);
-
     /**
      * Sets the timestamp for this transaction. The transaction will be recorded
      * with this timestamp in those storage backends where the timestamp is

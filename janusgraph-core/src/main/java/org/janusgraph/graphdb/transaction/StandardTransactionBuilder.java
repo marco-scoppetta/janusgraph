@@ -53,10 +53,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
     private boolean verifyInternalVertexExistence = false;
 
-    private boolean verifyUniqueness = true;
-
-    private boolean acquireLocks = true;
-
     private final boolean propertyPrefetching;
 
     private boolean singleThreaded = false;
@@ -140,7 +136,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     public StandardTransactionBuilder enableBatchLoading() {
         hasEnabledBatchLoading = true;
         checkExternalVertexExistence(false);
-        consistencyChecks(false);
         return this;
     }
 
@@ -148,7 +143,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     public StandardTransactionBuilder disableBatchLoading() {
         hasEnabledBatchLoading = false;
         checkExternalVertexExistence(true);
-        consistencyChecks(true);
         return this;
     }
 
@@ -175,13 +169,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     @Override
     public StandardTransactionBuilder checkExternalVertexExistence(boolean enabled) {
         this.verifyExternalVertexExistence = enabled;
-        return this;
-    }
-
-    @Override
-    public TransactionBuilder consistencyChecks(boolean enabled) {
-        this.verifyUniqueness = enabled;
-        this.acquireLocks = enabled;
         return this;
     }
 
@@ -233,7 +220,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     public StandardJanusGraphTx start() {
         TransactionConfiguration immutable = new ImmutableTxCfg(isReadOnly, hasEnabledBatchLoading,
                 assignIDsImmediately, preloadedData, forceIndexUsage, verifyExternalVertexExistence,
-                verifyInternalVertexExistence, acquireLocks, verifyUniqueness,
+                verifyInternalVertexExistence,
                 propertyPrefetching, singleThreaded, threadBound, getTimestampProvider(), userCommitTime,
                 indexCacheWeight, getVertexCacheSize(), getDirtyVertexSize(),
                 logIdentifier, restrictedPartitions, groupName,
@@ -282,18 +269,8 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     }
 
     @Override
-    public final boolean hasAcquireLocks() {
-        return acquireLocks;
-    }
-
-    @Override
     public final DefaultSchemaMaker getAutoSchemaMaker() {
         return defaultSchemaMaker;
-    }
-
-    @Override
-    public final boolean hasVerifyUniqueness() {
-        return verifyUniqueness;
     }
 
     public boolean hasPropertyPrefetching() {
@@ -384,8 +361,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         private final boolean hasForceIndexUsage;
         private final boolean hasVerifyExternalVertexExistence;
         private final boolean hasVerifyInternalVertexExistence;
-        private final boolean hasAcquireLocks;
-        private final boolean hasVerifyUniqueness;
         private final boolean hasPropertyPrefetching;
         private final boolean isSingleThreaded;
         private final boolean isThreadBound;
@@ -395,25 +370,23 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         private final String logIdentifier;
         private final int[] restrictedPartitions;
         private final DefaultSchemaMaker defaultSchemaMaker;
-        private boolean hasDisabledSchemaConstraints = true;
 
         private final BaseTransactionConfig handleConfig;
 
-        public ImmutableTxCfg(boolean isReadOnly,
-                              boolean hasEnabledBatchLoading,
-                              boolean hasAssignIDsImmediately,
-                              boolean hasPreloadedData,
-                              boolean hasForceIndexUsage,
-                              boolean hasVerifyExternalVertexExistence,
-                              boolean hasVerifyInternalVertexExistence,
-                              boolean hasAcquireLocks, boolean hasVerifyUniqueness,
-                              boolean hasPropertyPrefetching, boolean isSingleThreaded,
-                              boolean isThreadBound, TimestampProvider times, Instant commitTime,
-                              long indexCacheWeight, int vertexCacheSize, int dirtyVertexSize, String logIdentifier,
-                              int[] restrictedPartitions,
-                              String groupName,
-                              DefaultSchemaMaker defaultSchemaMaker,
-                              Configuration customOptions) {
+        ImmutableTxCfg(boolean isReadOnly,
+                       boolean hasEnabledBatchLoading,
+                       boolean hasAssignIDsImmediately,
+                       boolean hasPreloadedData,
+                       boolean hasForceIndexUsage,
+                       boolean hasVerifyExternalVertexExistence,
+                       boolean hasVerifyInternalVertexExistence,
+                       boolean hasPropertyPrefetching, boolean isSingleThreaded,
+                       boolean isThreadBound, TimestampProvider times, Instant commitTime,
+                       long indexCacheWeight, int vertexCacheSize, int dirtyVertexSize, String logIdentifier,
+                       int[] restrictedPartitions,
+                       String groupName,
+                       DefaultSchemaMaker defaultSchemaMaker,
+                       Configuration customOptions) {
             this.isReadOnly = isReadOnly;
             this.hasEnabledBatchLoading = hasEnabledBatchLoading;
             this.hasAssignIDsImmediately = hasAssignIDsImmediately;
@@ -421,8 +394,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
             this.hasForceIndexUsage = hasForceIndexUsage;
             this.hasVerifyExternalVertexExistence = hasVerifyExternalVertexExistence;
             this.hasVerifyInternalVertexExistence = hasVerifyInternalVertexExistence;
-            this.hasAcquireLocks = hasAcquireLocks;
-            this.hasVerifyUniqueness = hasVerifyUniqueness;
             this.hasPropertyPrefetching = hasPropertyPrefetching;
             this.isSingleThreaded = isSingleThreaded;
             this.isThreadBound = isThreadBound;
@@ -432,7 +403,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
             this.logIdentifier = logIdentifier;
             this.restrictedPartitions = restrictedPartitions;
             this.defaultSchemaMaker = defaultSchemaMaker;
-            this.hasDisabledSchemaConstraints = hasDisabledSchemaConstraints;
             this.handleConfig = new StandardBaseTransactionConfig.Builder()
                     .commitTime(commitTime)
                     .timestampProvider(times)
@@ -476,18 +446,8 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         }
 
         @Override
-        public boolean hasAcquireLocks() {
-            return hasAcquireLocks;
-        }
-
-        @Override
         public DefaultSchemaMaker getAutoSchemaMaker() {
             return defaultSchemaMaker;
-        }
-
-        @Override
-        public boolean hasVerifyUniqueness() {
-            return hasVerifyUniqueness;
         }
 
         @Override
