@@ -30,7 +30,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
  * <p>
  * This is the base interface for the specific implementations of a VertexQuery. Calling {@link org.janusgraph.core.JanusGraphVertex#query()}
  * returns a {@link JanusGraphVertexQuery} for querying a single vertex.
- * Calling {@link JanusGraphTransaction#multiQuery(java.util.Collection)} returns a {@link JanusGraphMultiVertexQuery} to execute
+ * Calling JanusGraphTransaction#multiQuery() returns a {@link JanusGraphMultiVertexQuery} to execute
  * the same query against multiple vertices at the same time which is typically faster.
  *
  * @see JanusGraphVertexQuery

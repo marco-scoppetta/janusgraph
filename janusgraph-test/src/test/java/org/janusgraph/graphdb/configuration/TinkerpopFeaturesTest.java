@@ -43,16 +43,14 @@ public class TinkerpopFeaturesTest
             graph.close();
     }
 
-    public JanusGraph open()
-    {
+    public JanusGraph open() {
         JanusGraphFactory.Builder builder = JanusGraphFactory.build();
         builder.set("storage.backend", "inmemory");
         return builder.open();
     }
 
     @Test
-    public void testEdgeFeatures()
-    {
+    public void testEdgeFeatures() {
         Graph.Features.EdgeFeatures ef = graph.features().edge();
         assertFalse(ef.supportsStringIds());
         assertFalse(ef.supportsUuidIds());

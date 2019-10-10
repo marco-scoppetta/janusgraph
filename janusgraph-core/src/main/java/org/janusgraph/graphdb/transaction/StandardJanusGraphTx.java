@@ -424,8 +424,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         tx().close();
     }
 
-
-
     /*
      * ------------------------------------ Utility Access Verification methods ------------------------------------
      */
@@ -1202,13 +1200,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     public JanusGraphMultiVertexQuery multiQuery(JanusGraphVertex... vertices) {
         MultiVertexCentricQueryBuilder builder = new MultiVertexCentricQueryBuilder(this);
         for (JanusGraphVertex v : vertices) builder.addVertex(v);
-        return builder;
-    }
-
-    @Override
-    public JanusGraphMultiVertexQuery multiQuery(Collection<JanusGraphVertex> vertices) {
-        MultiVertexCentricQueryBuilder builder = new MultiVertexCentricQueryBuilder(this);
-        builder.addAllVertices(vertices);
         return builder;
     }
 

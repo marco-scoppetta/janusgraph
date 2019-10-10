@@ -2923,7 +2923,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         //MultiQueries
         results = tx.multiQuery(qvs).direction(IN).labels("connect").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(1, Iterables.size(result));
-        results = tx.multiQuery(Sets.newHashSet(qvs)).labels("connect").edges();
+        results = tx.multiQuery(qvs).labels("connect").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(2, Iterables.size(result));
         results = tx.multiQuery(qvs).labels("knows").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(0, Iterables.size(result));
@@ -3037,7 +3037,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         //MultiQueries
         results = tx.multiQuery(qvs).direction(IN).labels("connect").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(1, Iterables.size(result));
-        results = tx.multiQuery(Sets.newHashSet(qvs)).labels("connect").edges();
+        results = tx.multiQuery(qvs).labels("connect").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(2, Iterables.size(result));
         results = tx.multiQuery(qvs).labels("knows").edges();
         for (Iterable<JanusGraphEdge> result : results.values()) assertEquals(0, Iterables.size(result));

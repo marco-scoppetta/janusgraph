@@ -72,19 +72,10 @@ public class ElementHelper {
      * @param propertyKeyValues
      */
     public static void attachProperties(final JanusGraphVertex vertex, final Object... propertyKeyValues) {
-        if (null == vertex)
-            throw Graph.Exceptions.argumentCanNotBeNull("vertex");
-
         for (int i = 0; i < propertyKeyValues.length; i = i + 2) {
             if (!propertyKeyValues[i].equals(T.id) && !propertyKeyValues[i].equals(T.label))
                 vertex.property((String) propertyKeyValues[i], propertyKeyValues[i + 1]);
         }
-    }
-
-    public static Set<String> getPropertyKeys(JanusGraphVertex v) {
-        final Set<String> s = new HashSet<>();
-        v.query().properties().forEach( p -> s.add(p.propertyKey().name()));
-        return s;
     }
 
 }

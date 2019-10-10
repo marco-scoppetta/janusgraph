@@ -77,9 +77,6 @@ public interface JanusGraphTransaction extends Graph, SchemaManager {
 
     JanusGraphMultiVertexQuery<? extends JanusGraphMultiVertexQuery> multiQuery(JanusGraphVertex... vertices);
 
-
-    JanusGraphMultiVertexQuery<? extends JanusGraphMultiVertexQuery> multiQuery(Collection<JanusGraphVertex> vertices);
-
     @Override
     void close();
 
