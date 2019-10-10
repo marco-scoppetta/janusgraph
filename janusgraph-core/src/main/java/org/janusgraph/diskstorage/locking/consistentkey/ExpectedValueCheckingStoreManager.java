@@ -43,8 +43,7 @@ public class ExpectedValueCheckingStoreManager extends KCVSManagerProxy {
 
     private final Map<String,ExpectedValueCheckingStore> stores;
 
-    private static final Logger log =
-            LoggerFactory.getLogger(ExpectedValueCheckingStoreManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExpectedValueCheckingStoreManager.class);
 
     public ExpectedValueCheckingStoreManager(KeyColumnValueStoreManager storeManager, String lockStoreSuffix,
                                              LockerProvider lockerProvider, Duration maxReadTime) {
@@ -72,10 +71,10 @@ public class ExpectedValueCheckingStoreManager extends KCVSManagerProxy {
         boolean hasAtLeastOneLock = etx.prepareForMutations();
         if (hasAtLeastOneLock) {
             // Force all mutations on this transaction to use strong consistency
-            log.debug("Transaction {} holds one or more locks: writing using consistent transaction {} due to held locks", etx, etx.getConsistentTx());
+            LOG.debug("Transaction {} holds one or more locks: writing using consistent transaction {} due to held locks", etx, etx.getConsistentTx());
             manager.mutateMany(mutations, etx.getConsistentTx());
         } else {
-            log.debug("Transaction {} holds no locks: writing mutations using store transaction {}", etx, etx.getInconsistentTx());
+            LOG.debug("Transaction {} holds no locks: writing mutations using store transaction {}", etx, etx.getInconsistentTx());
             manager.mutateMany(mutations, etx.getInconsistentTx());
         }
     }

@@ -15,15 +15,16 @@
 package org.janusgraph.diskstorage.keycolumnvalue.scan;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang.StringUtils;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.configuration.*;
+import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.configuration.MergedConfiguration;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -36,16 +37,16 @@ import java.util.function.Consumer;
 /**
  * @author Matthias Broecheler (me@matthiasb.com)
  */
-public class StandardScanner  {
+public class StandardScanner {
 
     private final KeyColumnValueStoreManager manager;
     private final Set<KeyColumnValueStore> openStores;
-    private final ConcurrentMap<Object,StandardScannerExecutor> runningJobs;
+    private final ConcurrentMap<Object, StandardScannerExecutor> runningJobs;
     private final AtomicLong jobCounter;
 
-    public StandardScanner(final KeyColumnValueStoreManager manager) {
+    public StandardScanner(KeyColumnValueStoreManager manager) {
         Preconditions.checkNotNull(manager);
-        Preconditions.checkArgument(manager.getFeatures().hasScan(),"Provided data store does not support scans: %s",manager);
+        Preconditions.checkArgument(manager.getFeatures().hasScan(), "Provided data store does not support scans: %s", manager);
 
         this.manager = manager;
         this.openStores = new HashSet<>(4);
@@ -67,13 +68,13 @@ public class StandardScanner  {
     }
 
     private void addJob(Object jobId, StandardScannerExecutor executor) {
-        for (Map.Entry<Object,StandardScannerExecutor> jobs : runningJobs.entrySet()) {
+        for (Map.Entry<Object, StandardScannerExecutor> jobs : runningJobs.entrySet()) {
             StandardScannerExecutor exe = jobs.getValue();
             if (exe.isDone() || exe.isCancelled()) {
-                runningJobs.remove(jobs.getKey(),exe);
+                runningJobs.remove(jobs.getKey(), exe);
             }
         }
-        Preconditions.checkArgument(runningJobs.putIfAbsent(jobId, executor) == null,"Another job with the same id is already running: %s",jobId);
+        Preconditions.checkArgument(runningJobs.putIfAbsent(jobId, executor) == null, "Another job with the same id is already running: %s", jobId);
     }
 
     public JanusGraphManagement.IndexJobFuture getRunningJob(Object jobId) {
@@ -103,18 +104,19 @@ public class StandardScanner  {
             jobConfiguration = Configuration.EMPTY;
             dbName = null;
             jobId = jobCounter.incrementAndGet();
-            finishJob = m -> {} ;
+            finishJob = m -> {
+            };
         }
 
         public Builder setNumProcessingThreads(int numThreads) {
-            Preconditions.checkArgument(numThreads>0,
-                    "Need to specify a positive number of processing threads: %s",numThreads);
+            Preconditions.checkArgument(numThreads > 0,
+                    "Need to specify a positive number of processing threads: %s", numThreads);
             this.numProcessingThreads = numThreads;
             return this;
         }
 
         public Builder setWorkBlockSize(int size) {
-            Preconditions.checkArgument(size>0, "Need to specify a positive work block size: %s",size);
+            Preconditions.checkArgument(size > 0, "Need to specify a positive work block size: %s", size);
             this.workBlockSize = size;
             return this;
         }
@@ -125,17 +127,13 @@ public class StandardScanner  {
         }
 
         public Builder setStoreName(String name) {
-            Preconditions.checkArgument(StringUtils.isNotBlank(name),"Invalid name: %s",name);
+            Preconditions.checkArgument(StringUtils.isNotBlank(name), "Invalid name: %s", name);
             this.dbName = name;
             return this;
         }
 
-        public Object getJobId() {
-            return jobId;
-        }
-
         public Builder setJobId(Object id) {
-            this.jobId = Preconditions.checkNotNull(id, "Need to provide a valid id: %s",id);
+            this.jobId = Preconditions.checkNotNull(id, "Need to provide a valid id: %s", id);
             return this;
         }
 
@@ -154,19 +152,15 @@ public class StandardScanner  {
             return this;
         }
 
-        public Configuration getJobConfiguration() {
-            return this.jobConfiguration;
-        }
-
         public Builder setFinishJob(Consumer<ScanMetrics> finishJob) {
             this.finishJob = Preconditions.checkNotNull(finishJob);
             return this;
         }
 
         public JanusGraphManagement.IndexJobFuture execute() throws BackendException {
-            Preconditions.checkNotNull(job,"Need to specify a job to execute");
-            Preconditions.checkArgument(StringUtils.isNotBlank(dbName),"Need to specify a database to execute against");
-            Preconditions.checkNotNull(times,"Need to configure the timestamp provider for this job");
+            Preconditions.checkNotNull(job, "Need to specify a job to execute");
+            Preconditions.checkArgument(StringUtils.isNotBlank(dbName), "Need to specify a database to execute against");
+            Preconditions.checkNotNull(times, "Need to configure the timestamp provider for this job");
             StandardBaseTransactionConfig.Builder txBuilder = new StandardBaseTransactionConfig.Builder();
             txBuilder.timestampProvider(times);
 
@@ -180,21 +174,6 @@ public class StandardScanner  {
                 txBuilder.customOptions(scanConfig);
             }
 
-//            if (!txOptions.isEmpty()) {
-//                ModifiableConfiguration writeConf = GraphDatabaseConfiguration.buildConfiguration();
-//                for (Map.Entry<String,Object> confEntry : txOptions.entrySet()) {
-//                    writeConf.set(
-//                            (ConfigOption<Object>) ConfigElement.parse(ROOT_NS, confEntry.getKey()).element,
-//                            confEntry.getValue());
-//                }
-//                Configuration customConf = writeConf;
-//                if (configuration!=Configuration.EMPTY) {
-//                    customConf = new MergedConfiguration(writeConf, configuration);
-//
-//                }
-//                txBuilder.customOptions(customConf);
-//            }
-
             StoreTransaction storeTx = manager.beginTransaction(txBuilder.build());
             KeyColumnValueStore kcvs = manager.openDatabase(dbName);
 
@@ -202,7 +181,7 @@ public class StandardScanner  {
             try {
                 StandardScannerExecutor executor = new StandardScannerExecutor(job, finishJob, kcvs, storeTx,
                         manager.getFeatures(), numProcessingThreads, workBlockSize, jobConfiguration, graphConfiguration);
-                addJob(jobId,executor);
+                addJob(jobId, executor);
                 new Thread(executor).start();
                 return executor;
             } catch (Throwable e) {

@@ -31,7 +31,6 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.CommonsConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.KCVSConfiguration;
 import org.janusgraph.diskstorage.configuration.backend.builder.KCVSConfigurationBuilder;
-import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
 import org.janusgraph.diskstorage.indexing.IndexFeatures;
 import org.janusgraph.diskstorage.indexing.IndexInformation;
 import org.janusgraph.diskstorage.indexing.IndexProvider;
@@ -58,7 +57,6 @@ import org.janusgraph.diskstorage.util.BackendOperation;
 import org.janusgraph.diskstorage.util.MetricInstrumentedStoreManager;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
-import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
 import org.janusgraph.graphdb.transaction.TransactionConfiguration;
 import org.janusgraph.util.system.ConfigurationUtil;
 import org.slf4j.Logger;
@@ -81,7 +79,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_CLEAN_WAIT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_SIZE;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB_CACHE_TIME;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_STORE_NAME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_NS;
@@ -186,7 +183,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         managementLogManager = getKCVSLogManager(MANAGEMENT_LOG);
         txLogManager = getKCVSLogManager(TRANSACTION_LOG);
         userLogManager = getLogManager(USER_LOG);
-
 
         cacheEnabled = !configuration.get(STORAGE_BATCH) && configuration.get(DB_CACHE);
 
@@ -307,10 +303,11 @@ public class Backend implements LockerProvider, AutoCloseable {
                 }
 
                 @Override
-                public void close() throws BackendException {
+                public void close() {
                     //Do nothing, storeManager is closed explicitly by Backend
                 }
             }, systemConfigStore, configuration);
+
             userConfig = kcvsConfigurationBuilder.buildUserConfiguration(new BackendOperation.TransactionalProvider() {
                 @Override
                 public StoreTransaction openTx() throws BackendException {
@@ -384,7 +381,7 @@ public class Backend implements LockerProvider, AutoCloseable {
         return userLogManager.openLog(getUserLogName(identifier));
     }
 
-    public static String getUserLogName(String identifier) {
+    private static String getUserLogName(String identifier) {
         Preconditions.checkArgument(StringUtils.isNotBlank(identifier));
         return USER_LOG_PREFIX + identifier;
     }
@@ -402,12 +399,12 @@ public class Backend implements LockerProvider, AutoCloseable {
         return configuration.get(METRICS_MERGE_STORES) ? METRICS_MERGED_CACHE : storeName + METRICS_CACHE_SUFFIX;
     }
 
-    public KCVSLogManager getKCVSLogManager(String logName) {
+    private KCVSLogManager getKCVSLogManager(String logName) {
         Preconditions.checkArgument(configuration.restrictTo(logName).get(LOG_BACKEND).equalsIgnoreCase(LOG_BACKEND.getDefaultValue()));
         return (KCVSLogManager) getLogManager(logName);
     }
 
-    public LogManager getLogManager(String logName) {
+    private LogManager getLogManager(String logName) {
         Configuration logConfig = configuration.restrictTo(logName);
         String backend = logConfig.get(LOG_BACKEND);
         if (backend.equalsIgnoreCase(LOG_BACKEND.getDefaultValue())) {
@@ -438,12 +435,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         return ConfigurationUtil.instantiate(className, new Object[]{config}, new Class[]{Configuration.class});
     }
 
-
-    /**
-     * Returns the {@link StoreFeatures} of the configured backend storage engine.
-     *
-     * @return
-     */
     public StoreFeatures getStoreFeatures() {
         return storeFeatures;
     }
@@ -563,15 +554,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     static {
         final Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
-
-//        m.put(StandardStoreManager.BDB_JE, STORAGE_DIRECTORY);
-//        m.put(StandardStoreManager.CASSANDRA_ASTYANAX, STORAGE_HOSTS);
-//        m.put(StandardStoreManager.CASSANDRA_EMBEDDED, STORAGE_CONF_FILE);
-//        m.put(StandardStoreManager.CASSANDRA_THRIFT, STORAGE_HOSTS);
-//        m.put(StandardStoreManager.HBASE, STORAGE_HOSTS);
-        //m.put(StandardStorageBackend.IN_MEMORY, null);
-
-        //STORE_SHORTHAND_OPTIONS = Maps.immutableEnumMap(m);
         STORE_SHORTHAND_OPTIONS = ImmutableMap.copyOf(m);
     }
 

@@ -106,8 +106,7 @@ public class ManagementSystem implements JanusGraphManagement {
     private final static String FIRSTDASH = "------------------------------------------------------------------------------------------------\n";
     private final static String DASHBREAK = "---------------------------------------------------------------------------------------------------\n";
 
-    public ManagementSystem(StandardJanusGraph graph, KCVSConfiguration config, Log sysLog,
-                            ManagementLogger managementLogger, SchemaCache schemaCache) {
+    public ManagementSystem(StandardJanusGraph graph, KCVSConfiguration config, Log sysLog, ManagementLogger managementLogger, SchemaCache schemaCache) {
         Preconditions.checkArgument(config != null && graph != null && sysLog != null && managementLogger != null);
         this.graph = graph;
         this.sysLog = sysLog;
@@ -923,8 +922,7 @@ public class ManagementSystem implements JanusGraphManagement {
 
     private static class UpdateStatusTrigger implements Callable<Boolean> {
 
-        private static final Logger log =
-                LoggerFactory.getLogger(UpdateStatusTrigger.class);
+        private static final Logger LOG = LoggerFactory.getLogger(UpdateStatusTrigger.class);
 
         private final StandardJanusGraph graph;
         private final long schemaVertexId;
@@ -949,7 +947,7 @@ public class ManagementSystem implements JanusGraphManagement {
             ManagementSystem management = (ManagementSystem) graph.openManagement();
             try {
                 JanusGraphVertex vertex = management.transaction.getVertex(schemaVertexId);
-                Preconditions.checkArgument(vertex != null && vertex instanceof JanusGraphSchemaVertex);
+                Preconditions.checkArgument(vertex instanceof JanusGraphSchemaVertex);
                 JanusGraphSchemaVertex schemaVertex = (JanusGraphSchemaVertex) vertex;
 
                 Set<PropertyKeyVertex> keys = Sets.newHashSet();
@@ -957,13 +955,13 @@ public class ManagementSystem implements JanusGraphManagement {
                 management.setStatus(schemaVertex, newStatus, keys);
                 management.updatedTypes.addAll(keys);
                 management.updatedTypes.add(schemaVertex);
-                if (log.isInfoEnabled()) {
+                if (LOG.isInfoEnabled()) {
                     Set<String> propNames = Sets.newHashSet();
                     for (PropertyKeyVertex v : keys) {
                         try {
                             propNames.add(v.name());
                         } catch (Throwable t) {
-                            log.warn("Failed to get name for property key with id {}", v.longId(), t);
+                            LOG.warn("Failed to get name for property key with id {}", v.longId(), t);
                             propNames.add("(ID#" + v.longId() + ")");
                         }
                     }
@@ -971,9 +969,9 @@ public class ManagementSystem implements JanusGraphManagement {
                     try {
                         schemaName = schemaVertex.name();
                     } catch (Throwable t) {
-                        log.warn("Failed to get name for schema vertex with id {}", schemaVertexId, t);
+                        LOG.warn("Failed to get name for schema vertex with id {}", schemaVertexId, t);
                     }
-                    log.info("Set status {} on schema element {} with property keys {}", newStatus, schemaName, propNames);
+                    LOG.info("Set status {} on schema element {} with property keys {}", newStatus, schemaName, propNames);
                 }
                 management.commit();
                 return true;
