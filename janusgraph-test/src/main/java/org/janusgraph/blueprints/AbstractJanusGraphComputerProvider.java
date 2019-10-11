@@ -24,12 +24,12 @@ import org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementS
 public abstract class AbstractJanusGraphComputerProvider extends AbstractJanusGraphProvider {
 
     @Override
-    public GraphTraversalSource traversal(final Graph graph) {
+    public GraphTraversalSource traversal( Graph graph) {
         return new GraphTraversalSource(graph).withComputer();
     }
 
     @Override
-    public GraphTraversalSource traversal(final Graph graph, final TraversalStrategy... strategies) {
+    public GraphTraversalSource traversal(Graph graph, TraversalStrategy... strategies) {
         return new GraphTraversalSource(graph).withComputer().withStrategies(strategies);
     }
 

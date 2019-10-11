@@ -36,8 +36,8 @@ public class RelationCache implements Iterable<LongObjectCursor<Object>> {
     private final Object other;
     private final LongObjectHashMap<Object> properties;
 
-    public RelationCache(final Direction direction, final long typeId, final long relationId,
-                         final Object other, final LongObjectHashMap<Object> properties) {
+    public RelationCache(Direction direction, long typeId, long relationId,
+                         final Object other, LongObjectHashMap<Object> properties) {
         this.direction = direction;
         this.typeId = typeId;
         this.relationId = relationId;
@@ -45,7 +45,7 @@ public class RelationCache implements Iterable<LongObjectCursor<Object>> {
         this.properties = (properties == null || properties.size() > 0) ? properties : EMPTY;
     }
 
-    public RelationCache(final Direction direction, final long typeId, final long relationId,
+    public RelationCache(Direction direction, long typeId, long relationId,
                          final Object other) {
         this(direction,typeId,relationId,other,null);
     }

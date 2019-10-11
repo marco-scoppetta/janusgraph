@@ -331,7 +331,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         return (int)value;
     }
 
-    private StaticBuffer getLogKey(final int partitionId, final int bucketId, final int timeslice) {
+    private StaticBuffer getLogKey(int partitionId, int bucketId, int timeslice) {
         Preconditions.checkArgument(partitionId>=0 && partitionId<(1<<manager.partitionBitWidth));
         Preconditions.checkArgument(bucketId>=0 && bucketId<numBuckets);
         DataOutput o = manager.serializer.getDataOutput(3 * 4);
@@ -466,7 +466,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
      *
      * @param msgEnvelopes
      */
-    private void sendMessages(final List<MessageEnvelope> msgEnvelopes) {
+    private void sendMessages(List<MessageEnvelope> msgEnvelopes) {
         try {
             boolean success=BackendOperation.execute(new BackendOperation.Transactional<Boolean>() {
                 @Override
@@ -666,7 +666,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
         private Instant messageTimeStart;
 
-        private MessagePuller(final int partitionId, final int bucketId) {
+        private MessagePuller(int partitionId, int bucketId) {
             this.bucketId = bucketId;
             this.partitionId = partitionId;
             initializeTimepoint();
@@ -784,7 +784,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
             setReadMarker();
         }
 
-        private BackendOperation.Transactional<List<Entry>> getOperation(final KeySliceQuery query) {
+        private BackendOperation.Transactional<List<Entry>> getOperation(KeySliceQuery query) {
             return new BackendOperation.Transactional<List<Entry>>() {
                 @Override
                 public List<Entry> call(StoreTransaction txh) throws BackendException {
@@ -821,7 +821,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         return out.getStaticBuffer();
     }
 
-    private long readSetting(String identifier, final StaticBuffer column, long defaultValue) {
+    private long readSetting(String identifier, StaticBuffer column, long defaultValue) {
         final StaticBuffer key = getSettingKey(identifier);
         StaticBuffer value = BackendOperation.execute(new BackendOperation.Transactional<StaticBuffer>() {
             @Override
@@ -840,7 +840,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         }
     }
 
-    private void writeSetting(String identifier, final StaticBuffer column, long value) {
+    private void writeSetting(String identifier, StaticBuffer column, long value) {
         final StaticBuffer key = getSettingKey(identifier);
         final Entry add = StaticArrayEntry.of(column, BufferUtil.getLongBuffer(value));
         Boolean status = BackendOperation.execute(new BackendOperation.Transactional<Boolean>() {

@@ -38,7 +38,7 @@ public class CacheVertex extends StandardVertex {
         queryCache = new HashMap<>(4);
     }
 
-    protected void addToQueryCache(final SliceQuery query, final EntryList entries) {
+    protected void addToQueryCache(SliceQuery query, EntryList entries) {
         synchronized (queryCache) {
             //TODO: become smarter about what to cache and when (e.g. memory pressure)
             queryCache.put(query, entries);
@@ -52,7 +52,7 @@ public class CacheVertex extends StandardVertex {
     }
 
     @Override
-    public EntryList loadRelations(final SliceQuery query, final Retriever<SliceQuery, EntryList> lookup) {
+    public EntryList loadRelations(SliceQuery query, Retriever<SliceQuery, EntryList> lookup) {
         if (isNew())
             return EntryList.EMPTY_LIST;
 
@@ -75,13 +75,13 @@ public class CacheVertex extends StandardVertex {
     }
 
     @Override
-    public boolean hasLoadedRelations(final SliceQuery query) {
+    public boolean hasLoadedRelations(SliceQuery query) {
         synchronized (queryCache) {
             return queryCache.get(query) != null || getSuperResultSet(query) != null;
         }
     }
 
-    private Map.Entry<SliceQuery, EntryList> getSuperResultSet(final SliceQuery query) {
+    private Map.Entry<SliceQuery, EntryList> getSuperResultSet(SliceQuery query) {
 
         synchronized (queryCache) {
             if (queryCache.size() > 0) {

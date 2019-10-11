@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat;
  */
 public class FormatTools {
 
-    public static Class getBaseOutputFormatClass(final Job job) {
+    public static Class getBaseOutputFormatClass(Job job) {
         try {
             if (LazyOutputFormat.class.isAssignableFrom(job.getOutputFormatClass())) {
                 Class<OutputFormat> baseClass = (Class<OutputFormat>)

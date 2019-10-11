@@ -51,7 +51,7 @@ public class ConfigurationLint {
     }
 
     public static Status validate(String filename) throws IOException {
-        try (final FileInputStream fis = new FileInputStream(filename)) {
+        try (FileInputStream fis = new FileInputStream(filename)) {
             new Properties().load(fis);
         }
 

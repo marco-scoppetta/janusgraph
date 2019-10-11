@@ -77,7 +77,7 @@ public abstract class IndexUpdateJob {
         this.indexRelationTypeName = copy.indexRelationTypeName;
     }
 
-    public IndexUpdateJob(final String indexName, final String indexRelationTypeName) {
+    public IndexUpdateJob(String indexName, String indexRelationTypeName) {
         this.indexName = indexName;
         this.indexRelationTypeName = indexRelationTypeName;
     }
@@ -118,7 +118,7 @@ public abstract class IndexUpdateJob {
             StandardTransactionBuilder txb = this.graph.buildTransaction();
             txb.commitTime(jobStartTime);
             writeTx = (StandardJanusGraphTx)txb.start();
-        } catch (final Exception e) {
+        } catch (Exception e) {
             if (null != managementSystem && managementSystem.isOpen())
                 managementSystem.rollback();
             if (writeTx!=null && writeTx.isOpen())

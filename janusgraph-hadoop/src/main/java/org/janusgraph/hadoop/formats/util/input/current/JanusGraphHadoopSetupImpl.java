@@ -46,7 +46,7 @@ public class JanusGraphHadoopSetupImpl extends JanusGraphHadoopSetupCommon {
     private final StandardJanusGraph graph;
     private final StandardJanusGraphTx tx;
 
-    public JanusGraphHadoopSetupImpl(final Configuration config) {
+    public JanusGraphHadoopSetupImpl(Configuration config) {
         scanConf = ModifiableHadoopConfiguration.of(JanusGraphHadoopConfiguration.MAPRED_NS, config);
         BasicConfiguration bc = scanConf.getJanusGraphConf();
         graph = (StandardJanusGraph) JanusGraphFactory.open(bc);

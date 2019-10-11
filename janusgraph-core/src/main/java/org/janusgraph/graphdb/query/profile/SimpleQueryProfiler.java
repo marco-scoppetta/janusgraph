@@ -38,7 +38,7 @@ public class SimpleQueryProfiler implements QueryProfiler, Iterable<SimpleQueryP
         this("__root");
     }
 
-    public SimpleQueryProfiler(final String groupName) {
+    public SimpleQueryProfiler(String groupName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(groupName));
         this.groupName=groupName;
     }

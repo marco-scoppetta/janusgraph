@@ -57,7 +57,7 @@ public class ElasticSearchScroll implements Iterator<RawQuery.Result<String>> {
             isFinished = res.numResults() < batchSize;
             if (isFinished) client.deleteScroll(scrollId);
             return res.numResults() > 0;
-        } catch (final IOException e) {
+        } catch (IOException e) {
              throw new UncheckedIOException(e.getMessage(), e);
         }
     }
@@ -66,7 +66,7 @@ public class ElasticSearchScroll implements Iterator<RawQuery.Result<String>> {
     public Result<String> next() {
          try {
              return queue.take();
-         } catch (final InterruptedException e) {
+         } catch (InterruptedException e) {
               throw new UncheckedIOException(new IOException("Interrupted waiting on queue", e));
          }
     }

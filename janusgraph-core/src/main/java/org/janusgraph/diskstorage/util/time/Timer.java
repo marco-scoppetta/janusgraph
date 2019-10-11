@@ -36,7 +36,7 @@ public class Timer {
     private Instant start;
     private Instant stop;
 
-    public Timer(final TimestampProvider times) {
+    public Timer(TimestampProvider times) {
         this.times = times;
     }
 

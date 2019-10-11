@@ -209,7 +209,7 @@ public abstract class JanusGraphBaseTest {
             Map<TestConfigOption, Object> options = validateConfigOptions(settings);
             JanusGraphManagement janusGraphManagement = null;
             ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.LOCAL);
-            for (final Map.Entry<TestConfigOption, Object> option : options.entrySet()) {
+            for (Map.Entry<TestConfigOption, Object> option : options.entrySet()) {
                 if (option.getKey().option.isLocal()) {
                     modifiableConfiguration.set(option.getKey().option, option.getValue(), option.getKey().umbrella);
                 } else {
@@ -254,13 +254,13 @@ public abstract class JanusGraphBaseTest {
 
     private void closeLogs() {
         try {
-            for (final LogManager lm : logManagers.values()) lm.close();
+            for (LogManager lm : logManagers.values()) lm.close();
             logManagers.clear();
             if (logStoreManager != null) {
                 logStoreManager.close();
                 logStoreManager = null;
             }
-        } catch (final BackendException e) {
+        } catch (BackendException e) {
             throw new JanusGraphException(e);
         }
     }
@@ -269,7 +269,7 @@ public abstract class JanusGraphBaseTest {
         if (logManagers.containsKey(logManagerName)) {
             try {
                 logManagers.remove(logManagerName).close();
-            } catch (final BackendException e) {
+            } catch (BackendException e) {
                 throw new JanusGraphException("Could not close log manager " + logManagerName, e);
             }
         }
@@ -294,7 +294,7 @@ public abstract class JanusGraphBaseTest {
             final StoreFeatures f = logStoreManager.getFeatures();
             final boolean part = f.isDistributed() && f.isKeyOrdered();
             if (part) {
-                for (final String partitionedLogName : new String[]{USER_LOG, TRANSACTION_LOG, MANAGEMENT_LOG})
+                for (String partitionedLogName : new String[]{USER_LOG, TRANSACTION_LOG, MANAGEMENT_LOG})
                     configuration.set(KCVSLogManager.LOG_MAX_PARTITIONS, 8, partitionedLogName);
             }
             Preconditions.checkNotNull(logStoreManager);
@@ -306,7 +306,7 @@ public abstract class JanusGraphBaseTest {
             }
             Preconditions.checkState(logManagers.containsKey(logManagerName));
             return logManagers.get(logManagerName).openLog(logName);
-        } catch (final BackendException e) {
+        } catch (BackendException e) {
             throw new JanusGraphException("Could not open log: " + logName, e);
         }
     }
@@ -479,7 +479,7 @@ public abstract class JanusGraphBaseTest {
         assertEquals(expectedCount, count);
     }
 
-    public static <T> Stream<T> asStream(final Iterator<T> source) {
+    public static <T> Stream<T> asStream(Iterator<T> source) {
         final Iterable<T> iterable = () -> source;
         return StreamSupport.stream(iterable.spliterator(), false);
     }

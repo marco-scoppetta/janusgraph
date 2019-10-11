@@ -71,7 +71,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
 
     // Read a single row from the edgestore and create a TinkerVertex corresponding to the row
     // The neighboring vertices are represented by DetachedVertex instances
-    public TinkerVertex readHadoopVertex(final StaticBuffer key, Iterable<Entry> entries) {
+    public TinkerVertex readHadoopVertex(StaticBuffer key, Iterable<Entry> entries) {
 
         // Convert key to a vertex ID
         long vertexId = idManager.getKeyID(key);
@@ -162,7 +162,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
 
                     if (relation.hasProperties()) {
                         // Load relation properties
-                        for (final LongObjectCursor<Object> next : relation) {
+                        for (LongObjectCursor<Object> next : relation) {
                             assert next.value != null;
                             RelationType rt = typeManager.getExistingRelationType(next.key);
                             if (rt.isPropertyKey()) {
@@ -187,7 +187,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         return tv;
     }
 
-    public TinkerVertex getOrCreateVertex(final long vertexId, final String label, final TinkerGraph tg) {
+    public TinkerVertex getOrCreateVertex(long vertexId, String label, TinkerGraph tg) {
         TinkerVertex v;
 
         try {

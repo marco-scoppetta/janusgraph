@@ -38,28 +38,28 @@ public class PageRankMapReduce extends StaticMapReduce<Object, Double, Object, D
 
     }
 
-    private PageRankMapReduce(final String memoryKey) {
+    private PageRankMapReduce(String memoryKey) {
         this.memoryKey = memoryKey;
     }
 
     @Override
-    public void storeState(final Configuration configuration) {
+    public void storeState(Configuration configuration) {
         super.storeState(configuration);
         configuration.setProperty(PAGE_RANK_MEMORY_KEY, this.memoryKey);
     }
 
     @Override
-    public void loadState(final Graph graph, final Configuration configuration) {
+    public void loadState(Graph graph, Configuration configuration) {
         this.memoryKey = configuration.getString(PAGE_RANK_MEMORY_KEY, DEFAULT_MEMORY_KEY);
     }
 
     @Override
-    public boolean doStage(final Stage stage) {
+    public boolean doStage(Stage stage) {
         return stage.equals(Stage.MAP);
     }
 
     @Override
-    public void map(final Vertex vertex, final MapEmitter<Object, Double> emitter) {
+    public void map(Vertex vertex, MapEmitter<Object, Double> emitter) {
         final Property pageRank = vertex.property(PageRankVertexProgram.PAGE_RANK);
         if (pageRank.isPresent()) {
             emitter.emit(vertex.id(), (Double) pageRank.value());
@@ -67,7 +67,7 @@ public class PageRankMapReduce extends StaticMapReduce<Object, Double, Object, D
     }
 
     @Override
-    public Iterator<KeyValue<Object, Double>> generateFinalResult(final Iterator<KeyValue<Object, Double>> keyValues) {
+    public Iterator<KeyValue<Object, Double>> generateFinalResult(Iterator<KeyValue<Object, Double>> keyValues) {
         return keyValues;
     }
 
@@ -95,7 +95,7 @@ public class PageRankMapReduce extends StaticMapReduce<Object, Double, Object, D
 
         }
 
-        public Builder memoryKey(final String memoryKey) {
+        public Builder memoryKey(String memoryKey) {
             this.memoryKey = memoryKey;
             return this;
         }

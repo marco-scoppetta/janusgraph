@@ -144,7 +144,7 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
         }
     }
 
-    public byte[] get(final byte[] key) throws PermanentBackendException {
+    public byte[] get(byte[] key) throws PermanentBackendException {
         boolean failing = true;
         byte[] value = null;
         for (int i = 0; i < maxRuns; i++) {
@@ -164,7 +164,7 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
         return value;
     }
 
-    public List<KeyValue> getRange(final byte[] startKey, final byte[] endKey,
+    public List<KeyValue> getRange(byte[] startKey, byte[] endKey,
                                    final int limit) throws PermanentBackendException {
         boolean failing = true;
         List<KeyValue> result = Collections.emptyList();
@@ -188,7 +188,7 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
         return result;
     }
 
-    public synchronized  Map<KVQuery, List<KeyValue>> getMultiRange(final List<Object[]> queries)
+    public synchronized  Map<KVQuery, List<KeyValue>> getMultiRange(List<Object[]> queries)
             throws PermanentBackendException {
         Map<KVQuery, List<KeyValue>> resultMap = new ConcurrentHashMap<>();
         final List<Object[]> retries = new CopyOnWriteArrayList<>(queries);
@@ -219,7 +219,7 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
                 }
             }
         }
-        for (final CompletableFuture future : futures) {
+        for (CompletableFuture future : futures) {
             try {
                 future.get();
             } catch (ExecutionException ee) {
@@ -234,12 +234,12 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
         return resultMap;
     }
 
-    public void set(final byte[] key, final byte[] value) {
+    public void set(byte[] key, byte[] value) {
         inserts.add(new Insert(key, value));
         tx.set(key, value);
     }
 
-    public void clear(final byte[] key) {
+    public void clear(byte[] key) {
         deletions.add(key);
         tx.clear(key);
     }
@@ -249,7 +249,7 @@ public class FoundationDBTransaction extends AbstractStoreTransaction {
         private byte[] key;
         private byte[] value;
 
-        public Insert(final byte[] key, final byte[] value) {
+        public Insert(byte[] key, byte[] value) {
             this.key = key;
             this.value = value;
         }

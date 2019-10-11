@@ -61,7 +61,7 @@ public class CqlBinaryInputFormat extends AbstractBinaryInputFormat {
     }
 
     @Override
-    public void setConf(final Configuration config) {
+    public void setConf(Configuration config) {
         super.setConf(config);
 
         // Copy some JanusGraph configuration keys to the Hadoop Configuration keys used by Cassandra's ColumnFamilyInputFormat
@@ -87,7 +87,7 @@ public class CqlBinaryInputFormat extends AbstractBinaryInputFormat {
         ConfigHelper.setInputSlicePredicate(config, predicate);
     }
 
-    private SliceRange getSliceRange(final int limit) {
+    private SliceRange getSliceRange(int limit) {
         final SliceRange sliceRange = new SliceRange();
         sliceRange.setStart(JanusGraphHadoopSetupCommon.DEFAULT_SLICE_QUERY.getSliceStart().asByteBuffer());
         sliceRange.setFinish(JanusGraphHadoopSetupCommon.DEFAULT_SLICE_QUERY.getSliceEnd().asByteBuffer());

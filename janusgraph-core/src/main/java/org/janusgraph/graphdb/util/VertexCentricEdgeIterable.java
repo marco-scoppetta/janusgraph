@@ -31,7 +31,7 @@ public class VertexCentricEdgeIterable<R extends JanusGraphRelation> implements 
     private final Iterable<InternalVertex> vertices;
     private final RelationCategory relationCategory;
 
-    public VertexCentricEdgeIterable(final Iterable<InternalVertex> vertices, final RelationCategory relationCategory) {
+    public VertexCentricEdgeIterable(Iterable<InternalVertex> vertices, RelationCategory relationCategory) {
         Preconditions.checkArgument(vertices!=null && relationCategory!=null);
         this.vertices = vertices;
         this.relationCategory = relationCategory;

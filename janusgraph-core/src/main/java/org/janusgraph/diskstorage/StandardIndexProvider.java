@@ -58,9 +58,9 @@ public enum StandardIndexProvider {
         StandardIndexProvider[] backends = values();
         final List<String> tempShorthands = new ArrayList<>();
         final Map<String, String> tempClassMap = new HashMap<>();
-        for (final StandardIndexProvider backend : backends) {
+        for (StandardIndexProvider backend : backends) {
             tempShorthands.addAll(backend.getShorthands());
-            for (final String shorthand : backend.getShorthands()) {
+            for (String shorthand : backend.getShorthands()) {
                 tempClassMap.put(shorthand, backend.getProviderName());
             }
         }

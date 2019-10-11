@@ -99,7 +99,7 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh) throws BackendException {
+    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
         return runWithMetrics(txh, metricsStoreName, M_GET_SLICE, () -> {
             final EntryList result = backend.getSlice(query, txh);
             recordSliceMetrics(txh, result);
@@ -108,13 +108,13 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public Map<StaticBuffer,EntryList> getSlice(final List<StaticBuffer> keys,
+    public Map<StaticBuffer,EntryList> getSlice(List<StaticBuffer> keys,
                                       final SliceQuery query,
                                       final StoreTransaction txh) throws BackendException {
         return runWithMetrics(txh, metricsStoreName, M_GET_SLICE, () -> {
             final Map<StaticBuffer,EntryList> results = backend.getSlice(keys, query, txh);
 
-            for (final EntryList result : results.values()) {
+            for (EntryList result : results.values()) {
                 recordSliceMetrics(txh, result);
             }
             return results;
@@ -122,7 +122,7 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public void mutate(final StaticBuffer key,
+    public void mutate(StaticBuffer key,
                        final List<Entry> additions,
                        final List<StaticBuffer> deletions,
                        final StoreTransaction txh) throws BackendException {
@@ -133,7 +133,7 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public void acquireLock(final StaticBuffer key,
+    public void acquireLock(StaticBuffer key,
                             final StaticBuffer column,
                             final StaticBuffer expectedValue,
                             final StoreTransaction txh) throws BackendException {
@@ -144,7 +144,7 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(KeyRangeQuery query, StoreTransaction txh) throws BackendException {
         return runWithMetrics(txh, metricsStoreName, M_GET_KEYS, () -> {
             final KeyIterator ki = backend.getKeys(query, txh);
             if (txh.getConfiguration().hasGroupName()) {
@@ -156,7 +156,7 @@ public class MetricInstrumentedStore implements KeyColumnValueStore {
     }
 
     @Override
-    public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(SliceQuery query, StoreTransaction txh) throws BackendException {
         return runWithMetrics(txh, metricsStoreName, M_GET_KEYS, () -> {
             final KeyIterator ki = backend.getKeys(query, txh);
             if (txh.getConfiguration().hasGroupName()) {

@@ -33,11 +33,11 @@ public class IndexEntry implements MetaAnnotated, MetaAnnotatable {
     public final String field;
     public final Object value;
 
-    public IndexEntry(final String field, final Object value) {
+    public IndexEntry(String field, Object value) {
         this(field, value, null);
     }
 
-    public IndexEntry(final String field, final Object value, Map<EntryMetaData, Object> metadata) {
+    public IndexEntry(String field, Object value, Map<EntryMetaData, Object> metadata) {
         Preconditions.checkNotNull(field);
         Preconditions.checkNotNull(value);
         Preconditions.checkArgument(StringUtils.isNotBlank(field));

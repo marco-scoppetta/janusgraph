@@ -250,8 +250,8 @@ public class RestClientSetupTest {
         return hccc;
     }
 
-    private CredentialsProvider basicAuthTestBase(final Map<String, String> extraConfigValues, final String realm,
-            final String username, final String password) throws Exception {
+    private CredentialsProvider basicAuthTestBase(Map<String, String> extraConfigValues, String realm,
+            final String username, String password) throws Exception {
         final HttpClientConfigCallback hccc = authTestBase(
                 ImmutableMap.<String, String>builder().
                     put("index." + INDEX_NAME + ".elasticsearch.interface", "REST_CLIENT").
@@ -332,7 +332,7 @@ public class RestClientSetupTest {
         assertArrayEquals(customAuthArgs, customAuth.args);
     }
 
-    public SSLConfigurationCallback.Builder sslSettingsTestBase(final Map<String, String> extraConfigValues) throws Exception {
+    public SSLConfigurationCallback.Builder sslSettingsTestBase(Map<String, String> extraConfigValues) throws Exception {
 
         final SSLConfigurationCallback.Builder sslConfBuilderMock = mock(SSLConfigurationCallback.Builder.class);
 

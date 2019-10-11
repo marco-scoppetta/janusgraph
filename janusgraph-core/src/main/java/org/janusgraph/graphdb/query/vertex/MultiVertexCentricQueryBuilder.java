@@ -43,7 +43,7 @@ public class MultiVertexCentricQueryBuilder extends BasicVertexCentricQueryBuild
      */
     private final Set<InternalVertex> vertices;
 
-    public MultiVertexCentricQueryBuilder(final StandardJanusGraphTx tx) {
+    public MultiVertexCentricQueryBuilder(StandardJanusGraphTx tx) {
         super(tx);
         vertices = Sets.newHashSet();
     }

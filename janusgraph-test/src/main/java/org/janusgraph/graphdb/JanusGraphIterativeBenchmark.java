@@ -88,7 +88,7 @@ public abstract class JanusGraphIterativeBenchmark extends JanusGraphBaseTest {
     }
 
 
-    public void loadData(final int numVertices, final int numThreads) throws Exception {
+    public void loadData(int numVertices, int numThreads) throws Exception {
         makeKey("w", Integer.class);
         PropertyKey time = makeKey("t", Long.class);
         ((StandardEdgeLabelMaker) mgmt.makeEdgeLabel("l")).sortKey(time).make();

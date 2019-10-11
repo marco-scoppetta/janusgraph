@@ -131,13 +131,13 @@ public class PartitionIDRange {
     =========== Helper methods to generate PartitionIDRanges ============
      */
 
-    public static List<PartitionIDRange> getGlobalRange(final int partitionBits) {
+    public static List<PartitionIDRange> getGlobalRange(int partitionBits) {
         Preconditions.checkArgument(partitionBits>=0 && partitionBits<(Integer.SIZE-1),"Invalid partition bits: %s",partitionBits);
         final int partitionIdBound = (1 << (partitionBits));
         return ImmutableList.of(new PartitionIDRange(0, partitionIdBound, partitionIdBound));
     }
 
-    public static List<PartitionIDRange> getIDRanges(final int partitionBits, final List<KeyRange> locals) {
+    public static List<PartitionIDRange> getIDRanges(int partitionBits, List<KeyRange> locals) {
         Preconditions.checkArgument(partitionBits>0 && partitionBits<(Integer.SIZE-1));
         Preconditions.checkArgument(locals!=null && !locals.isEmpty(),"KeyRanges are empty");
         final int partitionIdBound = (1 << (partitionBits));

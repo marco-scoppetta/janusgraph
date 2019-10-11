@@ -33,7 +33,7 @@ public class MetricInstrumentedSchemaCache implements SchemaCache {
 
     private final SchemaCache cache;
 
-    public MetricInstrumentedSchemaCache(final StoreRetrieval retriever) {
+    public MetricInstrumentedSchemaCache(StoreRetrieval retriever) {
         cache = new StandardSchemaCache(new StoreRetrieval() {
             @Override
             public Long retrieveSchemaByName(String typeName) {

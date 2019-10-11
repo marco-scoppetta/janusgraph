@@ -69,7 +69,7 @@ public class TestGraphConfigs {
     }
 
 
-    public static void applyOverrides(final WriteConfiguration base) {
+    public static void applyOverrides(WriteConfiguration base) {
         if (null == overrides)
             return;
 

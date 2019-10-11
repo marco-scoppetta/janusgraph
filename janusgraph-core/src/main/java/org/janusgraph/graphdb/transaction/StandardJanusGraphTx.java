@@ -329,7 +329,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     }
 
     @Override
-    public <I extends Io> I io(final Io.Builder<I> builder) {
+    public <I extends Io> I io(Io.Builder<I> builder) {
         return getGraph().io(builder);
     }
 

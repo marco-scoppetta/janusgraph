@@ -95,7 +95,7 @@ public abstract class ConfigElement {
         return name.equals(c.name) && namespace ==c.namespace;
     }
 
-    public static String[] getComponents(final String path) {
+    public static String[] getComponents(String path) {
         return StringUtils.split(path,SEPARATOR);
     }
 

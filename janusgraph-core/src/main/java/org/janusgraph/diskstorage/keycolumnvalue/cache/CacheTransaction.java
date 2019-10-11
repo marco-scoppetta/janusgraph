@@ -88,7 +88,7 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
         }
     }
 
-    private int persist(final Map<String, Map<StaticBuffer, KCVMutation>> subMutations) {
+    private int persist(Map<String, Map<StaticBuffer, KCVMutation>> subMutations) {
         BackendOperation.execute(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -148,11 +148,11 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
                     } else {
                         final KCVEntryMutation m = mutationsForKey.getValue();
                         final List<CachableStaticBuffer> entries = new ArrayList<>(m.getTotalMutations());
-                        for (final Entry e : m.getAdditions()) {
+                        for (Entry e : m.getAdditions()) {
                             assert e instanceof CachableStaticBuffer;
                             entries.add((CachableStaticBuffer) e);
                         }
-                        for (final StaticBuffer e : m.getDeletions()) {
+                        for (StaticBuffer e : m.getDeletions()) {
                             assert e instanceof CachableStaticBuffer;
                             entries.add((CachableStaticBuffer) e);
                         }

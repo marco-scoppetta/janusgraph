@@ -64,7 +64,7 @@ public class JanusGraphAssert {
     }
 
     public static<E extends Element> void assertTraversal(GraphTraversal<?, E> req, E... expectedElements) {
-        for (final E expectedElement : expectedElements) {
+        for (E expectedElement : expectedElements) {
             assertEquals(expectedElement, req.next());
         }
         assertFalse(req.hasNext());

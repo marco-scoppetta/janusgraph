@@ -200,7 +200,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
      * @param idNamespace
      * @return
      */
-    private long getBlockSize(final int idNamespace) {
+    private long getBlockSize(int idNamespace) {
         long blockSize = blockSizer.getBlockSize(idNamespace);
         Preconditions.checkArgument(blockSize > 0, "Invalid block size: %s", blockSize);
         Preconditions.checkArgument(blockSize < getIdUpperBound(idNamespace),
@@ -208,7 +208,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
         return blockSize;
     }
 
-    private long getIdUpperBound(final int idNamespace) {
+    private long getIdUpperBound(int idNamespace) {
         long upperBound = blockSizer.getIdUpperBound(idNamespace);
         Preconditions.checkArgument(upperBound > 0, "Invalid upper bound: %s", upperBound);
         return upperBound;
@@ -235,7 +235,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
         return manager.beginTransaction(storeTxConfigBuilder.build());
     }
 
-    private long getCurrentID(final StaticBuffer partitionKey) throws BackendException {
+    private long getCurrentID(StaticBuffer partitionKey) throws BackendException {
         final List<Entry> blocks = BackendOperation.execute(
                 (BackendOperation.Transactional<List<Entry>>) txh -> idStore.getSlice(new KeySliceQuery(partitionKey, LOWER_SLICE, UPPER_SLICE).setLimit(5), txh), this, times);
 

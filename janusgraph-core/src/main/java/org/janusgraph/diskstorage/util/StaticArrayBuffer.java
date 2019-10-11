@@ -194,7 +194,7 @@ public class StaticArrayBuffer implements StaticBuffer {
                 | array[offset] & 0xFF;
     }
 
-    public static void putInt(byte[] array, int offset, final int value) {
+    public static void putInt(byte[] array, int offset, int value) {
         array[offset++]= (byte)((value >> 24) & 0xFF);
         array[offset++]= (byte)((value >> 16) & 0xFF);
         array[offset++]= (byte)((value >> 8) & 0xFF);
@@ -218,7 +218,7 @@ public class StaticArrayBuffer implements StaticBuffer {
                 | array[offset] & 0xFF;
     }
 
-    public static void putLong(byte[] array, int offset, final long value) {
+    public static void putLong(byte[] array, int offset, long value) {
         array[offset++] = (byte) (value >> 56  );
         array[offset++] = (byte)((value >> 48  ) & 0xFF);
         array[offset++] = (byte)((value >> 40  ) & 0xFF);

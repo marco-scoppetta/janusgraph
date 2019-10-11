@@ -65,7 +65,7 @@ public class ConcurrentLRUCache<V> {
     private final EvictionListener<V> evictionListener;
     private CleanupThread cleanupThread;
 
-    public ConcurrentLRUCache(int upperWaterMark, final int lowerWaterMark, int acceptableWatermark,
+    public ConcurrentLRUCache(int upperWaterMark, int lowerWaterMark, int acceptableWatermark,
                               int initialSize, boolean runCleanupThread, boolean runNewThreadForCleanup,
                               EvictionListener<V> evictionListener) {
         if (upperWaterMark < 1) throw new IllegalArgumentException("upperWaterMark must be > 0");

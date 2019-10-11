@@ -46,7 +46,7 @@ public class GraphOfTheGodsFactory {
                     "use GraphOfTheGodsFactory.loadWithoutMixedIndex(graph,true) to load without the use of an " +
                     "indexing backend.";
 
-    public static void loadWithoutMixedIndex(final JanusGraph graph, boolean uniqueNameCompositeIndex) {
+    public static void loadWithoutMixedIndex(JanusGraph graph, boolean uniqueNameCompositeIndex) {
         load(graph, null, uniqueNameCompositeIndex);
     }
 
@@ -58,7 +58,7 @@ public class GraphOfTheGodsFactory {
         return indexName == null || graph.getIndexSerializer().containsIndex(indexName);
     }
 
-    public static void load(final JanusGraph graph, String mixedIndexName, boolean uniqueNameCompositeIndex) {
+    public static void load(JanusGraph graph, String mixedIndexName, boolean uniqueNameCompositeIndex) {
         if (graph instanceof StandardJanusGraph) {
             Preconditions.checkState(mixedIndexNullOrExists((StandardJanusGraph) graph, mixedIndexName),
                     ERR_NO_INDEXING_BACKEND, mixedIndexName);

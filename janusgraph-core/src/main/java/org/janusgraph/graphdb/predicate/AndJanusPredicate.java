@@ -28,7 +28,7 @@ public class AndJanusPredicate extends ConnectiveJanusPredicate {
         super();
     }
 
-    public AndJanusPredicate(final List<JanusGraphPredicate> predicates) {
+    public AndJanusPredicate(List<JanusGraphPredicate> predicates) {
         super(predicates);
     }
 
@@ -44,7 +44,7 @@ public class AndJanusPredicate extends ConnectiveJanusPredicate {
 
     @Override
     public boolean isQNF() {
-        for (final JanusGraphPredicate internalCondition : this) {
+        for (JanusGraphPredicate internalCondition : this) {
             if (!internalCondition.isQNF()){
                 return false;
             }

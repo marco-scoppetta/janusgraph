@@ -41,22 +41,22 @@ public class MetricsQueryExecutor<Q extends ElementQuery,R extends JanusGraphEle
     }
 
     @Override
-    public Iterator<R> getNew(final Q query) {
+    public Iterator<R> getNew(Q query) {
         return runWithMetrics("getNew", v -> qe.getNew(query));
     }
 
     @Override
-    public boolean hasDeletions(final Q query) {
+    public boolean hasDeletions(Q query) {
         return runWithMetrics("hasDeletions", v -> qe.hasDeletions(query));
     }
 
     @Override
-    public boolean isDeleted(final Q query, final R result) {
+    public boolean isDeleted(Q query, R result) {
         return runWithMetrics("isDeleted", v -> qe.isDeleted(query, result));
     }
 
     @Override
-    public Iterator<R> execute(final Q query, final B subquery, final Object executionInfo, final QueryProfiler profiler) {
+    public Iterator<R> execute(Q query, B subquery, Object executionInfo, QueryProfiler profiler) {
         return runWithMetrics("execute", v -> qe.execute(query, subquery, executionInfo, profiler));
     }
 
@@ -68,7 +68,7 @@ public class MetricsQueryExecutor<Q extends ElementQuery,R extends JanusGraphEle
         final MetricManager mgr = MetricManager.INSTANCE;
         mgr.getCounter(metricsPrefix, opName, M_CALLS).inc();
 
-        try (final Timer.Context tc = mgr.getTimer(metricsPrefix, opName, M_TIME).time()) {
+        try (Timer.Context tc = mgr.getTimer(metricsPrefix, opName, M_TIME).time()) {
             return impl.apply(null);
         } catch (RuntimeException e) {
             mgr.getCounter(metricsPrefix, opName, M_EXCEPTIONS).inc();

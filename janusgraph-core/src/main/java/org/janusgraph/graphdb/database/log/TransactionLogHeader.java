@@ -77,7 +77,7 @@ public class TransactionLogHeader {
         return out.getStaticBuffer();
     }
 
-    private static void logRelations(DataOutput out, final Collection<InternalRelation> relations, StandardJanusGraphTx tx) {
+    private static void logRelations(DataOutput out, Collection<InternalRelation> relations, StandardJanusGraphTx tx) {
         VariableLong.writePositive(out,relations.size());
         for (InternalRelation rel : relations) {
             VariableLong.writePositive(out,rel.getVertex(0).longId());

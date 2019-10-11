@@ -77,7 +77,7 @@ public class JanusGraphPSerializer extends Serializer<P> {
 
         try {
             return createPredicateWithValue(predicate, value);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log.info("Couldn't deserialize class: " + aClass + ", predicate: " + predicate + ", isCollection: "
                     + isCollection + ",value: " + value, e);
             throw new IllegalStateException(e.getMessage(), e);

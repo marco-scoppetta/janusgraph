@@ -54,9 +54,9 @@ public enum StandardStoreManager {
         StandardStoreManager[] backends = values();
         final List<String> tempShorthands = new ArrayList<>();
         final Map<String, String> tempClassMap = new HashMap<>();
-        for (final StandardStoreManager backend : backends) {
+        for (StandardStoreManager backend : backends) {
             tempShorthands.addAll(backend.getShorthands());
-            for (final String shorthand : backend.getShorthands()) {
+            for (String shorthand : backend.getShorthands()) {
                 tempClassMap.put(shorthand, backend.getManagerClass());
             }
         }

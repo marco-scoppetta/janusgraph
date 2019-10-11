@@ -128,7 +128,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
         return iterator;
     }
 
-    private Iterator<R> getFilterIterator(final Iterator<R> iterator, final boolean filterDeletions, final boolean filterMatches) {
+    private Iterator<R> getFilterIterator(Iterator<R> iterator, boolean filterDeletions, boolean filterMatches) {
         if (filterDeletions || filterMatches) {
             return Iterators.filter(iterator, r -> (!filterDeletions || !executor.isDeleted(query, r)) && (!filterMatches || query.matches(r)));
         } else {

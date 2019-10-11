@@ -37,7 +37,7 @@ public class ConnectiveJanusGraphP extends P<Object>{
         return toString((ConnectiveJanusPredicate) this.biPredicate, this.originalValue).toString();
     }
 
-    private StringBuilder toString(final JanusGraphPredicate predicate, final Object value) {
+    private StringBuilder toString(JanusGraphPredicate predicate, Object value) {
         final StringBuilder toReturn = new StringBuilder();
         if (!(predicate instanceof ConnectiveJanusPredicate)) {
             toReturn.append(predicate);

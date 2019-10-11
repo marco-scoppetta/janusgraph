@@ -25,7 +25,7 @@ import com.google.common.base.Preconditions;
 public class AbstractLongListUtil {
 
 
-    public static boolean isSorted(LongArrayList l, final boolean unique) {
+    public static boolean isSorted(LongArrayList l, boolean unique) {
         for (int i = 1; i < l.size(); i++) {
             if (l.get(i) < l.get(i - 1) || (unique && l.get(i) == l.get(i - 1))) return false;
         }
@@ -57,7 +57,7 @@ public class AbstractLongListUtil {
         return result;
     }
 
-    public static LongArrayList mergeJoin(LongArrayList a, LongArrayList b, final boolean unique) {
+    public static LongArrayList mergeJoin(LongArrayList a, LongArrayList b, boolean unique) {
         assert isSorted(a) : a.toString();
         assert isSorted(b) : b.toString();
         int counterA = 0, counterB = 0;

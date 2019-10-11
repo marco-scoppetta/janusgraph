@@ -48,7 +48,7 @@ public class JanusGraphLocalQueryOptimizerStrategy extends AbstractTraversalStra
     }
 
     @Override
-    public void apply(final Traversal.Admin<?, ?> traversal) {
+    public void apply(Traversal.Admin<?, ?> traversal) {
         if (!traversal.getGraph().isPresent())
             return;
 
@@ -170,7 +170,7 @@ public class JanusGraphLocalQueryOptimizerStrategy extends AbstractTraversalStra
      * @param nextStep The next step in the traversal
      * @param txVertexCacheSize The size of the vertex cache
      */
-    private void applyBatchPropertyPrefetching(final Admin<?, ?> traversal, final JanusGraphVertexStep vertexStep, final Step nextStep, final int txVertexCacheSize) {
+    private void applyBatchPropertyPrefetching(Admin<?, ?> traversal, JanusGraphVertexStep vertexStep, Step nextStep, int txVertexCacheSize) {
         if (Vertex.class.isAssignableFrom(vertexStep.getReturnClass())) {
             if (HasStepFolder.foldableHasContainerNoLimit(vertexStep)) {
                 vertexStep.setBatchPropertyPrefetching(true);
@@ -186,7 +186,7 @@ public class JanusGraphLocalQueryOptimizerStrategy extends AbstractTraversalStra
         }
     }
 
-    private static void unfoldLocalTraversal(final Traversal.Admin<?, ?> traversal,
+    private static void unfoldLocalTraversal(Traversal.Admin<?, ?> traversal,
                                              LocalStep<?,?> localStep, Traversal.Admin localTraversal,
                                              MultiQueriable vertexStep, boolean useMultiQuery) {
         assert localTraversal.asAdmin().getSteps().size() > 0;

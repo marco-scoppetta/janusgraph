@@ -33,7 +33,7 @@ public class VertexCache {
     private final ConcurrentMap<Long, InternalVertex> volatileVertices;
     private final Cache<Long, InternalVertex> cache;
 
-    public VertexCache(final long maxCacheSize, final int concurrencyLevel, final int initialDirtySize) {
+    public VertexCache(long maxCacheSize, int concurrencyLevel, int initialDirtySize) {
         volatileVertices = new NonBlockingHashMapLong<>(initialDirtySize);
         cache = CacheBuilder.newBuilder()
                 .maximumSize(maxCacheSize)

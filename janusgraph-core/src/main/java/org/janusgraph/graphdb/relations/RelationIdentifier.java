@@ -50,7 +50,7 @@ public final class RelationIdentifier implements Serializable {
         inVertexId = 0;
     }
 
-    private RelationIdentifier(final long outVertexId, final long typeId, final long relationId, final long inVertexId) {
+    private RelationIdentifier(long outVertexId, long typeId, long relationId, long inVertexId) {
         this.outVertexId = outVertexId;
         this.typeId = typeId;
         this.relationId = relationId;

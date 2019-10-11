@@ -63,7 +63,7 @@ public class OrderedKeyValueStoreManagerAdapter implements KeyColumnValueStoreMa
     }
 
     @Override
-    public StoreTransaction beginTransaction(final BaseTransactionConfig config) throws BackendException {
+    public StoreTransaction beginTransaction(BaseTransactionConfig config) throws BackendException {
         return manager.beginTransaction(config);
     }
 

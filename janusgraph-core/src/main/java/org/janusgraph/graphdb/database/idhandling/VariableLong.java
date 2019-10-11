@@ -52,11 +52,11 @@ public class VariableLong {
     }
 
 
-    private static void writeUnsigned(WriteBuffer out, final long value) {
+    private static void writeUnsigned(WriteBuffer out, long value) {
         writeUnsigned(out, unsignedBlockBitLength(value), value);
     }
 
-    private static void writeUnsigned(WriteBuffer out, int offset, final long value) {
+    private static void writeUnsigned(WriteBuffer out, int offset, long value) {
         assert offset % 7 == 0;
         while (offset > 0) {
             offset -= 7;
@@ -68,20 +68,20 @@ public class VariableLong {
         }
     }
 
-    private static int unsignedBlockBitLength(final long value) {
+    private static int unsignedBlockBitLength(long value) {
         return unsignedNumBlocks(value)*7;
     }
 
-    private static int unsignedNumBlocks(final long value) {
+    private static int unsignedNumBlocks(long value) {
         return numVariableBlocks(unsignedBitLength(value));
     }
 
-    private static int numVariableBlocks(final int numBits) {
+    private static int numVariableBlocks(int numBits) {
         assert numBits > 0;
         return (numBits - 1) / 7 + 1;
     }
 
-    public static int unsignedBitLength(final long value) {
+    public static int unsignedBitLength(long value) {
         return (value == 0) ? 1 : Long.SIZE - Long.numberOfLeadingZeros(value);
     }
 
@@ -96,12 +96,12 @@ public class VariableLong {
         return value;
     }
 
-    public static void writePositive(WriteBuffer out, final long value) {
+    public static void writePositive(WriteBuffer out, long value) {
         assert value >= 0;
         writeUnsigned(out, value);
     }
 
-    public static StaticBuffer positiveBuffer(final long value) {
+    public static StaticBuffer positiveBuffer(long value) {
         WriteBuffer buffer = new WriteByteBuffer(positiveLength(value));
         writePositive(buffer, value);
         return buffer.getStaticBuffer();
@@ -130,12 +130,12 @@ public class VariableLong {
       Read and write arbitrary longs
     ################################## */
 
-    private static long convert2Unsigned(final long value) {
+    private static long convert2Unsigned(long value) {
         assert value >= 0 || value > Long.MIN_VALUE;
         return Math.abs(value) << 1 | (value < 0 ? 1 : 0);
     }
 
-    private static long convertFromUnsigned(final long value) {
+    private static long convertFromUnsigned(long value) {
         return ((value & 1) == 1) ? -(value >>> 1) : value >>> 1;
     }
 
@@ -143,7 +143,7 @@ public class VariableLong {
         return unsignedNumBlocks(convert2Unsigned(value));
     }
 
-    public static void write(WriteBuffer out, final long value) {
+    public static void write(WriteBuffer out, long value) {
         writeUnsigned(out, convert2Unsigned(value));
     }
 
@@ -156,7 +156,7 @@ public class VariableLong {
       Read and write positive longs with a specified binary prefix of fixed length
     ################################## */
 
-    public static void writePositiveWithPrefix(final WriteBuffer out, long value, long prefix, final int prefixBitLen) {
+    public static void writePositiveWithPrefix(WriteBuffer out, long value, long prefix, int prefixBitLen) {
         assert value >= 0;
         assert prefixBitLen > 0 && prefixBitLen < 6 && (prefix < (1L << prefixBitLen));
         //Write first byte
@@ -184,13 +184,13 @@ public class VariableLong {
         }
     }
 
-    public static int positiveWithPrefixLength(final long value, final int prefixBitLen) {
+    public static int positiveWithPrefixLength(long value, int prefixBitLen) {
         assert value >= 0;
         assert prefixBitLen > 0 && prefixBitLen < 6;
         return numVariableBlocks(unsignedBitLength(value)+prefixBitLen);
     }
 
-    public static long[] readPositiveWithPrefix(final ReadBuffer in, final int prefixBitLen) {
+    public static long[] readPositiveWithPrefix(ReadBuffer in, int prefixBitLen) {
         assert prefixBitLen > 0 && prefixBitLen < 6;
 
         int first = unsignedByte(in.getByte());
@@ -232,11 +232,11 @@ public class VariableLong {
       Use length() for length
     ################################## */
 
-    public static void writeBackward(WriteBuffer out, final long value) {
+    public static void writeBackward(WriteBuffer out, long value) {
         writeUnsignedBackward(out, convert2Unsigned(value));
     }
 
-    public static int backwardLength(final long value) {
+    public static int backwardLength(long value) {
         return unsignedBackwardLength(convert2Unsigned(value));
     }
 
@@ -254,7 +254,7 @@ public class VariableLong {
      * @param out
      * @param value
      */
-    private static void writeUnsignedBackward(WriteBuffer out, final long value) {
+    private static void writeUnsignedBackward(WriteBuffer out, long value) {
         int numBytes = unsignedBackwardLength(value);
         int prefixLen = numBytes - 3;
         assert prefixLen >= 0 && prefixLen < 8; //Consumes 3 bits
@@ -267,7 +267,7 @@ public class VariableLong {
         }
     }
 
-    private static int unsignedBackwardLength(final long value) {
+    private static int unsignedBackwardLength(long value) {
         int bitLength = unsignedBitLength(value);
         assert bitLength > 0 && bitLength <= 64;
         return Math.max(3, 1 + (bitLength <= 4 ? 0 : (1 + (bitLength - 5) / 7)));

@@ -259,7 +259,7 @@ public class StandardJanusGraph implements JanusGraph {
     }
 
     @Override
-    public <I extends Io> I io(final Io.Builder<I> builder) {
+    public <I extends Io> I io(Io.Builder<I> builder) {
         if (builder.requiresVersion(GryoVersion.V1_0) || builder.requiresVersion(GraphSONVersion.V1_0)) {
             return (I) builder.graph(this).onMapper(mapper -> mapper.addRegistry(JanusGraphIoRegistryV1d0.getInstance())).create();
         } else if (builder.requiresVersion(GraphSONVersion.V2_0)) {
@@ -511,7 +511,7 @@ public class StandardJanusGraph implements JanusGraph {
         return buildTransaction().threadBound().start();
     }
 
-    public StandardJanusGraphTx newTransaction(final TransactionConfiguration configuration) {
+    public StandardJanusGraphTx newTransaction(TransactionConfiguration configuration) {
         if (!isOpen) {
             throw new IllegalStateException("Graph has been shut down");
         }

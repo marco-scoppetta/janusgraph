@@ -148,7 +148,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
         }
     }
 
-    private void fixSecondaryFailure(final StandardTransactionId txId, final TxEntry entry) {
+    private void fixSecondaryFailure(StandardTransactionId txId, TxEntry entry) {
         logRecoveryMsg("Attempting to repair partially failed transaction [%s]",txId);
         if (entry.entry==null) {
             logRecoveryMsg("Trying to repair expired or unpersisted transaction [%s] (Ignore in startup)", txId);
@@ -201,7 +201,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
                     .map(m -> ModificationDeserializer.parseRelation(m, tx))
                     .forEach(rel -> {
                         //Collect affected vertex indexes
-                        for (final MixedIndexType index : getMixedIndexes(rel.getType())) {
+                        for (MixedIndexType index : getMixedIndexes(rel.getType())) {
                             if (index.getElement()== ElementCategory.VERTEX
                                 && isFailedIndex.apply(index.getBackingIndexName())) {
                                 assert rel.isProperty();
@@ -210,8 +210,8 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
                             }
                         }
                         //See if relation itself is affected
-                        for (final RelationType relType : rel.getPropertyKeysDirect()) {
-                            for (final MixedIndexType index : getMixedIndexes(relType)) {
+                        for (RelationType relType : rel.getPropertyKeysDirect()) {
+                            for (MixedIndexType index : getMixedIndexes(relType)) {
                                 if (index.getElement().isInstance(rel)
                                     && isFailedIndex.apply(index.getBackingIndexName())) {
                                     assert rel.id() instanceof RelationIdentifier;
@@ -229,7 +229,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
 
 
         //2) Restore elements per backing index
-        for (final String indexName : indexRestores.keySet()) {
+        for (String indexName : indexRestores.keySet()) {
             StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
             try {
                 BackendTransaction btx = tx.getBackendTransaction();

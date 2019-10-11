@@ -386,7 +386,7 @@ public class StandardSerializer implements AttributeHandler, Serializer {
         }
 
         @Override
-        public DataOutput putBytes(final StaticBuffer val) {
+        public DataOutput putBytes(StaticBuffer val) {
             super.putBytes(val);
             return this;
         }

@@ -27,7 +27,7 @@ public class CompactMap implements Map<String,Object> {
     private final String[] keys;
     private final Object[] values;
 
-    private CompactMap(final String[] keys, final Object[] values) {
+    private CompactMap(String[] keys, Object[] values) {
         checkKeys(keys);
         if (values==null || values.length<1) throw new IllegalArgumentException("Invalid values");
         if (values.length!=keys.length) throw new IllegalArgumentException("Keys and values do not match in length");
@@ -36,11 +36,11 @@ public class CompactMap implements Map<String,Object> {
         this.values=values;
     }
 
-    public static CompactMap of(final String[] keys, final Object[] values) {
+    public static CompactMap of(String[] keys, Object[] values) {
         return new CompactMap(keys,values);
     }
 
-    private static void checkKeys(final String[] keys) {
+    private static void checkKeys(String[] keys) {
         if (keys==null || keys.length<1) throw new IllegalArgumentException("Invalid keys");
         for (int i=0;i<keys.length;i++) if (keys[i]==null) throw new IllegalArgumentException("Key cannot be null at position " + i);
 
@@ -332,13 +332,13 @@ public class CompactMap implements Map<String,Object> {
         private String[] keys;
         private int hashcode;
 
-        KeyContainer(final String[] keys) {
+        KeyContainer(String[] keys) {
             setKeys(keys);
         }
 
         KeyContainer() {}
 
-        void setKeys(final String[] keys) {
+        void setKeys(String[] keys) {
             checkKeys(keys);
             this.keys = keys;
             this.hashcode= Arrays.hashCode(keys);

@@ -102,7 +102,7 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
         parameters = Lists.newArrayList();
         orders = Lists.newArrayList();
         unknownKeyName = tx.getGraph().getConfiguration().getUnknownIndexKeyName();
-        this.offset=0;
+        this.offset = 0;
     }
 
     //################################################
@@ -135,8 +135,8 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
 
     @Override
     public IndexQueryBuilder setElementIdentifier(String identifier) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(identifier),"Prefix may not be a blank string");
-        this.prefix=identifier;
+        Preconditions.checkArgument(StringUtils.isNotBlank(identifier), "Prefix may not be a blank string");
+        this.prefix = identifier;
         return this;
     }
 
@@ -151,26 +151,26 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
 
     public IndexQueryBuilder setIndex(String indexName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(indexName));
-        this.indexName=indexName;
+        this.indexName = indexName;
         return this;
     }
 
     public IndexQueryBuilder setQuery(String query) {
         Preconditions.checkArgument(StringUtils.isNotBlank(query));
-        this.query=query;
+        this.query = query;
         return this;
     }
 
     @Override
     public IndexQueryBuilder offset(int offset) {
-        Preconditions.checkArgument(offset>=0,"Invalid offset provided: %s",offset);
-        this.offset=offset;
+        Preconditions.checkArgument(offset >= 0, "Invalid offset provided: %s", offset);
+        this.offset = offset;
         return this;
     }
 
     @Override
     public JanusGraphIndexQuery orderBy(String key, Order order) {
-        Preconditions.checkArgument(key!=null && order!=null,"Need to specify and key and an order");
+        Preconditions.checkArgument(key != null && order != null, "Need to specify and key and an order");
         orders.add(Parameter.of(key, order));
         return this;
     }
@@ -195,7 +195,7 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
 
     @Override
     public IndexQueryBuilder addParameters(Parameter... paras) {
-        for (Parameter para: paras) addParameter(para);
+        for (Parameter para : paras) addParameter(para);
         return this;
     }
 
@@ -203,8 +203,8 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
         Preconditions.checkNotNull(indexName);
         Preconditions.checkNotNull(query);
         if (tx.hasModifications())
-            log.warn("Modifications in this transaction might not be accurately reflected in this index query: {}",query);
-        return serializer.executeQuery(this, resultType, tx.getBackendTransaction(),tx).map(r -> (Result<E>) new ResultImpl<>(tx.getConversionFunction(resultType).apply(r.getResult()), r.getScore())).filter(r -> !r.getElement().isRemoved());
+            log.warn("Modifications in this transaction might not be accurately reflected in this index query: {}", query);
+        return serializer.executeQuery(this, resultType, tx.getBackendTransaction(), tx).map(r -> (Result<E>) new ResultImpl<>(tx.getConversionFunction(resultType).apply(r.getResult()), r.getScore())).filter(r -> !r.getElement().isRemoved());
     }
 
     private Long executeTotals(ElementCategory resultType) {
@@ -212,8 +212,8 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
         Preconditions.checkNotNull(query);
         this.setLimit(0);
         if (tx.hasModifications())
-            log.warn("Modifications in this transaction might not be accurately reflected in this index query: {}",query);
-        return serializer.executeTotals(this,resultType,tx.getBackendTransaction(),tx);
+            log.warn("Modifications in this transaction might not be accurately reflected in this index query: {}", query);
+        return serializer.executeTotals(this, resultType, tx.getBackendTransaction(), tx);
     }
 
     @Deprecated
@@ -272,7 +272,7 @@ public class IndexQueryBuilder extends BaseQuery implements JanusGraphIndexQuery
 
     private void setPrefixInternal(String prefix) {
         Preconditions.checkArgument(StringUtils.isNotBlank(prefix));
-        if (this.prefix==null) this.prefix=prefix;
+        if (this.prefix == null) this.prefix = prefix;
     }
 
     private static class ResultImpl<V extends Element> implements Result<V> {

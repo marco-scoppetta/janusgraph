@@ -326,7 +326,7 @@ public class VertexIDAssigner implements AutoCloseable {
         }
     }
 
-    private long getPartitionID(final InternalVertex v) {
+    private long getPartitionID(InternalVertex v) {
         long vid = v.longId();
         if (IDManager.VertexIDType.Schema.is(vid)) return IDManager.SCHEMA_PARTITION;
         else return idManager.getPartitionId(vid);

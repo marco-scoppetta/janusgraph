@@ -337,7 +337,7 @@ public class ManagementSystem implements JanusGraphManagement {
     }
 
     @Override
-    public Iterable<RelationTypeIndex> getRelationIndexes(final RelationType type) {
+    public Iterable<RelationTypeIndex> getRelationIndexes(RelationType type) {
         Preconditions.checkArgument(type instanceof InternalRelationType, "Invalid relation type provided: %s", type);
         return Iterables.transform(Iterables.filter(((InternalRelationType) type).getRelationIndexes(), internalRelationType -> !type.equals(internalRelationType)), new Function<InternalRelationType, RelationTypeIndex>() {
             @Nullable
@@ -370,7 +370,7 @@ public class ManagementSystem implements JanusGraphManagement {
     }
 
     @Override
-    public Iterable<JanusGraphIndex> getGraphIndexes(final Class<? extends Element> elementType) {
+    public Iterable<JanusGraphIndex> getGraphIndexes(Class<? extends Element> elementType) {
         return StreamSupport.stream(
                 QueryUtil.getVertices(transaction, BaseKey.SchemaCategory, JanusGraphSchemaCategory.GRAPHINDEX).spliterator(), false)
                 .map(janusGraphVertex -> {
@@ -607,7 +607,7 @@ public class ManagementSystem implements JanusGraphManagement {
     }
 
     @Override
-    public void addIndexKey(final JanusGraphIndex index, final PropertyKey key, Parameter... parameters) {
+    public void addIndexKey(JanusGraphIndex index, PropertyKey key, Parameter... parameters) {
         Preconditions.checkArgument(key != null && index instanceof JanusGraphIndexWrapper
                 && !(key instanceof BaseKey), "Need to provide valid index and key");
         if (parameters == null) parameters = new Parameter[0];
@@ -1115,7 +1115,7 @@ public class ManagementSystem implements JanusGraphManagement {
             return getIndexJobFinisher(null, null);
         }
 
-        public Consumer<ScanMetrics> getIndexJobFinisher(final JanusGraph graph, final SchemaAction action) {
+        public Consumer<ScanMetrics> getIndexJobFinisher(JanusGraph graph, SchemaAction action) {
             Preconditions.checkArgument((graph != null && action != null) || (graph == null && action == null));
             return metrics -> {
                 try {
@@ -1256,7 +1256,7 @@ public class ManagementSystem implements JanusGraphManagement {
     }
 
     @Override
-    public Duration getTTL(final JanusGraphSchemaType type) {
+    public Duration getTTL(JanusGraphSchemaType type) {
         Preconditions.checkArgument(type != null);
         int ttl;
         if (type instanceof VertexLabelVertex) {
@@ -1276,7 +1276,7 @@ public class ManagementSystem implements JanusGraphManagement {
      * @param duration Note that only 'seconds' granularity is supported
      */
     @Override
-    public void setTTL(final JanusGraphSchemaType type,
+    public void setTTL(JanusGraphSchemaType type,
                        final Duration duration) {
         if (!graph.getBackend().getStoreFeatures().hasCellTTL())
             throw new UnsupportedOperationException("The storage engine does not support TTL");

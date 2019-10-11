@@ -48,7 +48,7 @@ public class TestBed {
         private int c = 0;
         private final Object o;
 
-        A(final Object o) {
+        A(Object o) {
             this.o = o;
         }
 

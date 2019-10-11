@@ -36,7 +36,7 @@ public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayL
         super(capacity);
     }
 
-    MultiCondition(final Condition<E>... conditions) {
+    MultiCondition(Condition<E>... conditions) {
         super(conditions.length);
         for (Condition<E> condition : conditions) {
             assert condition != null;

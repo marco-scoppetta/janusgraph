@@ -48,7 +48,7 @@ public class SSLConfigurationCallback implements HttpClientConfigCallback {
     private final boolean disableHostNameVerification;
     private final boolean allowSelfSignedCertificates;
 
-    private SSLConfigurationCallback(final SSLContextBuilder sslContextBuilder,
+    private SSLConfigurationCallback(SSLContextBuilder sslContextBuilder,
             final String trustStoreFile,
             final String trustStorePassword,
             final String keyStoreFile,
@@ -127,11 +127,11 @@ public class SSLConfigurationCallback implements HttpClientConfigCallback {
         private boolean disableHostNameVerification;
         private boolean allowSelfSignedCertificates;
 
-        private Builder(final SSLContextBuilder sslContextBuilder) {
+        private Builder(SSLContextBuilder sslContextBuilder) {
             this.sslContextBuilder = sslContextBuilder;
         }
 
-        public static Builder createCustom(final SSLContextBuilder sslContextBuilder) {
+        public static Builder createCustom(SSLContextBuilder sslContextBuilder) {
             return new Builder(sslContextBuilder);
         }
 
@@ -139,13 +139,13 @@ public class SSLConfigurationCallback implements HttpClientConfigCallback {
             return new Builder(SSLContexts.custom());
         }
 
-        public Builder withTrustStore(final String trustStoreFile, final String trustStorePassword) {
+        public Builder withTrustStore(String trustStoreFile, String trustStorePassword) {
             this.trustStoreFile = trustStoreFile;
             this.trustStorePassword = trustStorePassword;
             return this;
         }
 
-        public Builder withKeyStore(final String keyStoreFile, final String keyStorePassword, final String keyPassword) {
+        public Builder withKeyStore(String keyStoreFile, String keyStorePassword, String keyPassword) {
             this.keyStoreFile = keyStoreFile;
             this.keyStorePassword = keyStorePassword;
             this.keyPassword = keyPassword;

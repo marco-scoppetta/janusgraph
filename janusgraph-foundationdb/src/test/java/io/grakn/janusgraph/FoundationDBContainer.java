@@ -61,7 +61,7 @@ public class FoundationDBContainer extends FixedHostPortGenericContainer<Foundat
         }
     }
 
-    public ModifiableConfiguration getFoundationDBConfiguration(final String graphName) {
+    public ModifiableConfiguration getFoundationDBConfiguration(String graphName) {
         String s = "docker:docker@127.0.0.1:4500";// + getMappedPort(4500);
         File clusterFile = null;
         try {

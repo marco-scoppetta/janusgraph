@@ -144,11 +144,11 @@ public class JanusGraphSchemaVertex extends CacheVertex implements SchemaSource 
         inRelations=null;
     }
 
-    public Iterable<JanusGraphEdge> getEdges(final TypeDefinitionCategory def, final Direction dir) {
+    public Iterable<JanusGraphEdge> getEdges(TypeDefinitionCategory def, Direction dir) {
         return getEdges(def,dir,null);
     }
 
-    public Iterable<JanusGraphEdge> getEdges(final TypeDefinitionCategory def, final Direction dir, JanusGraphSchemaVertex other) {
+    public Iterable<JanusGraphEdge> getEdges(TypeDefinitionCategory def, Direction dir, JanusGraphSchemaVertex other) {
         JanusGraphVertexQuery query = query().type(BaseLabel.SchemaDefinitionEdge).direction(dir);
         if (other!=null) query.adjacent(other);
         return Iterables.filter(query.edges(), (Predicate<JanusGraphEdge>) edge -> {

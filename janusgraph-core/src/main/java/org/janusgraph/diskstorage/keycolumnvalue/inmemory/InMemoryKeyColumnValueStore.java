@@ -45,7 +45,7 @@ public class InMemoryKeyColumnValueStore implements KeyColumnValueStore {
     private final String name;
     private final ConcurrentNavigableMap<StaticBuffer, ColumnValueStore> kcv;
 
-    public InMemoryKeyColumnValueStore(final String name) {
+    public InMemoryKeyColumnValueStore(String name) {
         Preconditions.checkArgument(StringUtils.isNotBlank(name));
         this.name = name;
         this.kcv = new ConcurrentSkipListMap<>();
@@ -81,7 +81,7 @@ public class InMemoryKeyColumnValueStore implements KeyColumnValueStore {
     }
 
     @Override
-    public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(KeyRangeQuery query, StoreTransaction txh) throws BackendException {
         return new RowIterator(kcv.subMap(query.getKeyStart(), query.getKeyEnd()).entrySet().iterator(), query, txh);
     }
 

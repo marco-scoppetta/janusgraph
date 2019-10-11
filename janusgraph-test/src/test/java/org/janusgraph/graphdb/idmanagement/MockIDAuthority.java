@@ -59,7 +59,7 @@ public class MockIDAuthority implements IDAuthority {
     }
 
     @Override
-    public IDBlock getIDBlock(final int partition, final int idNamespace, Duration timeout) throws BackendException {
+    public IDBlock getIDBlock(int partition, int idNamespace, Duration timeout) throws BackendException {
         //Delay artificially
         if (delayAcquisitionMS>0) {
             try {

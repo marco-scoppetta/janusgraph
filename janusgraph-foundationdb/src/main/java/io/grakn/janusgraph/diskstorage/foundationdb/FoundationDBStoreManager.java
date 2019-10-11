@@ -89,7 +89,7 @@ public class FoundationDBStoreManager extends AbstractStoreManager implements Or
                 .build();
     }
 
-    private void initialize(final String directoryName) throws BackendException {
+    private void initialize(String directoryName) throws BackendException {
         try {
             // create the root directory to hold the JanusGraph data
             rootDirectory = DirectoryLayer.getDefault().createOrOpen(db, PathUtil.from(directoryName)).get();
@@ -109,7 +109,7 @@ public class FoundationDBStoreManager extends AbstractStoreManager implements Or
     }
 
     @Override
-    public StoreTransaction beginTransaction(final BaseTransactionConfig txCfg) throws BackendException {
+    public StoreTransaction beginTransaction(BaseTransactionConfig txCfg) throws BackendException {
         try {
             final Transaction tx = db.createTransaction();
 

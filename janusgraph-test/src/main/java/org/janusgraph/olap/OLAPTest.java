@@ -478,7 +478,7 @@
 //    }
 //
 //
-//    private void expand(Vertex v, final int distance, final int diameter, final int branch) {
+//    private void expand(Vertex v, int distance, int diameter, int branch) {
 //        v.property(VertexProperty.Cardinality.single, "distance", distance);
 //        if (distance<diameter) {
 ////          JanusGraphVertex previous = null;
@@ -524,7 +524,7 @@
 //        }
 //
 //        double correctPRSum = 0;
-//        for (final JanusGraphVertex janusGraphVertex : tx.query().vertices()) {
+//        for (JanusGraphVertex janusGraphVertex : tx.query().vertices()) {
 //            correctPRSum += correctPR[janusGraphVertex.<Integer>value("distance")];
 //        }
 //

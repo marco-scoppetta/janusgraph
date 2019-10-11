@@ -64,10 +64,10 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
     private <Q extends BaseVertexQuery> Q makeQuery(Q query) {
         final String[] keys = getPropertyKeys();
         query.keys(keys);
-        for (final HasContainer condition : hasContainers) {
+        for (HasContainer condition : hasContainers) {
             query.has(condition.getKey(), JanusGraphPredicate.Converter.convert(condition.getBiPredicate()), condition.getValue());
         }
-        for (final OrderEntry order : orders) query.orderBy(order.key, order.order);
+        for (OrderEntry order : orders) query.orderBy(order.key, order.order);
         if (limit != BaseQuery.NO_LIMIT) query.limit(limit);
         ((BasicVertexCentricQueryBuilder) query).profiler(queryProfiler);
         return query;
@@ -104,7 +104,7 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
      * an attempt to retrieve a vertex from the cached multiQuery results doesn't find an entry.
      * @param vertices A list of vertices with which to initialise the multiQuery
      */
-    private void initializeMultiQuery(final List<Traverser.Admin<Element>> list) {
+    private void initializeMultiQuery(List<Traverser.Admin<Element>> list) {
         assert list.size() > 0;
         final JanusGraphMultiVertexQuery multiQuery = JanusGraphTraversalUtil.getTx(traversal).multiQuery();
         list.forEach(v -> multiQuery.addVertex((Vertex)v.get()));
@@ -126,7 +126,7 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
     }
 
     @Override
-    protected Iterator<E> flatMap(final Traverser.Admin<Element> traverser) {
+    protected Iterator<E> flatMap(Traverser.Admin<Element> traverser) {
         if (useMultiQuery) { //it is guaranteed that all elements are vertices
             if (multiQueryResults == null || !multiQueryResults.containsKey(traverser.get())) {
                 initializeMultiQuery(Arrays.asList(traverser));

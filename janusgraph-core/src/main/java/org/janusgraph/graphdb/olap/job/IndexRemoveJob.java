@@ -71,7 +71,7 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
         if (copy.graph.isProvided()) this.graph.setGraph(copy.graph.get());
     }
 
-    public IndexRemoveJob(final JanusGraph graph, final String indexName, final String indexType) {
+    public IndexRemoveJob(JanusGraph graph, String indexName, String indexType) {
         super(indexName,indexType);
         this.graph.setGraph(graph);
     }
@@ -133,7 +133,7 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
             } else {
                 mutator.mutateIndex(key, KCVSCache.NO_ADDITIONS, deletions);
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             managementSystem.rollback();
             writeTx.rollback();
             metrics.incrementCustom(FAILED_TX);

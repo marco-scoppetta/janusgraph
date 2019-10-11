@@ -437,7 +437,7 @@ public class SerializerTest extends SerializerTestCommon {
         };
 
         DataOutput out = serialize.getDataOutput(128);
-        for (final Shape shape : shapes) {
+        for (Shape shape : shapes) {
             // manually serialize with non-JTS codec
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             outputStream.write(1);
@@ -568,7 +568,7 @@ public class SerializerTest extends SerializerTestCommon {
         put(TClass1.class, (Factory<TClass1>) () -> new TClass1(random.nextLong(),random.nextFloat()));
     }};
 
-    private static Factory getArrayFactory(final Class ct, final Factory f) {
+    private static Factory getArrayFactory(Class ct, Factory f) {
         return () -> {
             final int length = random.nextInt(100);
             final Object array = Array.newInstance(ct,length);

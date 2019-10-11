@@ -36,7 +36,7 @@ public class CQLLogTest extends KCVSLogTest {
         return getCQLConfiguration(getClass().getSimpleName());
     }
 
-    private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
+    private CQLStoreManager openStorageManager(Configuration c) throws BackendException {
         return new CQLStoreManager(c);
     }
 

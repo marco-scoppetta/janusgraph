@@ -28,12 +28,12 @@ public class JanusGraphGremlinPluginTest {
         final ImportCustomizer customizer = (ImportCustomizer) plugin.getCustomizers().get()[0];
         final Set<Class> classes = customizer.getClassImports();
 
-        for (final Method m : customizer.getMethodImports()) {
+        for (Method m : customizer.getMethodImports()) {
             final Class c = m.getDeclaringClass();
             assertTrue(classes.contains(c), "CLASS_IMPORTS is missing " + c.getCanonicalName());
         }
 
-        for (final Enum e : customizer.getEnumImports()) {
+        for (Enum e : customizer.getEnumImports()) {
             final Class c = e.getDeclaringClass();
             assertTrue(classes.contains(c), "CLASS_IMPORTS is missing " + c.getCanonicalName());
         }

@@ -86,7 +86,7 @@ public class ElementLifeCycle {
         return lifecycle>=New && lifecycle<=Removed;
     }
 
-    public static byte update(final byte lifecycle, final Event event) {
+    public static byte update(byte lifecycle, Event event) {
         Preconditions.checkArgument(isValid(lifecycle),"Invalid element state: " + lifecycle);
         if (event==Event.REMOVED) return Removed;
         else if (lifecycle==New || lifecycle==Modified) {

@@ -30,7 +30,7 @@ public abstract class AbstractBinaryInputFormat extends InputFormat<StaticBuffer
     protected ModifiableConfiguration janusgraphConf;
 
     @Override
-    public void setConf(final Configuration config) {
+    public void setConf( Configuration config) {
         HadoopPoolsConfigurable.super.setConf(config);
         this.mrConf = ModifiableHadoopConfiguration.of(JanusGraphHadoopConfiguration.MAPRED_NS, config);
         this.hadoopConf = config;

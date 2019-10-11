@@ -47,7 +47,7 @@ public abstract class LimitAdjustingIterator<R> implements Iterator<R> {
      * @param maxLimit
      * @param currentLimit
      */
-    public LimitAdjustingIterator(final int maxLimit, final int currentLimit) {
+    public LimitAdjustingIterator(int maxLimit, int currentLimit) {
         Preconditions.checkArgument(currentLimit>0 && maxLimit>0,"Invalid limits: current [%s], max [%s]",currentLimit,maxLimit);
         this.currentLimit = currentLimit;
         this.maxLimit = maxLimit;

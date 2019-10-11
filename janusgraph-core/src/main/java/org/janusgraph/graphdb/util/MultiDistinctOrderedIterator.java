@@ -44,7 +44,7 @@ public class MultiDistinctOrderedIterator<E extends Element> implements Iterator
     private final Integer limit;
     private long count = 0;
 
-    public MultiDistinctOrderedIterator(final Integer lowLimit, final Integer highLimit, final List<Iterator<E>> iterators, final List<OrderEntry> orders) {
+    public MultiDistinctOrderedIterator(Integer lowLimit, Integer highLimit, List<Iterator<E>> iterators, List<OrderEntry> orders) {
         this.limit = highLimit;
         Comparator<E> comparator = null;
         if (orders.isEmpty()) {

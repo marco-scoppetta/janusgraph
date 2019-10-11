@@ -119,7 +119,7 @@ public class ConfigurationManagementGraph {
      * open your graph using graph.graphname without having to supply the
      * Configuration or File each time using the {@link org.janusgraph.core.ConfiguredGraphFactory}.
      */
-    public void createConfiguration(final Configuration config) {
+    public void createConfiguration(Configuration config) {
         Preconditions.checkArgument(config.containsKey(PROPERTY_GRAPH_NAME),
                                     String.format("Please include the property \"%s\" in your configuration.",
                                                   PROPERTY_GRAPH_NAME
@@ -138,7 +138,7 @@ public class ConfigurationManagementGraph {
      * this template configuration to create a graph using the
      * ConfiguredGraphFactory create signature and supplying a new graphName.
      */
-    public void createTemplateConfiguration(final Configuration config) {
+    public void createTemplateConfiguration(Configuration config) {
         Preconditions.checkArgument(!config.containsKey(PROPERTY_GRAPH_NAME),
                                     String.format("Your template configuration may not contain the property \"%s\".",
                                                   PROPERTY_GRAPH_NAME
@@ -160,7 +160,7 @@ public class ConfigurationManagementGraph {
      * NOTE: The updated configuration is only guaranteed to take effect if the {@link Graph} corresponding to
      * graphName has been closed and reopened on every JanusGraph Node.
      */
-    public void updateConfiguration(final String graphName, final Configuration config) {
+    public void updateConfiguration(String graphName, Configuration config) {
         final Map<Object, Object> map = ConfigurationConverter.getMap(config);
         if (config.containsKey(PROPERTY_GRAPH_NAME)) {
             final String graphNameOnConfig = (String) map.get(PROPERTY_GRAPH_NAME);
@@ -186,7 +186,7 @@ public class ConfigurationManagementGraph {
      * 1) be closed and reopened on every JanusGraph Node 2) have its corresponding Configuration removed
      * and 3) recreate the graph-- before the update is guaranteed to take effect.
      */
-    public void updateTemplateConfiguration(final Configuration config) {
+    public void updateTemplateConfiguration(Configuration config) {
         Preconditions.checkArgument(!config.containsKey(PROPERTY_GRAPH_NAME),
                                     String.format("Your updated template configuration may not contain the property \"%s\".",
                                                   PROPERTY_GRAPH_NAME
@@ -201,7 +201,7 @@ public class ConfigurationManagementGraph {
     /**
      * Remove Configuration according to graphName
      */
-    public void removeConfiguration(final String graphName) {
+    public void removeConfiguration(String graphName) {
         removeVertex(PROPERTY_GRAPH_NAME, graphName);
     }
 
@@ -218,7 +218,7 @@ public class ConfigurationManagementGraph {
      *
      * @return Map&lt;String, Object&gt;
      */
-    public Map<String, Object> getConfiguration(final String configName) {
+    public Map<String, Object> getConfiguration(String configName) {
         final List<Map<Object, Object>> graphConfiguration = graph.traversal().V().has(PROPERTY_GRAPH_NAME, configName).valueMap().toList();
         if (graphConfiguration.isEmpty()) return null;
         else if (graphConfiguration.size() > 1) { // this case shouldn't happen because our index has a unique constraint

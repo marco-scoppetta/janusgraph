@@ -118,7 +118,7 @@ public class IndexSerializer {
     private final boolean hashKeys;
     private final HashingUtil.HashLength hashLength = HashingUtil.HashLength.SHORT;
 
-    public IndexSerializer(Configuration config, Serializer serializer, Map<String, ? extends IndexInformation> indexes, final boolean hashKeys) {
+    public IndexSerializer(Configuration config, Serializer serializer, Map<String, ? extends IndexInformation> indexes, boolean hashKeys) {
         this.serializer = serializer;
         this.configuration = config;
         this.mixedIndexes = indexes;

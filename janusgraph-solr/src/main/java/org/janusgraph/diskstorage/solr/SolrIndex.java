@@ -140,7 +140,7 @@ public class SolrIndex implements IndexProvider {
         HTTP, CLOUD;
 
         public static Mode parse(String mode) {
-            for (final Mode m : Mode.values()) {
+            for (Mode m : Mode.values()) {
                 if (m.toString().equalsIgnoreCase(mode)) return m;
             }
             throw new IllegalArgumentException("Unrecognized mode: "+mode);
@@ -250,7 +250,7 @@ public class SolrIndex implements IndexProvider {
     private final boolean waitSearcher;
     private final boolean kerberosEnabled;
 
-    public SolrIndex(final Configuration config) throws BackendException {
+    public SolrIndex(Configuration config) throws BackendException {
         Preconditions.checkArgument(config!=null);
         configuration = config;
         mode = Mode.parse(config.get(SOLR_MODE));
@@ -350,7 +350,7 @@ public class SolrIndex implements IndexProvider {
     private Map<String, String> parseKeyFieldsForCollections(Configuration config) throws BackendException {
         final Map<String, String> keyFieldNames = new HashMap<>();
         final String[] collectionFieldStatements = config.has(KEY_FIELD_NAMES) ? config.get(KEY_FIELD_NAMES) : new String[0];
-        for (final String collectionFieldStatement : collectionFieldStatements) {
+        for (String collectionFieldStatement : collectionFieldStatements) {
             final String[] parts = collectionFieldStatement.trim().split("=");
             if (parts.length != 2) {
                 throw new PermanentBackendException(
@@ -389,7 +389,7 @@ public class SolrIndex implements IndexProvider {
             final CloudSolrClient client = (CloudSolrClient) solrClient;
             try {
                 createCollectionIfNotExists(client, configuration, store);
-            } catch (final IOException | SolrServerException | InterruptedException | KeeperException e) {
+            } catch (IOException | SolrServerException | InterruptedException | KeeperException e) {
                 throw new PermanentBackendException(e);
             }
         }
@@ -401,7 +401,7 @@ public class SolrIndex implements IndexProvider {
             try {
                 ((Constructor<Tokenizer>) ClassLoader.getSystemClassLoader().loadClass(analyzer)
                         .getConstructor()).newInstance();
-            } catch (final ReflectiveOperationException e) {
+            } catch (ReflectiveOperationException e) {
                 throw new PermanentBackendException(e.getMessage(),e);
             }
         }
@@ -411,7 +411,7 @@ public class SolrIndex implements IndexProvider {
             try {
                 ((Constructor<Tokenizer>) ClassLoader.getSystemClassLoader().loadClass(analyzer)
                         .getConstructor()).newInstance();
-            } catch (final ReflectiveOperationException e) {
+            } catch (ReflectiveOperationException e) {
                 throw new PermanentBackendException(e.getMessage(),e);
             }
         }
@@ -422,14 +422,14 @@ public class SolrIndex implements IndexProvider {
                        BaseTransaction tx) throws BackendException {
         logger.debug("Mutating SOLR");
         try {
-            for (final Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
+            for (Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
                 final String collectionName = stores.getKey();
                 final String keyIdField = getKeyFieldId(collectionName);
 
                 final List<String> deleteIds = new ArrayList<>();
                 final Collection<SolrInputDocument> changes = new ArrayList<>();
 
-                for (final Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
+                for (Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
                     final String docId = entry.getKey();
                     final IndexMutation mutation = entry.getValue();
                     Preconditions.checkArgument(!(mutation.isNew() && mutation.isDeleted()));
@@ -444,7 +444,7 @@ public class SolrIndex implements IndexProvider {
                         } else {
                             final List<IndexEntry> fieldDeletions = new ArrayList<>(mutation.getDeletions());
                             if (mutation.hasAdditions()) {
-                                for (final IndexEntry indexEntry : mutation.getAdditions()) {
+                                for (IndexEntry indexEntry : mutation.getAdditions()) {
                                     fieldDeletions.remove(indexEntry);
                                 }
                             }
@@ -485,9 +485,9 @@ public class SolrIndex implements IndexProvider {
                 commitDeletes(collectionName, deleteIds);
                 commitChanges(collectionName, changes);
             }
-        } catch (final IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw new PermanentBackendException("Unable to complete query on Solr.", e);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw storageException(e);
         }
     }
@@ -499,7 +499,7 @@ public class SolrIndex implements IndexProvider {
         fieldDeletes.put("set", null);
         final SolrInputDocument doc = new SolrInputDocument();
         doc.addField(keyIdField, docId);
-        for(final IndexEntry v: fieldDeletions) {
+        for(IndexEntry v: fieldDeletions) {
             final KeyInformation keyInformation = information.get(collectionName, v.field);
             // If the cardinality is a Set or List, we just need to remove the individual value
             // received in the mutation and not set the field to null, but we still consolidate the values
@@ -543,13 +543,13 @@ public class SolrIndex implements IndexProvider {
     public void restore(Map<String, Map<String, List<IndexEntry>>> documents,
                         KeyInformation.IndexRetriever information, BaseTransaction tx) throws BackendException {
         try {
-            for (final Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
+            for (Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
                 final String collectionName = stores.getKey();
 
                 final List<String> deleteIds = new ArrayList<>();
                 final List<SolrInputDocument> newDocuments = new ArrayList<>();
 
-                for (final Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
+                for (Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
                     final String docID = entry.getKey();
                     final List<IndexEntry> content = entry.getValue();
 
@@ -569,7 +569,7 @@ public class SolrIndex implements IndexProvider {
                 commitDeletes(collectionName, deleteIds);
                 commitChanges(collectionName, newDocuments);
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw new TemporaryBackendException("Could not restore Solr index", e);
         }
     }
@@ -579,7 +579,7 @@ public class SolrIndex implements IndexProvider {
     private Map<String, Object> collectFieldValues(List<IndexEntry> content, String collectionName,
                                                    KeyInformation.IndexRetriever information) throws BackendException {
         final Map<String, Object> docs = new HashMap<>();
-        for (final IndexEntry addition: content) {
+        for (IndexEntry addition: content) {
             final KeyInformation keyInformation = information.get(collectionName, addition.field);
             switch (keyInformation.getCardinality()) {
                 case SINGLE:
@@ -608,12 +608,12 @@ public class SolrIndex implements IndexProvider {
 
         try {
             solrClient.request(newUpdateRequest().add(documents), collectionName);
-        } catch (final HttpSolrClient.RemoteSolrException rse) {
+        } catch (HttpSolrClient.RemoteSolrException rse) {
             logger.error("Unable to save documents to Solr as one of the shape objects stored were not compatible with Solr.", rse);
             logger.error("Details in failed document batch: ");
-            for (final SolrInputDocument d : documents) {
+            for (SolrInputDocument d : documents) {
                 final Collection<String> fieldNames = d.getFieldNames();
-                for (final String name : fieldNames) {
+                for (String name : fieldNames) {
                     logger.error(name + ":" + d.getFieldValue(name));
                 }
             }
@@ -650,7 +650,7 @@ public class SolrIndex implements IndexProvider {
     }
 
     private void addOrderToQuery(SolrQuery solrQuery, List<IndexQuery.OrderEntry> orders) {
-        for (final IndexQuery.OrderEntry order1 : orders) {
+        for (IndexQuery.OrderEntry order1 : orders) {
             final String item = order1.getKey();
             final SolrQuery.ORDER order = order1.getOrder() == Order.ASC ? SolrQuery.ORDER.asc : SolrQuery.ORDER.desc;
             solrQuery.addSort(new SolrQuery.SortClause(item, order));
@@ -664,10 +664,10 @@ public class SolrIndex implements IndexProvider {
                 solrQuery.getRows(), collection, solrQuery, function);
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED),
                 false);
-        } catch (final IOException | UncheckedIOException e) {
+        } catch (IOException | UncheckedIOException e) {
             logger.error("Query did not complete : ", e);
             throw new PermanentBackendException(e);
-        } catch (final SolrServerException | UncheckedSolrException e) {
+        } catch (SolrServerException | UncheckedSolrException e) {
             logger.error("Unable to query Solr index.", e);
             throw new PermanentBackendException(e);
         }
@@ -689,7 +689,7 @@ public class SolrIndex implements IndexProvider {
             addOrderToQuery(solrQuery, query.getOrders());
         }
 
-        for(final Parameter parameter: query.getParameters()) {
+        for(Parameter parameter: query.getParameters()) {
             if (parameter.value() instanceof String[]) {
                 solrQuery.setParam(parameter.key(), (String[]) parameter.value());
             } else if (parameter.value() instanceof String) {
@@ -721,10 +721,10 @@ public class SolrIndex implements IndexProvider {
                     collection, keyIdField));
             logger.debug("Executed query [{}] in {} ms", query.getQuery(), response.getElapsedTime());
             return response.getResults().getNumFound();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             logger.error("Query did not complete : ", e);
             throw new PermanentBackendException(e);
-        } catch (final SolrServerException e) {
+        } catch (SolrServerException e) {
             logger.error("Unable to query Solr index.", e);
             throw new PermanentBackendException(e);
         }
@@ -877,7 +877,7 @@ public class SolrIndex implements IndexProvider {
         } else if (condition instanceof And) {
             final int numChildren = ((And) condition).size();
             final StringBuilder sb = new StringBuilder();
-            for (final Condition<JanusGraphElement> c : condition.getChildren()) {
+            for (Condition<JanusGraphElement> c : condition.getChildren()) {
                 final String sub = buildQueryFilter(c, information);
 
                 if (StringUtils.isBlank(sub))
@@ -895,7 +895,7 @@ public class SolrIndex implements IndexProvider {
         } else if (condition instanceof Or) {
             final StringBuilder sb = new StringBuilder();
             int element=0;
-            for (final Condition<JanusGraphElement> c : condition.getChildren()) {
+            for (Condition<JanusGraphElement> c : condition.getChildren()) {
                 final String sub = buildQueryFilter(c,information);
                 if (StringUtils.isBlank(sub)) continue;
                 if (element==0) sb.append("(");
@@ -924,7 +924,7 @@ public class SolrIndex implements IndexProvider {
             return (key + ":(" + escapeValue(terms.get(0)) + ")");
         } else {
             final And<JanusGraphElement> andTerms = new And<>();
-            for (final String term : terms) {
+            for (String term : terms) {
                 andTerms.add(new PredicateCondition<>(key, janusgraphPredicate, term));
             }
             return buildQueryFilter(andTerms, information);
@@ -979,7 +979,7 @@ public class SolrIndex implements IndexProvider {
         logger.trace("Shutting down connection to Solr", solrClient);
         try {
             solrClient.close();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException(e);
         }
     }
@@ -995,7 +995,7 @@ public class SolrIndex implements IndexProvider {
             final ZkStateReader zkStateReader = ((CloudSolrClient) solrClient).getZkStateReader();
             zkStateReader.forciblyRefreshAllClusterStateSlow();
             final ClusterState clusterState = zkStateReader.getClusterState();
-            for (final String collection : clusterState.getCollectionsMap().keySet()) {
+            for (String collection : clusterState.getCollectionsMap().keySet()) {
                 logger.debug("Clearing collection [{}] in Solr",collection);
                 // Collection is not dropped because it may have been created externally
                 final UpdateRequest deleteAll = newUpdateRequest();
@@ -1003,13 +1003,13 @@ public class SolrIndex implements IndexProvider {
                 solrClient.request(deleteAll, collection);
             }
 
-        } catch (final SolrServerException e) {
+        } catch (SolrServerException e) {
             logger.error("Unable to clear storage from index due to server error on Solr.", e);
             throw new PermanentBackendException(e);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             logger.error("Unable to clear storage from index due to low-level I/O error.", e);
             throw new PermanentBackendException(e);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             logger.error("Unable to clear storage from index due to general error.", e);
             throw new PermanentBackendException(e);
         }
@@ -1211,9 +1211,9 @@ public class SolrIndex implements IndexProvider {
 
                // change paths for Replica.State per Solr refactoring
                // remove SYNC state per: https://tinyurl.com/pag6rwt
-               for (final Map.Entry<String, Slice> entry : slices.entrySet()) {
+               for (Map.Entry<String, Slice> entry : slices.entrySet()) {
                     final Map<String, Replica> shards = entry.getValue().getReplicasMap();
-                    for (final Map.Entry<String, Replica> shard : shards.entrySet()) {
+                    for (Map.Entry<String, Replica> shard : shards.entrySet()) {
                         final String state = shard.getValue().getStr(ZkStateReader.STATE_PROP).toUpperCase();
                         if ((Replica.State.RECOVERING.name().equals(state) || Replica.State.DOWN.name().equals(state))
                                 && clusterState.liveNodesContain(shard.getValue().getStr(

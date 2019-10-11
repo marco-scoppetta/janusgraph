@@ -38,7 +38,7 @@ public class CqlBinaryRecordReader extends RecordReader<StaticBuffer, Iterable<E
     }
 
     @Override
-    public void initialize(final InputSplit inputSplit, final TaskAttemptContext taskAttemptContext) throws IOException {
+    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
         reader.initialize(inputSplit, taskAttemptContext);
     }
 

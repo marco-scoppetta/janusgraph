@@ -78,7 +78,7 @@ public class JanusGraphTraversalUtil {
         return Vertex.class.isAssignableFrom(vertexStep.getReturnClass());
     }
 
-    public static Step getNextNonIdentityStep(final Step start) {
+    public static Step getNextNonIdentityStep(Step start) {
         Step currentStep = start.getNextStep();
         //Skip over identity steps
         while (currentStep instanceof IdentityStep) currentStep = currentStep.getNextStep();
@@ -112,9 +112,9 @@ public class JanusGraphTraversalUtil {
      * @param traversal The traversal in which to search for multiQuery compatible steps
      * @return A list of traversal parents which were multiQuery compatible
      */
-    public static List<Step> getMultiQueryCompatibleSteps(final Traversal.Admin<?, ?> traversal) {
+    public static List<Step> getMultiQueryCompatibleSteps(Traversal.Admin<?, ?> traversal) {
         final Set<Step> multiQueryCompatibleSteps = new HashSet<>();
-        for (final Step step : traversal.getSteps()) {
+        for (Step step : traversal.getSteps()) {
             if (isMultiQueryCompatibleStep(step)) {
                 Step parentStep = step;
                 ((TraversalParent) parentStep).getGlobalChildren().forEach(childTraversal -> getMultiQueryCompatibleStepsFromChildTraversal(childTraversal, parentStep, multiQueryCompatibleSteps));

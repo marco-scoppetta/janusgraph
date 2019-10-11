@@ -123,7 +123,7 @@ public class Geoshape {
 
     private final Shape shape;
 
-    protected Geoshape(final Shape shape) {
+    protected Geoshape(Shape shape) {
         this.shape = Preconditions.checkNotNull(shape,"Invalid shape (null)");
     }
 
@@ -268,7 +268,7 @@ public class Geoshape {
      * @param longitude
      * @return
      */
-    public static Geoshape point(final double latitude, final double longitude) {
+    public static Geoshape point(double latitude, double longitude) {
         Preconditions.checkArgument(isValidCoordinate(latitude, longitude), "Invalid coordinate provided");
         return new Geoshape(getShapeFactory().pointXY(longitude, latitude));
     }
@@ -280,7 +280,7 @@ public class Geoshape {
      * @param radiusInKM
      * @return
      */
-    public static Geoshape circle(final double latitude, final double longitude, final double radiusInKM) {
+    public static Geoshape circle(double latitude, double longitude, double radiusInKM) {
         Preconditions.checkArgument(isValidCoordinate(latitude, longitude), "Invalid coordinate provided");
         Preconditions.checkArgument(radiusInKM > 0, "Invalid radius provided [%s]", radiusInKM);
         return new Geoshape(getShapeFactory().circle(longitude, latitude, DistanceUtils.dist2Degrees(radiusInKM, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
@@ -294,8 +294,8 @@ public class Geoshape {
      * @param northEastLongitude
      * @return
      */
-    public static Geoshape box(final double southWestLatitude, final double southWestLongitude,
-                                     final double northEastLatitude, final double northEastLongitude) {
+    public static Geoshape box(double southWestLatitude, double southWestLongitude,
+                                     final double northEastLatitude, double northEastLongitude) {
         Preconditions.checkArgument(isValidCoordinate(southWestLatitude, southWestLongitude), "Invalid south-west coordinate provided");
         Preconditions.checkArgument(isValidCoordinate(northEastLatitude, northEastLongitude), "Invalid north-east coordinate provided");
         return new Geoshape(getShapeFactory().rect(southWestLongitude, northEastLongitude, southWestLatitude, northEastLatitude));
@@ -350,7 +350,7 @@ public class Geoshape {
      * @param longitude
      * @return
      */
-    public static boolean isValidCoordinate(final double latitude, final double longitude) {
+    public static boolean isValidCoordinate(double latitude, double longitude) {
         return latitude>=-90.0 && latitude<=90.0 && longitude>=-180.0 && longitude<=180.0;
     }
 

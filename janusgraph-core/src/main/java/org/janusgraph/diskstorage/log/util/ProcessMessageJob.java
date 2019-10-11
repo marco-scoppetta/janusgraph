@@ -33,7 +33,7 @@ public class ProcessMessageJob implements Runnable {
     private final Message message;
     private final MessageReader reader;
 
-    public ProcessMessageJob(final Message message, final MessageReader reader) {
+    public ProcessMessageJob(Message message, MessageReader reader) {
         Preconditions.checkArgument(message!=null && reader!=null);
         this.message = message;
         this.reader = reader;

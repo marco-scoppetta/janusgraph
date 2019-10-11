@@ -116,7 +116,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
     private boolean restrict2Partitions = true;
 
 
-    public BasicVertexCentricQueryBuilder(final StandardJanusGraphTx tx) {
+    public BasicVertexCentricQueryBuilder(StandardJanusGraphTx tx) {
         super(tx);
         this.tx = Preconditions.checkNotNull(tx);
     }
@@ -203,7 +203,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
      * ---------------------------------------------------------------
      */
 
-    protected static Iterable<JanusGraphVertex> edges2Vertices(final Iterable<JanusGraphEdge> edges,
+    protected static Iterable<JanusGraphVertex> edges2Vertices(Iterable<JanusGraphEdge> edges,
                                                                final JanusGraphVertex other) {
         return Iterables.transform(edges, new Function<JanusGraphEdge, JanusGraphVertex>() {
             @Nullable
@@ -214,7 +214,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
         });
     }
 
-    protected VertexList edges2VertexIds(final Iterable<JanusGraphEdge> edges, final JanusGraphVertex other) {
+    protected VertexList edges2VertexIds(Iterable<JanusGraphEdge> edges, JanusGraphVertex other) {
         VertexArrayList vertices = new VertexArrayList(tx);
         for (JanusGraphEdge edge : edges) vertices.add(edge.otherVertex(other));
         return vertices;

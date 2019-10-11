@@ -133,7 +133,7 @@ public class TestByteBuffer {
         }
 
         @Override
-        public Iterable<Vertex> getNeighbors(final int value) {
+        public Iterable<Vertex> getNeighbors(int value) {
             return outEdges.stream()
                 .filter(edge -> (Integer) edge.getProperty("number") == value)
                 .map(Edge::getEnd)
@@ -157,7 +157,7 @@ public class TestByteBuffer {
         }
 
         @Override
-        public Iterable<Vertex> getNeighbors(final int value) {
+        public Iterable<Vertex> getNeighbors(int value) {
 //            SortedSet<ByteEntry> set = (SortedSet<ByteEntry>) tx.get(id);
             return set.stream()
                 .filter(entry -> entry.value.getInt(0) == value)

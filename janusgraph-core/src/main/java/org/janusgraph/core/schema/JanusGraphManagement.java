@@ -161,7 +161,7 @@ public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaMan
      * @param elementType
      * @return
      */
-    Iterable<JanusGraphIndex> getGraphIndexes(final Class<? extends Element> elementType);
+    Iterable<JanusGraphIndex> getGraphIndexes(Class<? extends Element> elementType);
 
     /**
      * Returns an {@link IndexBuilder} to add a graph index to this JanusGraph graph. The index to-be-created
@@ -174,7 +174,7 @@ public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaMan
     IndexBuilder buildIndex(String indexName, Class<? extends Element> elementType);
 
 
-    void addIndexKey(final JanusGraphIndex index, final PropertyKey key, Parameter... parameters);
+    void addIndexKey(JanusGraphIndex index, PropertyKey key, Parameter... parameters);
 
     /**
      * Builder for {@link JanusGraphIndex}. Allows for the configuration of a graph index prior to its construction.

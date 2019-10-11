@@ -35,7 +35,7 @@ public abstract class AbstractTypedRelation extends AbstractElement implements I
 
     protected final InternalRelationType type;
 
-    public AbstractTypedRelation(final long id, final RelationType type) {
+    public AbstractTypedRelation(long id, RelationType type) {
         super(id);
         assert type != null && type instanceof InternalRelationType;
         this.type = (InternalRelationType) type;
@@ -122,7 +122,7 @@ public abstract class AbstractTypedRelation extends AbstractElement implements I
      */
 
     @Override
-    public <V> Property<V> property(final String key, final V value) {
+    public <V> Property<V> property(String key, V value) {
         verifyAccess();
 
         PropertyKey propertyKey = tx().getOrCreatePropertyKey(key, value);
@@ -158,7 +158,7 @@ public abstract class AbstractTypedRelation extends AbstractElement implements I
     }
 
     @Override
-    public <V> Iterator<Property<V>> properties(final String... keyNames) {
+    public <V> Iterator<Property<V>> properties(String... keyNames) {
         verifyAccess();
 
         Stream<PropertyKey> keys;

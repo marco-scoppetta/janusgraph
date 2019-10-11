@@ -98,7 +98,7 @@ public class HadoopConfiguration implements WriteConfiguration {
     }
 
     @Override
-    public Iterable<String> getKeys(final String userPrefix) {
+    public Iterable<String> getKeys(String userPrefix) {
         /*
          * Is there a way to iterate over just the keys of a Hadoop Configuration?
          * Iterating over Map.Entry is needlessly wasteful since we don't need the values.

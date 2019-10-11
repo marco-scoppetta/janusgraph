@@ -192,7 +192,7 @@ public class ElasticsearchConfigTest {
         try {
             idx.register(storeName, "date", IndexProviderTest.getMapping(idx.getFeatures(), ANALYZER_ENGLISH, ANALYZER_KEYWORD).get("date"), itx);
             fail("should fail");
-        } catch (final PermanentBackendException e) {
+        } catch (PermanentBackendException e) {
             log.debug(e.getMessage(), e);
         }
 
@@ -208,21 +208,21 @@ public class ElasticsearchConfigTest {
         try {
             idx.register(storeName, "weight", IndexProviderTest.getMapping(idx.getFeatures(), ANALYZER_ENGLISH, ANALYZER_KEYWORD).get("weight"), itx);
             fail("should fail");
-        } catch (final BackendException e) {
+        } catch (BackendException e) {
             log.debug(e.getMessage(), e);
         }
         itx.rollback();
         idx.close();
     }
 
-    private TypedIndexMappings readTypesMapping(final String mappingFilePath) throws IOException {
-        try (final InputStream inputStream = getClass().getResourceAsStream(mappingFilePath)) {
+    private TypedIndexMappings readTypesMapping(String mappingFilePath) throws IOException {
+        try (InputStream inputStream = getClass().getResourceAsStream(mappingFilePath)) {
             return objectMapper.readValue(inputStream, new TypeReference<TypedIndexMappings>() {});
         }
     }
 
-    private TypelessIndexMappings readTypelessMapping(final String mappingFilePath) throws IOException {
-        try (final InputStream inputStream = getClass().getResourceAsStream(mappingFilePath)) {
+    private TypelessIndexMappings readTypelessMapping(String mappingFilePath) throws IOException {
+        try (InputStream inputStream = getClass().getResourceAsStream(mappingFilePath)) {
             return objectMapper.readValue(inputStream, new TypeReference<TypelessIndexMappings>() {});
         }
     }
@@ -284,7 +284,7 @@ public class ElasticsearchConfigTest {
         try {
             idx.register(storeName, "weight", IndexProviderTest.getMapping(idx.getFeatures(), ANALYZER_ENGLISH, ANALYZER_KEYWORD).get("weight"), itx);
             fail("should fail");
-        } catch (final BackendException e) {
+        } catch (BackendException e) {
             log.debug(e.getMessage(), e);
         }
         itx.rollback();
@@ -298,7 +298,7 @@ public class ElasticsearchConfigTest {
 
         final BaseTransactionConfig txConfig = StandardBaseTransactionConfig.of(TimestampProviders.MILLI);
         IndexTransaction itx = new IndexTransaction(idx, indexRetriever, txConfig, maxWrite);
-        for (final Entry<String, KeyInformation> entry : IndexProviderTest.getMapping(idx.getFeatures(), "english", "keyword").entrySet()) {
+        for (Entry<String, KeyInformation> entry : IndexProviderTest.getMapping(idx.getFeatures(), "english", "keyword").entrySet()) {
            idx.register(storeName, entry.getKey(), entry.getValue(), itx);
         }
         assertEquals(0, itx.queryStream(new IndexQuery(storeName, PredicateCondition.of(IndexProviderTest.NAME, Text.PREFIX, "ali"))).count());
@@ -313,7 +313,7 @@ public class ElasticsearchConfigTest {
 
     private void executeRequest(HttpRequestBase request) throws IOException {
         request.setHeader("Content-Type", "application/json");
-        try (final CloseableHttpResponse res = httpClient.execute(host, request)) {
+        try (CloseableHttpResponse res = httpClient.execute(host, request)) {
             final int statusCode = res.getStatusLine().getStatusCode();
             if(statusCode < 200 || statusCode >= 300 || EntityUtils.toString(res.getEntity()).contains("error")){
                 fail("Failed to execute a request:"+request.toString()+". Entity: "+EntityUtils.toString(res.getEntity()));
@@ -345,7 +345,7 @@ public class ElasticsearchConfigTest {
         try {
             idx.register(storeName, "date", IndexProviderTest.getMapping(idx.getFeatures(), ANALYZER_ENGLISH, ANALYZER_KEYWORD).get("date"), itx);
             fail("should fail");
-        } catch (final PermanentBackendException e) {
+        } catch (PermanentBackendException e) {
             log.debug(e.getMessage(), e);
         }
 

@@ -95,7 +95,7 @@ public class WriteByteBuffer implements WriteBuffer {
     }
 
     @Override
-    public WriteBuffer putBytes(final StaticBuffer val) {
+    public WriteBuffer putBytes(StaticBuffer val) {
         require(BYTE_LEN*val.length());
         val.as((array, offset, limit) -> {
             buffer.put(array,offset,val.length());

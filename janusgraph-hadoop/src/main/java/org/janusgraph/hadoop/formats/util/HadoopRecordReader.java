@@ -45,7 +45,7 @@ public class HadoopRecordReader extends RecordReader<NullWritable, VertexWritabl
     private VertexWritable vertex;
     private GraphFilter graphFilter;
 
-    public HadoopRecordReader(final HadoopInputFormat.RefCountedCloseable<JanusGraphVertexDeserializer> countedDeserializer,
+    public HadoopRecordReader(HadoopInputFormat.RefCountedCloseable<JanusGraphVertexDeserializer> countedDeserializer,
                               final RecordReader<StaticBuffer, Iterable<Entry>> reader) {
         this.countedDeserializer = countedDeserializer;
         this.reader = reader;
@@ -53,7 +53,7 @@ public class HadoopRecordReader extends RecordReader<NullWritable, VertexWritabl
     }
 
     @Override
-    public void initialize(final InputSplit inputSplit, final TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         reader.initialize(inputSplit, taskAttemptContext);
 
         final Configuration conf = taskAttemptContext.getConfiguration();

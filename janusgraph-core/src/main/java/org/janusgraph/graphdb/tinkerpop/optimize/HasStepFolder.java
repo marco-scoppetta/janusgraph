@@ -81,7 +81,7 @@ public interface HasStepFolder<S, E> extends Step<S, E> {
     }
 
     static boolean validJanusGraphHas(Iterable<HasContainer> has) {
-        for (final HasContainer h : has) {
+        for (HasContainer h : has) {
             if (!validJanusGraphHas(h)) return false;
         }
         return true;
@@ -89,7 +89,7 @@ public interface HasStepFolder<S, E> extends Step<S, E> {
 
     static boolean validJanusGraphOrder(OrderGlobalStep orderGlobalStep, Traversal rootTraversal, boolean isVertexOrder) {
         final List<Pair<Traversal.Admin, Object>> comparators = orderGlobalStep.getComparators();
-        for (final Pair<Traversal.Admin, Object> comp : comparators) {
+        for (Pair<Traversal.Admin, Object> comp : comparators) {
             final String key;
             if (comp.getValue0() instanceof ElementValueTraversal &&
                     comp.getValue1() instanceof Order) {

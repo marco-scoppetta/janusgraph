@@ -31,7 +31,7 @@ public enum EntryMetaData {
     VISIBILITY(String.class, true, data -> data instanceof String && StringEncoding.isAsciiString((String) data)),
     TIMESTAMP(Long.class, false, data -> data instanceof Long);
 
-    EntryMetaData(final Class<?> dataType, final boolean identifying, final Function<Object, Boolean> validator) {
+    EntryMetaData(Class<?> dataType, boolean identifying, Function<Object, Boolean> validator) {
         this.dataType = dataType;
         this.identifying = identifying;
         this.validator = validator;

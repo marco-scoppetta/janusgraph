@@ -37,7 +37,7 @@ public enum ElasticMajorVersion {
         return value;
     }
 
-    public static ElasticMajorVersion parse(final String value) {
+    public static ElasticMajorVersion parse(String value) {
         final Matcher m = value != null ? PATTERN.matcher(value) : null;
         switch (m != null && m.find() ? Integer.valueOf(m.group(1)) : -1) {
             case 6:

@@ -67,7 +67,7 @@ public abstract class HadoopInputFormat extends InputFormat<NullWritable, Vertex
     }
 
     @Override
-    public void setConf(final Configuration conf) {
+    public void setConf(Configuration conf) {
         ((Configurable)inputFormat).setConf(conf);
 
         refCounter.setBuilderConfiguration(conf);
@@ -79,7 +79,7 @@ public abstract class HadoopInputFormat extends InputFormat<NullWritable, Vertex
     }
 
     @Override
-    public void setGraphFilter(final GraphFilter graphFilter) {
+    public void setGraphFilter(GraphFilter graphFilter) {
         // do nothing -- loaded via configuration
     }
 

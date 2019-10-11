@@ -265,7 +265,7 @@ public class JanusGraphGremlinPlugin extends AbstractGremlinPlugin {
         return true;
     }
 
-    private static boolean isMethodStatic(final Method method) {
+    private static boolean isMethodStatic(Method method) {
         return Modifier.isStatic(method.getModifiers());
     }
 
