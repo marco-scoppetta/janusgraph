@@ -35,8 +35,7 @@ import java.util.Map;
  */
 public class PartitionedVertexProgramExecutor<M> {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(PartitionedVertexProgramExecutor.class);
+    private static final Logger log = LoggerFactory.getLogger(PartitionedVertexProgramExecutor.class);
 
     private final StandardJanusGraph graph;
     private final IDManager idManager;
@@ -49,8 +48,7 @@ public class PartitionedVertexProgramExecutor<M> {
     public static final String PARTITION_VERTEX_POSTSUCCESS = "partition-success";
     public static final String PARTITION_VERTEX_POSTFAIL = "partition-fail";
 
-    public PartitionedVertexProgramExecutor(StandardJanusGraph graph, FulgoraMemory memory,
-                                 FulgoraVertexMemory vertexMemory, VertexProgram<M> vertexProgram) {
+    public PartitionedVertexProgramExecutor(StandardJanusGraph graph, FulgoraMemory memory, FulgoraVertexMemory vertexMemory, VertexProgram<M> vertexProgram) {
         this.graph=graph;
         this.idManager = graph.getIDManager();
         this.memory = memory;

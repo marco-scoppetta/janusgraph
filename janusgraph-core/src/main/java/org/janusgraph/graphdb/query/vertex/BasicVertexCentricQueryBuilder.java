@@ -106,7 +106,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
     /**
      * Whether this query should only focus on the provided vertex representative of a (potentially) partitioned vertex.
      * This effectively disables the automatic querying for other vertex representatives and focuses on the provided
-     * vertex object only. This is used in combination with {@link org.janusgraph.graphdb.vertices.PreloadedVertex}.
+     * vertex object only.
      */
     private boolean queryOnlyGivenVertex = false;
 
@@ -192,10 +192,6 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
             if (type != null && !type.isPropertyKey() && !type.multiplicity().isUnique(dir)) return false;
         }
         return true;
-    }
-
-    public boolean hasQueryOnlyGivenVertex() {
-        return queryOnlyGivenVertex;
     }
 
     public boolean hasQueryOnlyLoaded() {

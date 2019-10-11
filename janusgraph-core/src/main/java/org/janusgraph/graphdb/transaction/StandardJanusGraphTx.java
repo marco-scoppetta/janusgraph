@@ -607,6 +607,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         }
         List<JanusGraphVertex> result = new ArrayList<>(ids.length);
         LongArrayList vertexIds = new LongArrayList(ids.length);
+
         for (long id : ids) {
             if (isValidVertexId(id)) {
                 if (idManager.isPartitionedVertex(id)) id = idManager.getCanonicalVertexId(id);
@@ -617,6 +618,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                 }
             }
         }
+
         if (!vertexIds.isEmpty()) {
             if (externalVertexRetriever.hasVerifyExistence()) {
                 List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, backendTransaction);
@@ -697,8 +699,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             } else if (idManager.isGenericSchemaVertexId(vertexId)) {
                 vertex = new JanusGraphSchemaVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
             } else if (idManager.isUserVertexId(vertexId)) {
-                if (createStubVertex) vertex = new PreloadedVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
-                else vertex = new CacheVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
+                vertex = new CacheVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
             } else throw new IllegalArgumentException("ID could not be recognised");
             return vertex;
         }

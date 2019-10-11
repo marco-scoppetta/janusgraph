@@ -78,7 +78,6 @@ public abstract class AbstractJanusGraphProvider extends AbstractGraphProvider {
 
         StandardVertex.class,
         CacheVertex.class,
-        PreloadedVertex.class,
         EdgeLabelVertex.class,
         PropertyKeyVertex.class,
         VertexLabelVertex.class,
