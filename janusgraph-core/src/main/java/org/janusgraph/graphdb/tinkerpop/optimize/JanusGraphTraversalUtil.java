@@ -14,14 +14,7 @@
 
 package org.janusgraph.graphdb.tinkerpop.optimize;
 
-import org.janusgraph.core.JanusGraphTransaction;
-import org.janusgraph.core.JanusGraphVertex;
-import org.janusgraph.graphdb.database.StandardJanusGraph;
-import org.janusgraph.graphdb.olap.computer.FulgoraElementTraversal;
-import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
-
 import com.google.common.collect.Lists;
-
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
@@ -41,6 +34,10 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.wrapped.WrappedVertex;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.graphdb.database.StandardJanusGraph;
+import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -92,17 +89,15 @@ public class JanusGraphTraversalUtil {
         JanusGraphTransaction tx;
         Optional<Graph> optGraph = TraversalHelper.getRootTraversal(traversal.asAdmin()).getGraph();
 
-        if (traversal instanceof FulgoraElementTraversal) {
-            tx = (JanusGraphTransaction) optGraph.get();
-        } else {
-            if (!optGraph.isPresent()){
-                throw new IllegalArgumentException("Traversal is not bound to a graph: " + traversal);
-            }
-            Graph graph = optGraph.get();
-            if (graph instanceof JanusGraphTransaction) tx = (JanusGraphTransaction) graph;
-            else if (graph instanceof StandardJanusGraph) tx = ((StandardJanusGraph) graph).getCurrentThreadTx();
-            else throw new IllegalArgumentException("Traversal is not bound to a JanusGraph Graph, but: " + graph);
+
+        if (!optGraph.isPresent()) {
+            throw new IllegalArgumentException("Traversal is not bound to a graph: " + traversal);
         }
+        Graph graph = optGraph.get();
+        if (graph instanceof JanusGraphTransaction) tx = (JanusGraphTransaction) graph;
+        else if (graph instanceof StandardJanusGraph) tx = ((StandardJanusGraph) graph).getCurrentThreadTx();
+        else throw new IllegalArgumentException("Traversal is not bound to a JanusGraph Graph, but: " + graph);
+
         if (tx == null)
             throw new IllegalArgumentException("Not a valid start step for a JanusGraph traversal: " + traversal);
         if (tx.isOpen()) return tx;
@@ -113,6 +108,7 @@ public class JanusGraphTraversalUtil {
      * This method searches the traversal for traversal parents which are multiQuery compatible.
      * Being multiQuery compatible is not solely determined by the class of the parent step, it
      * must also have a vertex step as the first step in one of its local or global children.
+     *
      * @param traversal The traversal in which to search for multiQuery compatible steps
      * @return A list of traversal parents which were multiQuery compatible
      */
@@ -121,11 +117,11 @@ public class JanusGraphTraversalUtil {
         for (final Step step : traversal.getSteps()) {
             if (isMultiQueryCompatibleStep(step)) {
                 Step parentStep = step;
-                ((TraversalParent)parentStep).getGlobalChildren().forEach(childTraversal -> getMultiQueryCompatibleStepsFromChildTraversal(childTraversal, parentStep, multiQueryCompatibleSteps));
-                ((TraversalParent)parentStep).getLocalChildren().forEach(childTraversal -> getMultiQueryCompatibleStepsFromChildTraversal(childTraversal, parentStep, multiQueryCompatibleSteps));
+                ((TraversalParent) parentStep).getGlobalChildren().forEach(childTraversal -> getMultiQueryCompatibleStepsFromChildTraversal(childTraversal, parentStep, multiQueryCompatibleSteps));
+                ((TraversalParent) parentStep).getLocalChildren().forEach(childTraversal -> getMultiQueryCompatibleStepsFromChildTraversal(childTraversal, parentStep, multiQueryCompatibleSteps));
 
                 if (parentStep instanceof RepeatStep && multiQueryCompatibleSteps.contains(parentStep)) {
-                    RepeatStep repeatStep = (RepeatStep)parentStep;
+                    RepeatStep repeatStep = (RepeatStep) parentStep;
                     List<RepeatEndStep> repeatEndSteps = TraversalHelper.getStepsOfClass(RepeatEndStep.class, repeatStep.getRepeatTraversal());
                     if (repeatEndSteps.size() == 1) {
                         // Want the RepeatEndStep so the start of one iteration can feed into the next 
@@ -137,7 +133,8 @@ public class JanusGraphTraversalUtil {
         }
         return Lists.newArrayList(multiQueryCompatibleSteps);
     }
-    private static void getMultiQueryCompatibleStepsFromChildTraversal(Traversal.Admin<?,?> childTraversal, Step parentStep, Set<Step> multiQueryCompatibleSteps) {
+
+    private static void getMultiQueryCompatibleStepsFromChildTraversal(Traversal.Admin<?, ?> childTraversal, Step parentStep, Set<Step> multiQueryCompatibleSteps) {
         Step firstStep = childTraversal.getStartStep();
         while (firstStep instanceof StartStep || firstStep instanceof SideEffectStep) {
             // Want the next step if this is a side effect

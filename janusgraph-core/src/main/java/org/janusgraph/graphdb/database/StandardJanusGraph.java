@@ -81,7 +81,6 @@ import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.internal.InternalVertexLabel;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.QueryUtil;
 import org.janusgraph.graphdb.relations.EdgeDirection;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphFeatures;
@@ -272,11 +271,7 @@ public class StandardJanusGraph implements JanusGraph {
 
     @Override
     public <C extends GraphComputer> C compute(Class<C> graphComputerClass) throws IllegalArgumentException {
-        if (!graphComputerClass.equals(FulgoraGraphComputer.class)) {
-            throw Exceptions.graphDoesNotSupportProvidedGraphComputer(graphComputerClass);
-        } else {
-            return (C) compute();
-        }
+        return null; //TODO, yeah...
     }
 
     // ########## TRANSACTIONAL FORWARDING ###########################
@@ -297,8 +292,8 @@ public class StandardJanusGraph implements JanusGraph {
     }
 
     @Override
-    public FulgoraGraphComputer compute() throws IllegalArgumentException {
-        return new FulgoraGraphComputer(this, this.getConfiguration().getConfiguration());
+    public GraphComputer compute() throws IllegalArgumentException {
+        return null; // TODO possibly think about this in the future.
     }
 
     @Override

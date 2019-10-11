@@ -81,7 +81,6 @@ import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.internal.InternalVertexLabel;
 import org.janusgraph.graphdb.internal.JanusGraphSchemaCategory;
 import org.janusgraph.graphdb.internal.RelationCategory;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.MetricsQueryExecutor;
 import org.janusgraph.graphdb.query.Query;
 import org.janusgraph.graphdb.query.QueryExecutor;
@@ -131,7 +130,6 @@ import org.janusgraph.graphdb.types.vertices.PropertyKeyVertex;
 import org.janusgraph.graphdb.util.SubQueryIterator;
 import org.janusgraph.graphdb.util.VertexCentricEdgeIterable;
 import org.janusgraph.graphdb.vertices.CacheVertex;
-import org.janusgraph.graphdb.vertices.PreloadedVertex;
 import org.janusgraph.graphdb.vertices.StandardVertex;
 import org.janusgraph.util.datastructures.Retriever;
 import org.janusgraph.util.stats.MetricManager;
@@ -346,10 +344,8 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     }
 
     @Override
-    public FulgoraGraphComputer compute() throws IllegalArgumentException {
-        StandardJanusGraph graph = getGraph();
-        if (isOpen()) commit();
-        return graph.compute();
+    public GraphComputer compute() throws IllegalArgumentException {
+        return null; // TODO think about this at some point in the future.
     }
 
     /**
