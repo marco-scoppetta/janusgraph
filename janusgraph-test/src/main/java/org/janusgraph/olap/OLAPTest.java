@@ -14,21 +14,9 @@
 
 package org.janusgraph.olap;
 
-import org.janusgraph.core.Cardinality;
-import org.janusgraph.core.JanusGraphComputer;
-import org.janusgraph.core.JanusGraphVertex;
-import org.janusgraph.core.Multiplicity;
-import org.janusgraph.core.PropertyKey;
-import org.janusgraph.core.JanusGraphTransaction;
-import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanJob;
-import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
-import org.janusgraph.graphdb.JanusGraphBaseTest;
-import org.janusgraph.graphdb.olap.QueryContainer;
-import org.janusgraph.graphdb.olap.VertexJobConverter;
-import org.janusgraph.graphdb.olap.VertexScanJob;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
-import org.janusgraph.graphdb.olap.job.GhostVertexRemover;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.apache.tinkerpop.gremlin.process.computer.ComputerResult;
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 import org.apache.tinkerpop.gremlin.process.computer.KeyValue;
@@ -51,10 +39,19 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.JanusGraphComputer;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanJob;
+import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
+import org.janusgraph.graphdb.JanusGraphBaseTest;
+import org.janusgraph.graphdb.olap.QueryContainer;
+import org.janusgraph.graphdb.olap.VertexJobConverter;
+import org.janusgraph.graphdb.olap.VertexScanJob;
+import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -77,7 +74,6 @@ import static org.janusgraph.testutil.JanusGraphAssert.assertCount;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -188,48 +184,6 @@ public abstract class OLAPTest extends JanusGraphBaseTest {
         assertEquals(numV,result2.getCustom(VERTEX_COUNT));
     }
 
-    @Test
-    public void removeGhostVertices() throws Exception {
-        JanusGraphVertex v1 = tx.addVertex("person");
-        v1.property("name","stephen");
-        JanusGraphVertex v2 = tx.addVertex("person");
-        v1.property("name","marko");
-        JanusGraphVertex v3 = tx.addVertex("person");
-        v1.property("name","dan");
-        v2.addEdge("knows",v3);
-        v1.addEdge("knows",v2);
-        newTx();
-        long v3id = getId(v3);
-        long v1id = getId(v1);
-        assertTrue(v3id>0);
-
-        v3 = getV(tx, v3id);
-        assertNotNull(v3);
-        v3.remove();
-        tx.commit();
-
-        JanusGraphTransaction xx = graph.buildTransaction().checkExternalVertexExistence(false).start();
-        v3 = getV(xx, v3id);
-        assertNotNull(v3);
-        v1 = getV(xx, v1id);
-        assertNotNull(v1);
-        v3.property("name", "deleted");
-        v3.addEdge("knows", v1);
-        xx.commit();
-
-        newTx();
-        assertNull(getV(tx,v3id));
-        v1 = getV(tx, v1id);
-        assertNotNull(v1);
-        assertEquals(v3id, v1.query().direction(Direction.IN).labels("knows").vertices().iterator().next().longId());
-        tx.commit();
-        mgmt.commit();
-
-        ScanMetrics result = executeScanJob(new GhostVertexRemover(graph));
-        assertEquals(1,result.getCustom(GhostVertexRemover.REMOVED_VERTEX_COUNT));
-        assertEquals(2,result.getCustom(GhostVertexRemover.REMOVED_RELATION_COUNT));
-        assertEquals(0,result.getCustom(GhostVertexRemover.SKIPPED_GHOST_LIMIT_COUNT));
-    }
 
     @Test
     public void testBasicComputeJob() {
