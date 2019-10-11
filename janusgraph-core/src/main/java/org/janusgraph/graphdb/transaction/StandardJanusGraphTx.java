@@ -137,7 +137,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -176,7 +175,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     private static final Logger LOG = LoggerFactory.getLogger(StandardJanusGraphTx.class);
 
     private static final Map<Long, InternalRelation> EMPTY_DELETED_RELATIONS = ImmutableMap.of();
-    private static final Duration LOCK_TIMEOUT = Duration.ofMillis(5000L);
 
     /**
      * This is a workaround for #893.  Cache sizes small relative to the level
@@ -268,10 +266,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         this.temporaryIds = buildTemporaryIDsPool();
         this.isOpen = true;
 
-        boolean preloadedData = config.hasPreloadedData();
-        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence(), preloadedData);
-        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence(), preloadedData);
-        this.existingVertexRetriever = new VertexConstructor(false, preloadedData);
+        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence());
+        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence());
+        this.existingVertexRetriever = new VertexConstructor(false);
 
 
         int concurrencyLevel = (config.isSingleThreaded()) ? 1 : 4;
@@ -648,11 +645,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     private class VertexConstructor implements Retriever<Long, InternalVertex> {
 
         private final boolean verifyExistence;
-        private final boolean createStubVertex;
 
-        private VertexConstructor(boolean verifyExistence, boolean createStubVertex) {
+        private VertexConstructor(boolean verifyExistence) {
             this.verifyExistence = verifyExistence;
-            this.createStubVertex = createStubVertex;
         }
 
         boolean hasVerifyExistence() {

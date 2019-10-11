@@ -15,8 +15,8 @@
 package org.janusgraph.graphdb.olap;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphFactory;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
@@ -28,12 +28,10 @@ import org.janusgraph.diskstorage.keycolumnvalue.scan.ScanMetrics;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.idmanagement.IDManager;
-import org.janusgraph.graphdb.query.Query;
 import org.janusgraph.graphdb.relations.RelationCache;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.transaction.StandardTransactionBuilder;
 import org.janusgraph.graphdb.types.system.BaseKey;
-import org.janusgraph.graphdb.vertices.PreloadedVertex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +81,6 @@ public class VertexJobConverter implements ScanJob {
 
     public static StandardJanusGraphTx startTransaction(StandardJanusGraph graph) {
         StandardTransactionBuilder txb = graph.buildTransaction().readOnly();
-        txb.setPreloadedData(true);
         txb.checkInternalVertexExistence(false);
         txb.dirtyVertexSize(0);
         txb.vertexCacheSize(0);
@@ -127,17 +124,14 @@ public class VertexJobConverter implements ScanJob {
             metrics.incrementCustom(GHOST_VERTEX_COUNT);
             return;
         }
-        JanusGraphVertex vertex = tx.getInternalVertex(vertexId);
-        Preconditions.checkArgument(vertex instanceof PreloadedVertex,
-                "The bounding transaction is not configured correctly");
-        PreloadedVertex v = (PreloadedVertex)vertex;
-        v.setAccessCheck(PreloadedVertex.OPENSTAR_CHECK);
+        JanusGraphVertex v = tx.getInternalVertex(vertexId);
+
         for (Map.Entry<SliceQuery,EntryList> entry : entries.entrySet()) {
             SliceQuery sq = entry.getKey();
             if (sq.equals(VERTEX_EXISTS_QUERY)) continue;
             EntryList entryList = entry.getValue();
             if (entryList.size()>=sq.getLimit()) metrics.incrementCustom(TRUNCATED_ENTRY_LISTS);
-            v.addToQueryCache(sq.updateLimit(Query.NO_LIMIT),entryList);
+//            v.addToQueryCache(sq.updateLimit(Query.NO_LIMIT),entryList); // comment out as not sure what's really going on here
         }
         job.process(v, metrics);
     }

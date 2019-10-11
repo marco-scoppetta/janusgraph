@@ -81,7 +81,6 @@ public class StandardJanusGraphTxTest extends EasyMockSupport {
         expect(txConfig.isSingleThreaded()).andReturn(true);
         expect(txConfig.isSingleThreaded()).andReturn(true);
         expect(txConfig.isSingleThreaded()).andReturn(true);
-        expect(txConfig.hasPreloadedData()).andReturn(false);
         expect(txConfig.hasVerifyExternalVertexExistence()).andReturn(false);
         expect(txConfig.hasVerifyInternalVertexExistence()).andReturn(false);
         expect(txConfig.getVertexCacheSize()).andReturn(6);
