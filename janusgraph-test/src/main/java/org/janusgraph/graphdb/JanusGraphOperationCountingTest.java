@@ -19,7 +19,6 @@ import com.codahale.metrics.MetricFilter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -47,6 +46,7 @@ import org.janusgraph.graphdb.internal.InternalVertexLabel;
 import org.janusgraph.graphdb.types.CompositeIndexType;
 import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.util.stats.MetricManager;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +74,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DB
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_STORE_NAME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_MERGE_STORES;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.PROPERTY_PREFETCHING;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.SCHEMA_CONSTRAINTS;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_NAME;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_RELATIONS;
 import static org.janusgraph.graphdb.database.cache.MetricInstrumentedSchemaCache.METRICS_TYPENAME;
@@ -128,17 +127,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
     }
 
     @Test
-    public void testIdCounts() {
-        makeVertexIndexedUniqueKey("uid", Integer.class);
-        mgmt.setConsistency(mgmt.getGraphIndex("uid"), ConsistencyModifier.LOCK);
-        finishSchema();
-
-        //Schema and relation id pools are tapped, Schema id pool twice because the renew is triggered. Each id acquisition requires 1 mutations and 2 reads
-        verifyStoreMetrics(getConfig().get(IDS_STORE_NAME), SYSTEM_METRICS, ImmutableMap.of(M_MUTATE, 3L, M_GET_SLICE, 6L));
-    }
-
-
-    @Test
     public void testReadOperations() {
         testReadOperations(false);
     }
@@ -167,7 +155,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         tx.makeVertexLabel("person").make();
         tx.commit();
         verifyStoreMetrics(EDGESTORE_NAME);
-        verifyLockingOverwrite(3);
         verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L));
 
         resetMetrics();
@@ -232,7 +219,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         e.property("name", "edge");
         tx.commit();
         verifyStoreMetrics(EDGESTORE_NAME);
-        verifyLockingOverwrite(1);
 
         for (int i = 1; i <= 30; i++) {
             metricsPrefix = "op" + i + cache;
@@ -253,132 +239,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
             }
 
         }
-
-
     }
-
-    @Test
-    public void testSettingProperty() {
-        metricsPrefix = "testSettingProperty";
-
-        mgmt.makePropertyKey("foo").dataType(String.class).cardinality(Cardinality.SINGLE).make();
-        finishSchema();
-
-        clopen(option(SCHEMA_CONSTRAINTS), true);
-
-        JanusGraphVertex v = tx.addVertex();
-        v.property("foo", "bar");
-        tx.commit();
-
-
-        JanusGraphTransaction tx = graph.buildTransaction().checkExternalVertexExistence(false).groupName(metricsPrefix).start();
-        v = tx.getVertex(v.longId());
-        v.property("foo", "bus");
-        long numLookupPropertyConstraints = 1;
-        //printAllMetrics(metricsPrefix);
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, numLookupPropertyConstraints));
-        verifyStoreMetrics(INDEXSTORE_NAME);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L));
-
-        tx = graph.buildTransaction().checkExternalVertexExistence(false).groupName(metricsPrefix).start();
-        v = tx.getVertex(v.longId());
-        v.property("foo", "band");
-        numLookupPropertyConstraints += 1;
-        assertEquals("band", v.property("foo").value());
-        assertEquals(1, Iterators.size(v.properties("foo")));
-        assertEquals(1, Iterators.size(v.properties()));
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 2L + numLookupPropertyConstraints));
-        verifyStoreMetrics(INDEXSTORE_NAME);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 2L));
-        verifyStoreMetrics(getConfig().get(IDS_STORE_NAME));
-    }
-
-
-    @Test
-    public void testKCVSAccess1() {
-        metricsPrefix = "testKCVSAccess1";
-
-        JanusGraphTransaction tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        JanusGraphVertex v = tx.addVertex("age", 25, "name", "john");
-        JanusGraphVertex u = tx.addVertex("age", 35, "name", "mary");
-        v.addEdge("knows", u);
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME);
-        verifyLockingOverwrite(3);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L + (features.hasTxIsolation() ? 0 : 1)));
-
-        verifyTypeCacheMetrics(3, 0);
-
-        //Check type name & definition caching
-        tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        v = getV(tx, v);
-        assertCount(2, v.properties());
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 2L)); //1 verify vertex existence, 1 for query
-        verifyTypeCacheMetrics(3, 4);
-        tx.commit();
-
-        tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        v = getV(tx, v);
-        assertCount(2, v.properties());
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 4L)); //1 verify vertex existence, 1 for query
-        verifyTypeCacheMetrics(3, 4);
-        tx.commit();
-
-        //Check type index lookup caching
-        tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        v = getV(tx, v);
-        assertNotNull(v.value("age"));
-        assertNotNull(v.value("name"));
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 7L)); //1 verify vertex existence, 2 for query
-        verifyTypeCacheMetrics(5, 8);
-        tx.commit();
-
-        tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        v = getV(tx, v);
-        assertNotNull(v.value("age"));
-        assertNotNull(v.value("name"));
-        assertCount(1, v.query().direction(Direction.BOTH).edges());
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 11L)); //1 verify vertex existence, 3 for query
-        verifyTypeCacheMetrics(5, 10);
-        tx.commit();
-
-        verifyLockingOverwrite(3);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L + (features.hasTxIsolation() ? 0 : 1)));
-
-    }
-
-    @Test
-    public void checkPropertyLockingAndIndex() {
-        PropertyKey uid = makeKey("uid", String.class);
-        JanusGraphIndex index = mgmt.buildIndex("uid", Vertex.class).unique().addKey(uid).buildCompositeIndex();
-        mgmt.setConsistency(index, ConsistencyModifier.LOCK);
-        mgmt.makePropertyKey("name").dataType(String.class).make();
-        mgmt.makePropertyKey("age").dataType(Integer.class).make();
-        finishSchema();
-
-        metricsPrefix = "checkPropertyLockingAndIndex";
-
-        JanusGraphTransaction tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        JanusGraphVertex v = tx.addVertex("uid", "v1", "age", 25, "name", "john");
-        assertEquals(25, v.property("age").value());
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME);
-        verifyLockingOverwrite(1);
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME, ImmutableMap.of(M_MUTATE, 1L));
-
-        resetMetrics();
-
-        tx = graph.buildTransaction().groupName(metricsPrefix).start();
-        v = Iterables.getOnlyElement(tx.query().has("uid", Cmp.EQUAL, "v1").vertices());
-        assertEquals(25, v.property("age").value());
-        tx.commit();
-        verifyStoreMetrics(EDGESTORE_NAME, ImmutableMap.of(M_GET_SLICE, 1L));
-        verifyStoreMetrics(INDEXSTORE_NAME, ImmutableMap.of(M_GET_SLICE, 1L));
-        verifyStoreMetrics(METRICS_STOREMANAGER_NAME);
-    }
-
 
     @Test
     public void checkFastPropertyTrue() {
@@ -495,6 +356,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         }
     }
 
+    @Disabled("Currently disabled as we have removed schema constraint checks in Janus, and this test relies on it.")
     @Test
     public void testCacheConcurrency() throws InterruptedException {
         metricsPrefix = "tCC";
@@ -504,8 +366,7 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
                 option(GraphDatabaseConfiguration.DB_CACHE_SIZE), 0.25,
                 option(GraphDatabaseConfiguration.BASIC_METRICS), true,
                 option(GraphDatabaseConfiguration.METRICS_MERGE_STORES), false,
-                option(GraphDatabaseConfiguration.METRICS_PREFIX), metricsPrefix,
-                option(GraphDatabaseConfiguration.SCHEMA_CONSTRAINTS), true};
+                option(GraphDatabaseConfiguration.METRICS_PREFIX), metricsPrefix};
         clopen(newConfig);
         final String prop = "someProp";
         makeKey(prop, Integer.class);

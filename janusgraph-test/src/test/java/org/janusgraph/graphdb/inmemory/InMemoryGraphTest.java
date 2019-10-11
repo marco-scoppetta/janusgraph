@@ -102,21 +102,4 @@ public class InMemoryGraphTest extends JanusGraphTest {
     @Override @Test @Disabled
     public void testClearStorage() {}
 
-    @Override @Test @Disabled
-    public void testAutoSchemaMakerForEdgePropertyConstraints() {}
-
-    @Override @Test @Disabled
-    public void testAutoSchemaMakerForVertexPropertyConstraints() {}
-
-    @Override @Test @Disabled
-    public void testAutoSchemaMakerForConnectionConstraints() {}
-
-    @Override @Test @Disabled
-    public void testSupportDirectCommitOfSchemaChangesForVertexProperties() {}
-
-    @Override @Test @Disabled
-    public void testSupportDirectCommitOfSchemaChangesForConnection() {}
-
-    @Override @Test @Disabled
-    public void testSupportDirectCommitOfSchemaChangesForEdgeProperties() {}
 }

@@ -39,7 +39,6 @@ import java.util.Collection;
  * <li>Aborting and committing transaction</li>
  * </ul>
  *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  */
 public interface JanusGraphTransaction extends Graph, SchemaManager {
 
@@ -77,9 +76,6 @@ public interface JanusGraphTransaction extends Graph, SchemaManager {
 
     JanusGraphMultiVertexQuery<? extends JanusGraphMultiVertexQuery> multiQuery(JanusGraphVertex... vertices);
 
-
-    JanusGraphMultiVertexQuery<? extends JanusGraphMultiVertexQuery> multiQuery(Collection<JanusGraphVertex> vertices);
-
     @Override
     void close();
 
@@ -94,8 +90,7 @@ public interface JanusGraphTransaction extends Graph, SchemaManager {
      * Note, that an exception is thrown if the vertex id is not a valid JanusGraph vertex id or if a vertex with the given
      * id already exists.
      * <p>
-     * Custom id setting must be enabled via the configuration option {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#ALLOW_SETTING_VERTEX_ID}
-     * and valid JanusGraph vertex ids must be provided. Use {@link org.janusgraph.graphdb.idmanagement.IDManager#toVertexId(long)}
+     * A valid JanusGraph vertex ids must be provided. Use {@link org.janusgraph.graphdb.idmanagement.IDManager#toVertexId(long)}
      * to construct a valid JanusGraph vertex id from a user id, where <code>idManager</code> can be obtained through
      * {@link org.janusgraph.graphdb.database.StandardJanusGraph#getIDManager()}.
      * <pre>

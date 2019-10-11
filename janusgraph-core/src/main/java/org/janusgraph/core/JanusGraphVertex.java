@@ -73,11 +73,11 @@ public interface JanusGraphVertex extends JanusGraphElement, Vertex {
     }
 
     @Override
-    <V> JanusGraphVertexProperty<V> property(final String key, final V value, final Object... keyValues);
+    <V> JanusGraphVertexProperty<V> property(String key, V value, Object... keyValues);
 
 
     @Override
-    <V> JanusGraphVertexProperty<V> property(final VertexProperty.Cardinality cardinality, final String key, final V value, final Object... keyValues);
+    <V> JanusGraphVertexProperty<V> property(VertexProperty.Cardinality cardinality, String key, V value, Object... keyValues);
 
      /* ---------------------------------------------------------------
       * Vertex Label

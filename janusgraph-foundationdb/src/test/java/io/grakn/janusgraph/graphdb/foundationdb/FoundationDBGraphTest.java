@@ -64,23 +64,6 @@ public class FoundationDBGraphTest extends JanusGraphTest {
     }
 
     @Test
-    @Override
-    public void testConsistencyEnforcement() {
-        // Check that getConfiguration() explicitly set serializable isolation
-        // This could be enforced with a JUnit assertion instead of a Precondition,
-        // but a failure here indicates a problem in the test itself rather than the
-        // system-under-test, so a Precondition seems more appropriate
-        //IsolationLevel effective = ConfigOption.getEnumValue(config.get(ConfigElement.getPath(FoundationDBStoreManager.ISOLATION_LEVEL), String.class),IsolationLevel.class);
-        //Preconditions.checkState(IsolationLevel.SERIALIZABLE.equals(effective));
-        super.testConsistencyEnforcement();
-    }
-
-    @Override
-    public void testConcurrentConsistencyEnforcement() {
-        //Do nothing TODO: Figure out why this is failing in BerkeleyDB!!
-    }
-
-    @Test
     public void testIDBlockAllocationTimeout() throws BackendException {
         config.set("ids.authority.wait-time", Duration.of(0L, ChronoUnit.NANOS));
         config.set("ids.renew-timeout", Duration.of(1L, ChronoUnit.MILLIS));

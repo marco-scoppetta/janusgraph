@@ -34,14 +34,11 @@ import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONVersion;
 import org.apache.tinkerpop.gremlin.structure.io.gryo.GryoVersion;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractThreadLocalTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.JanusGraph;
 import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
-import org.janusgraph.core.Multiplicity;
 import org.janusgraph.core.VertexLabel;
-import org.janusgraph.core.schema.ConsistencyModifier;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.core.schema.SchemaStatus;
 import org.janusgraph.diskstorage.Backend;
@@ -154,8 +151,8 @@ public class StandardJanusGraph implements JanusGraph {
     private final TimestampProvider timestampProvider;
 
     //Serializers
-    protected final IndexSerializer indexSerializer;
-    protected final EdgeSerializer edgeSerializer;
+    private final IndexSerializer indexSerializer;
+    private final EdgeSerializer edgeSerializer;
     protected final Serializer serializer;
 
     //Caches
@@ -387,7 +384,6 @@ public class StandardJanusGraph implements JanusGraph {
         }
     }
 
-
     public String getGraphName() {
         return this.name;
     }
@@ -460,14 +456,12 @@ public class StandardJanusGraph implements JanusGraph {
         }
     }
 
-
     // ################### Simple Getters #########################
 
     @Override
     public Features features() {
         return JanusGraphFeatures.getFeatures(this, backend.getStoreFeatures());
     }
-
 
     public IndexSerializer getIndexSerializer() {
         return indexSerializer;
@@ -648,7 +642,6 @@ public class StandardJanusGraph implements JanusGraph {
     }
 
     private ModifiableConfiguration getGlobalSystemConfig(Backend backend) {
-
         return new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,
                 backend.getGlobalSystemConfig(), BasicConfiguration.Restriction.GLOBAL);
     }
@@ -661,18 +654,6 @@ public class StandardJanusGraph implements JanusGraph {
 
     public void assignID(InternalVertex vertex, VertexLabel label) {
         idAssigner.assignID(vertex, label);
-    }
-
-    private boolean acquireLock(InternalRelation relation, int pos, boolean acquireLocksConfig) {
-        InternalRelationType type = (InternalRelationType) relation.getType();
-        return acquireLocksConfig && type.getConsistencyModifier() == ConsistencyModifier.LOCK &&
-                (type.multiplicity().isUnique(EdgeDirection.fromPosition(pos))
-                        || pos == 0 && type.multiplicity() == Multiplicity.SIMPLE);
-    }
-
-    private boolean acquireLock(CompositeIndexType index, boolean acquireLocksConfig) {
-        return acquireLocksConfig && index.getConsistencyModifier() == ConsistencyModifier.LOCK
-                && index.getCardinality() != Cardinality.LIST;
     }
 
     /**
@@ -717,10 +698,7 @@ public class StandardJanusGraph implements JanusGraph {
     }
 
     private ModificationSummary prepareCommit(Collection<InternalRelation> addedRelations, Collection<InternalRelation> deletedRelations,
-                                              Predicate<InternalRelation> filter, BackendTransaction mutator, StandardJanusGraphTx tx,
-                                              boolean acquireLocks) throws BackendException {
-
-
+                                              Predicate<InternalRelation> filter, BackendTransaction mutator, StandardJanusGraphTx tx) throws BackendException {
         ListMultimap<Long, InternalRelation> mutations = ArrayListMultimap.create();
         ListMultimap<InternalVertex, InternalRelation> mutatedProperties = ArrayListMultimap.create();
         List<IndexSerializer.IndexUpdate> indexUpdates = Lists.newArrayList();
@@ -732,10 +710,6 @@ public class StandardJanusGraph implements JanusGraph {
                 if (pos == 0 || !del.isLoop()) {
                     if (del.isProperty()) mutatedProperties.put(vertex, del);
                     mutations.put(vertex.longId(), del);
-                }
-                if (acquireLock(del, pos, acquireLocks)) {
-                    Entry entry = edgeSerializer.writeRelation(del, pos, tx);
-                    mutator.acquireEdgeLock(idManager.getKey(vertex.longId()), entry);
                 }
             }
             indexUpdates.addAll(indexSerializer.getIndexUpdates(del));
@@ -751,10 +725,6 @@ public class StandardJanusGraph implements JanusGraph {
                     if (add.isProperty()) mutatedProperties.put(vertex, add);
                     mutations.put(vertex.longId(), add);
                 }
-                if (!vertex.isNew() && acquireLock(add, pos, acquireLocks)) {
-                    Entry entry = edgeSerializer.writeRelation(add, pos, tx);
-                    mutator.acquireEdgeLock(idManager.getKey(vertex.longId()), entry.getColumn());
-                }
             }
             indexUpdates.addAll(indexSerializer.getIndexUpdates(add));
         }
@@ -767,16 +737,10 @@ public class StandardJanusGraph implements JanusGraph {
         for (IndexSerializer.IndexUpdate update : indexUpdates) {
             if (!update.isCompositeIndex() || !update.isDeletion()) continue;
             CompositeIndexType iIndex = (CompositeIndexType) update.getIndex();
-            if (acquireLock(iIndex, acquireLocks)) {
-                mutator.acquireIndexLock((StaticBuffer) update.getKey(), (Entry) update.getEntry());
-            }
         }
         for (IndexSerializer.IndexUpdate update : indexUpdates) {
             if (!update.isCompositeIndex() || !update.isAddition()) continue;
             CompositeIndexType iIndex = (CompositeIndexType) update.getIndex();
-            if (acquireLock(iIndex, acquireLocks)) {
-                mutator.acquireIndexLock((StaticBuffer) update.getKey(), ((Entry) update.getEntry()).getColumn());
-            }
         }
 
         //5) Add relation mutations
@@ -856,7 +820,6 @@ public class StandardJanusGraph implements JanusGraph {
 
         //3. Commit
         BackendTransaction mutator = tx.getBackendTransaction();
-        boolean acquireLocks = tx.getConfiguration().hasAcquireLocks();
         boolean hasTxIsolation = backend.getStoreFeatures().hasTxIsolation();
         boolean logTransaction = config.hasLogTransactions() && !tx.getConfiguration().hasEnabledBatchLoading();
         KCVSLog txLog = logTransaction ? backend.getSystemTxLog() : null;
@@ -874,10 +837,7 @@ public class StandardJanusGraph implements JanusGraph {
 
             //3.2 Commit schema elements and their associated relations in a separate transaction if backend does not support
             //    transactional isolation
-            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER::test))
-                    || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER::test));
-            Preconditions.checkArgument(!hasSchemaElements || (!tx.getConfiguration().hasEnabledBatchLoading() && acquireLocks),
-                    "Attempting to create schema elements in inconsistent state");
+            boolean hasSchemaElements = !Iterables.isEmpty(Iterables.filter(deletedRelations, SCHEMA_FILTER::test)) || !Iterables.isEmpty(Iterables.filter(addedRelations, SCHEMA_FILTER::test));
 
             if (hasSchemaElements && !hasTxIsolation) {
                 /*
@@ -891,7 +851,7 @@ public class StandardJanusGraph implements JanusGraph {
 
                 try {
                     //[FAILURE] If the preparation throws an exception abort directly - nothing persisted since batch-loading cannot be enabled for schema elements
-                    commitSummary = prepareCommit(addedRelations, deletedRelations, SCHEMA_FILTER, schemaMutator, tx, acquireLocks);
+                    commitSummary = prepareCommit(addedRelations, deletedRelations, SCHEMA_FILTER, schemaMutator, tx);
                     assert commitSummary.hasModifications && !commitSummary.has2iModifications;
                 } catch (Throwable e) {
                     //Roll back schema tx and escalate exception
@@ -910,7 +870,7 @@ public class StandardJanusGraph implements JanusGraph {
 
             //[FAILURE] Exceptions during preparation here cause the entire transaction to fail on transactional systems
             //or just the non-system part on others. Nothing has been persisted unless batch-loading
-            commitSummary = prepareCommit(addedRelations, deletedRelations, hasTxIsolation ? NO_FILTER : NO_SCHEMA_FILTER, mutator, tx, acquireLocks);
+            commitSummary = prepareCommit(addedRelations, deletedRelations, hasTxIsolation ? NO_FILTER : NO_SCHEMA_FILTER, mutator, tx);
             if (commitSummary.hasModifications) {
                 String logTxIdentifier = tx.getConfiguration().getLogIdentifier();
                 boolean hasSecondaryPersistence = logTxIdentifier != null || commitSummary.has2iModifications;

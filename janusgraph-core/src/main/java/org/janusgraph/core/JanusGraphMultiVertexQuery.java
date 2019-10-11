@@ -30,7 +30,7 @@ import java.util.Map;
  * The query specification methods are identical to {@link JanusGraphVertexQuery}. The result set method return Maps from the specified
  * set of anchor vertices to their respective individual result sets.
  * <p>
- * Call {@link JanusGraphTransaction#multiQuery(java.util.Collection)} to construct a multi query in the enclosing transaction.
+ * Call JanusGraphTransaction#multiQuery() to construct a multi query in the enclosing transaction.
  * <p>
  * Note, that the {@link #limit(int)} constraint applies to each individual result set.
  *

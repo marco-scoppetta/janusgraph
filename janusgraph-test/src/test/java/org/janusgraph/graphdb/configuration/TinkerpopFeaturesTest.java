@@ -33,7 +33,7 @@ public class TinkerpopFeaturesTest
     @BeforeEach
     public void setupGraph()
     {
-        graph = open(false);
+        graph = open();
     }
 
     @AfterEach
@@ -43,43 +43,14 @@ public class TinkerpopFeaturesTest
             graph.close();
     }
 
-    public JanusGraph open(boolean useVertexIdSetting)
-    {
+    public JanusGraph open() {
         JanusGraphFactory.Builder builder = JanusGraphFactory.build();
         builder.set("storage.backend", "inmemory");
-        builder.set("graph.set-vertex-id", useVertexIdSetting);
         return builder.open();
     }
 
     @Test
-    public void testVertexFeatures()
-    {
-        Graph.Features.VertexFeatures vf = graph.features().vertex();
-        assertFalse(vf.supportsCustomIds());
-        assertFalse(vf.supportsStringIds());
-        assertFalse(vf.supportsUuidIds());
-        assertFalse(vf.supportsAnyIds());
-        assertFalse(vf.supportsCustomIds());
-        assertTrue(vf.supportsNumericIds());
-        assertFalse(vf.supportsUserSuppliedIds());
-
-        graph.close();
-        graph = open(true);
-
-        vf = graph.features().vertex();
-
-        assertFalse(vf.supportsCustomIds());
-        assertFalse(vf.supportsStringIds());
-        assertFalse(vf.supportsUuidIds());
-        assertFalse(vf.supportsAnyIds());
-        assertFalse(vf.supportsCustomIds());
-        assertTrue(vf.supportsNumericIds());
-        assertTrue(vf.supportsUserSuppliedIds());
-    }
-
-    @Test
-    public void testEdgeFeatures()
-    {
+    public void testEdgeFeatures() {
         Graph.Features.EdgeFeatures ef = graph.features().edge();
         assertFalse(ef.supportsStringIds());
         assertFalse(ef.supportsUuidIds());

@@ -237,25 +237,11 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
      */
     @Test
     public void testBatchLoadingNoLock() {
-        testBatchLoadingLocking(true);
+        testBatchLoadingLocking();
     }
 
-    /**
-     * Tests that without batch-loading locks will be correctly applied (and therefore the tx fails)
-     */
-    @Test
-    public void testLockException() {
-        try {
-            testBatchLoadingLocking(false);
-            fail();
-        } catch (JanusGraphException e) {
-            Throwable cause = e;
-            while (cause.getCause() != null) cause = cause.getCause();
-            assertEquals(UnsupportedOperationException.class, cause.getClass());
-        }
-    }
 
-    public void testBatchLoadingLocking(boolean batchLoading) {
+    public void testBatchLoadingLocking() {
         PropertyKey uid = makeKey("uid", Long.class);
         JanusGraphIndex uidIndex = mgmt.buildIndex("uid", Vertex.class).unique().addKey(uid).buildCompositeIndex();
         mgmt.setConsistency(uid, ConsistencyModifier.LOCK);
@@ -265,7 +251,7 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         finishSchema();
 
         TestLockerManager.ERROR_ON_LOCKING = true;
-        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH), batchLoading,
+        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH), true,
                 option(GraphDatabaseConfiguration.LOCK_BACKEND), "test");
 
 

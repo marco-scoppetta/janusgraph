@@ -38,8 +38,7 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
 
     private final StandardJanusGraphTx tx;
 
-
-    protected AbstractVertex(StandardJanusGraphTx tx, long id) {
+    AbstractVertex(StandardJanusGraphTx tx, long id) {
         super(id);
         assert tx != null;
         this.tx = tx;
@@ -85,7 +84,7 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
         return ElementLifeCycle.isModified(it().getLifeCycle());
     }
 
-    protected final void verifyAccess() {
+    private void verifyAccess() {
         if (isRemoved()) {
             throw InvalidElementException.removedException(this);
         }
@@ -99,7 +98,6 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
     @Override
     public synchronized void remove() {
         verifyAccess();
-//        if (isRemoved()) return; //Remove() is idempotent
         Iterator<JanusGraphRelation> iterator = it().query().noPartitionRestriction().relations().iterator();
         while (iterator.hasNext()) {
             iterator.next();
@@ -148,15 +146,16 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
 	 * ---------------------------------------------------------------
 	 */
 
-    public<V> JanusGraphVertexProperty<V> property(final String key, final V value, final Object... keyValues) {
+    public<V> JanusGraphVertexProperty<V> property(String key, V value, Object... keyValues) {
         JanusGraphVertexProperty<V> p = tx().addProperty(it(), tx().getOrCreatePropertyKey(key, value), value);
         ElementHelper.attachProperties(p,keyValues);
         return p;
     }
 
     @Override
-    public <V> JanusGraphVertexProperty<V> property(final VertexProperty.Cardinality cardinality, final String key, final V value, final Object... keyValues) {
-        JanusGraphVertexProperty<V> p = tx().addProperty(cardinality, it(), tx().getOrCreatePropertyKey(key, value), value);
+    public <V> JanusGraphVertexProperty<V> property(VertexProperty.Cardinality cardinality, String key, V value, Object... keyValues) {
+        //NOTE that cardinality is ignored as we are enforcing these cheks at Grakn level
+        JanusGraphVertexProperty<V> p = tx().addProperty(it(), tx().getOrCreatePropertyKey(key, value), value);
         ElementHelper.attachProperties(p,keyValues);
         return p;
     }
@@ -177,12 +176,9 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
         return (Iterator)query().direction(Direction.OUT).keys(keys).properties().iterator();
     }
 
-    public Iterator<Vertex> vertices(final Direction direction, final String... edgeLabels) {
+    public Iterator<Vertex> vertices(Direction direction, String... edgeLabels) {
         return (Iterator)query().direction(direction).labels(edgeLabels).vertices().iterator();
 
     }
-
-
-
 
 }

@@ -88,12 +88,6 @@ public class GraphDatabaseConfiguration {
     public static final ConfigNamespace GRAPH_NS = new ConfigNamespace(ROOT_NS, "graph",
             "General configuration options");
 
-    public static final ConfigOption<Boolean> ALLOW_SETTING_VERTEX_ID = new ConfigOption<>(GRAPH_NS, "set-vertex-id",
-            "Whether user provided vertex ids should be enabled and JanusGraph's automatic id allocation be disabled. " +
-                    "Useful when operating JanusGraph in concert with another storage system that assigns long ids but disables some " +
-                    "of JanusGraph's advanced features which can lead to inconsistent data. EXPERT FEATURE - USE WITH GREAT CARE.",
-            ConfigOption.Type.FIXED, false);
-
     public static final ConfigOption<String> GRAPH_NAME = new ConfigOption<>(GRAPH_NS, "graphname",
             "This config option is an optional configuration setting that you may supply when opening a graph. " +
                     "The String value you provide will be the name of your graph. If you use the ConfigurationManagement APIs, " +
@@ -277,13 +271,6 @@ public class GraphDatabaseConfiguration {
             ImmutableMap.of("none", DisableDefaultSchemaMaker.INSTANCE,
                     "default", JanusGraphDefaultSchemaMaker.INSTANCE,
                     "tp3", Tp3DefaultSchemaMaker.INSTANCE);
-
-    public static final ConfigOption<Boolean> SCHEMA_CONSTRAINTS = new ConfigOption<>(SCHEMA_NS, "constraints",
-            "Configures the schema constraints to be used by this graph. If config 'schema.constraints' " +
-                    "is set to 'true' and 'schema.default' is set to 'none', then an 'IllegalArgumentException' is thrown for schema constraint violations. " +
-                    "If 'schema.constraints' is set to 'true' and 'schema.default' is not set 'none', schema constraints are automatically created " +
-                    "as described in the config option 'schema.default'. If 'schema.constraints' is set to 'false' which is the default, then no schema constraints are applied.",
-            ConfigOption.Type.GLOBAL_OFFLINE, false);
 
     // ################ CACHE #######################
     // ################################################
@@ -1195,12 +1182,10 @@ public class GraphDatabaseConfiguration {
     private int txVertexCacheSize;
     private int txDirtyVertexSize;
     private DefaultSchemaMaker defaultSchemaMaker;
-    private boolean hasDisabledSchemaConstraints;
     private Boolean propertyPrefetching;
     private boolean adjustQueryLimit;
     private Boolean useMultiQuery;
     private Boolean batchPropertyPrefetching;
-    private boolean allowVertexIdSetting;
     private boolean logTransactions;
     private String metricsPrefix;
     private String unknownIndexKeyName;
@@ -1254,14 +1239,6 @@ public class GraphDatabaseConfiguration {
 
     public DefaultSchemaMaker getDefaultSchemaMaker() {
         return defaultSchemaMaker;
-    }
-
-    public boolean hasDisabledSchemaConstraints() {
-        return hasDisabledSchemaConstraints;
-    }
-
-    public boolean allowVertexIdSetting() {
-        return allowVertexIdSetting;
     }
 
     public Duration getMaxCommitTime() {
@@ -1365,8 +1342,6 @@ public class GraphDatabaseConfiguration {
         //Disable auto-type making when batch-loading is enabled since that may overwrite types without warning
         if (batchLoading) defaultSchemaMaker = DisableDefaultSchemaMaker.INSTANCE;
 
-        hasDisabledSchemaConstraints = !configuration.get(SCHEMA_CONSTRAINTS);
-
         txVertexCacheSize = configuration.get(TX_CACHE_SIZE);
         //Check for explicit dirty vertex cache size first, then fall back on batch-loading-dependent default
         if (configuration.has(TX_DIRTY_SIZE)) {
@@ -1381,7 +1356,6 @@ public class GraphDatabaseConfiguration {
         useMultiQuery = configuration.get(USE_MULTIQUERY);
         batchPropertyPrefetching = configuration.get(BATCH_PROPERTY_PREFETCHING);
         adjustQueryLimit = configuration.get(ADJUST_LIMIT);
-        allowVertexIdSetting = configuration.get(ALLOW_SETTING_VERTEX_ID);
         logTransactions = configuration.get(SYSTEM_LOG_TRANSACTIONS);
 
         unknownIndexKeyName = configuration.get(IGNORE_UNKNOWN_INDEX_FIELD) ? UNKNOWN_FIELD_NAME : null;

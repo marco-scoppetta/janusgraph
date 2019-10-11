@@ -230,9 +230,7 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     @Override
     public Locker getLocker(String lockerName) {
-
         Preconditions.checkNotNull(lockerName);
-
         Locker l = lockers.get(lockerName);
 
         if (null == l) {

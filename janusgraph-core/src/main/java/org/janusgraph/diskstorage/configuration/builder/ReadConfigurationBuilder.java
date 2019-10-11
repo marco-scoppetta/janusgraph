@@ -60,7 +60,7 @@ public class ReadConfigurationBuilder {
             }
 
             @Override
-            public void close() throws BackendException {
+            public void close() {
                 // do nothing
             }
         };
