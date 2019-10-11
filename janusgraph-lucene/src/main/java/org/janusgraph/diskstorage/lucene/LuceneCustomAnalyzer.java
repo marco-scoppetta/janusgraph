@@ -74,7 +74,7 @@ public class LuceneCustomAnalyzer extends DelegatingAnalyzerWrapper {
         return analyzerFor(analyzerNameFor(parameters, mapping, KEYWORD_ANALYZER, STANDARD_ANALYZER));
     }
 
-    private static String analyzerNameFor(final Parameter[] parameters, final Mapping mapping, final String defaultStringAnalyzer, final String defaultTextAnalyzer) {
+    private static String analyzerNameFor(Parameter[] parameters, Mapping mapping, String defaultStringAnalyzer, String defaultTextAnalyzer) {
         switch (mapping) {
             case TEXTSTRING:
                 throw new RuntimeException("TextString is an unsupported mapping for string data & custom analyzers");
@@ -90,7 +90,7 @@ public class LuceneCustomAnalyzer extends DelegatingAnalyzerWrapper {
         }
     }
 
-    private Analyzer analyzerFor(final String analyzerName) {
+    private Analyzer analyzerFor(String analyzerName) {
         if (!analyzers.containsKey(analyzerName)) {
             try {
                 final Class classDefinition = Class.forName(analyzerName);

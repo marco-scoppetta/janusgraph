@@ -27,7 +27,7 @@ public class FixedCondition<E extends JanusGraphElement> extends Literal<E> {
 
     private final boolean value;
 
-    public FixedCondition(final boolean value) {
+    public FixedCondition(boolean value) {
         this.value = value;
     }
 

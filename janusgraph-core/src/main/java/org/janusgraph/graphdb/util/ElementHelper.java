@@ -41,7 +41,7 @@ public class ElementHelper {
             return Iterables.transform((((JanusGraphVertex) element).query()).keys(key.name()).properties(), new Function<JanusGraphVertexProperty, Object>() {
                 @Nullable
                 @Override
-                public Object apply(final JanusGraphVertexProperty janusgraphProperty) {
+                public Object apply(JanusGraphVertexProperty janusgraphProperty) {
                     return janusgraphProperty.value();
                 }
             });
@@ -71,7 +71,7 @@ public class ElementHelper {
      * @param vertex
      * @param propertyKeyValues
      */
-    public static void attachProperties(final JanusGraphVertex vertex, final Object... propertyKeyValues) {
+    public static void attachProperties(JanusGraphVertex vertex, Object... propertyKeyValues) {
         for (int i = 0; i < propertyKeyValues.length; i = i + 2) {
             if (!propertyKeyValues[i].equals(T.id) && !propertyKeyValues[i].equals(T.label))
                 vertex.property((String) propertyKeyValues[i], propertyKeyValues[i + 1]);

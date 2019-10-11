@@ -109,7 +109,7 @@ public enum ElementCategory {
         else throw new IllegalArgumentException("Invalid clazz provided: " + clazz);
     }
 
-    public static ElementCategory getByName(final String name) {
+    public static ElementCategory getByName(String name) {
         for (ElementCategory category : values()) {
             if (category.toString().equalsIgnoreCase(name)) return category;
         }

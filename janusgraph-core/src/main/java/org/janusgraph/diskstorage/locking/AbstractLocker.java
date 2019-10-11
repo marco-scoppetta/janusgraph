@@ -347,7 +347,7 @@ public abstract class AbstractLocker<S extends LockStatus> implements Locker {
         // interrupt
         boolean ok = false;
         try {
-            for (final Map.Entry<KeyColumn, S> entry : m.entrySet()) {
+            for (Map.Entry<KeyColumn, S> entry : m.entrySet()) {
                 checkSingleLock(entry.getKey(), entry.getValue(), tx);
             }
             ok = true;

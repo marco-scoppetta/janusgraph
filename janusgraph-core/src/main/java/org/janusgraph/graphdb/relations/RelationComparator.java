@@ -46,7 +46,7 @@ public class RelationComparator implements Comparator<InternalRelation> {
     }
 
     @Override
-    public int compare(final InternalRelation r1, final InternalRelation r2) {
+    public int compare(InternalRelation r1, InternalRelation r2) {
         if (r1.equals(r2)) return 0;
 
         //1) Based on orders (if any)

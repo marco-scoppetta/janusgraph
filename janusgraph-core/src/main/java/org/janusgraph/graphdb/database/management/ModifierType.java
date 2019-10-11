@@ -25,7 +25,7 @@ public enum ModifierType {
 
     private final TypeDefinitionCategory category;
 
-    ModifierType(final TypeDefinitionCategory category) {
+    ModifierType(TypeDefinitionCategory category) {
         this.category = category;
     }
 

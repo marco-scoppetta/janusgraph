@@ -14,27 +14,23 @@
 
 package org.janusgraph.blueprints;
 
-import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
-import org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public abstract class AbstractJanusGraphComputerProvider extends AbstractJanusGraphProvider {
 
     @Override
-    public GraphTraversalSource traversal(final Graph graph) {
-        return new GraphTraversalSource(graph).withComputer(FulgoraGraphComputer.class);
+    public GraphTraversalSource traversal( Graph graph) {
+        return new GraphTraversalSource(graph).withComputer();
     }
 
     @Override
-    public GraphTraversalSource traversal(final Graph graph, final TraversalStrategy... strategies) {
-        return new GraphTraversalSource(graph).withComputer(FulgoraGraphComputer.class).withStrategies(strategies);
+    public GraphTraversalSource traversal(Graph graph, TraversalStrategy... strategies) {
+        return new GraphTraversalSource(graph).withComputer().withStrategies(strategies);
     }
 
     @Override

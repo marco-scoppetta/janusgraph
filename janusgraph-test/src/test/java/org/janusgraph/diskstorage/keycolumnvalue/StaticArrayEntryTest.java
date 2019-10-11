@@ -128,10 +128,10 @@ public class StaticArrayEntryTest {
         final Map<Integer,Long> entries = generateRandomEntries();
         EntryList[] el = generateEntryListArray(entries, "INSTANCE");
 
-        for (final EntryList anEl : el) {
+        for (EntryList anEl : el) {
             assertEquals(entries.size(), anEl.size());
             int num = 0;
-            for (final Entry e : anEl) {
+            for (Entry e : anEl) {
                 checkEntry(e, entries);
                 assertFalse(e.hasMetaData());
                 assertTrue(e.getMetaData().isEmpty());
@@ -163,11 +163,11 @@ public class StaticArrayEntryTest {
         final Map<Integer,Long> entries = generateRandomEntries();
         EntryList[] el = generateEntryListArray(entries, "SCHEMA_INSTANCE");
 
-        for (final EntryList anEl : el) {
+        for (EntryList anEl : el) {
             //System.out.println("Iteration: " + i);
             assertEquals(entries.size(), anEl.size());
             int num = 0;
-            for (final Entry e : anEl) {
+            for (Entry e : anEl) {
                 checkEntry(e, entries);
                 assertTrue(e.hasMetaData());
                 assertFalse(e.getMetaData().isEmpty());

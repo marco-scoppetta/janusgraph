@@ -39,7 +39,7 @@ public class VariableLongTest {
     private static final Logger log =
             LoggerFactory.getLogger(VariableLongTest.class);
 
-    private void readWriteTest(final ReadWriteLong impl, long maxValue, long jump, boolean negative, boolean backward) {
+    private void readWriteTest(ReadWriteLong impl, long maxValue, long jump, boolean negative, boolean backward) {
         Preconditions.checkArgument(maxValue%jump==0);
         long allocate = maxValue / jump * 8 * (negative?2:1);
         Preconditions.checkArgument(allocate < (1 << 28));

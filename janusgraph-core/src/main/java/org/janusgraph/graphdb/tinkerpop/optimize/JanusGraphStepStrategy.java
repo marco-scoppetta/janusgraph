@@ -34,7 +34,7 @@ public class JanusGraphStepStrategy extends AbstractTraversalStrategy<TraversalS
     }
 
     @Override
-    public void apply(final Traversal.Admin<?, ?> traversal) {
+    public void apply(Traversal.Admin<?, ?> traversal) {
         if (TraversalHelper.onGraphComputer(traversal))
             return;
 

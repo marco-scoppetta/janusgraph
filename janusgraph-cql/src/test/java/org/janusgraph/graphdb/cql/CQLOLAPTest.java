@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.janusgraph.graphdb.cql;
-
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
-import org.janusgraph.olap.OLAPTest;
-import org.junit.jupiter.api.BeforeAll;
-
-public class CQLOLAPTest extends OLAPTest {
-
-    @Override
-    public WriteConfiguration getConfigurationWithRandomKeyspace() {
-        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
-    }
-
-
-    @BeforeAll
-    public static void beforeClass() {
-        CassandraStorageSetup.startCleanEmbedded();
-    }
-}
+//package org.janusgraph.graphdb.cql;
+//
+//import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+//import org.janusgraph.diskstorage.cql.utils.CassandraStorageSetup;
+//import org.janusgraph.olap.OLAPTest;
+//import org.junit.jupiter.api.BeforeAll;
+//
+//public class CQLOLAPTest extends OLAPTest {
+//
+//    @Override
+//    public WriteConfiguration getConfigurationWithRandomKeyspace() {
+//        return CassandraStorageSetup.getCQLConfigurationWithRandomKeyspace().getConfiguration();
+//    }
+//
+//
+//    @BeforeAll
+//    public static void beforeClass() {
+//        CassandraStorageSetup.startCleanEmbedded();
+//    }
+//}

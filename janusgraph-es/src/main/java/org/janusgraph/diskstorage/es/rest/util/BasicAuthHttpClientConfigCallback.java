@@ -28,7 +28,7 @@ public class BasicAuthHttpClientConfigCallback implements HttpClientConfigCallba
 
     private final CredentialsProvider credentialsProvider;
 
-    public BasicAuthHttpClientConfigCallback(final String realm, final String username, final String password) {
+    public BasicAuthHttpClientConfigCallback(String realm, String username, String password) {
         Preconditions.checkArgument(StringUtils.isNotEmpty(username), "HTTP Basic Authentication: username must be provided");
         Preconditions.checkArgument(StringUtils.isNotEmpty(password), "HTTP Basic Authentication: password must be provided");
 

@@ -410,7 +410,7 @@ public class ConsistentKeyLocker extends AbstractLocker<ConsistentKeyLockStatus>
     }
 
     @Override
-    protected void checkSingleLock(final KeyColumn kc, final ConsistentKeyLockStatus ls,
+    protected void checkSingleLock(KeyColumn kc, ConsistentKeyLockStatus ls,
                                    final StoreTransaction tx) throws BackendException, InterruptedException {
 
         if (ls.isChecked())
@@ -547,7 +547,7 @@ public class ConsistentKeyLocker extends AbstractLocker<ConsistentKeyLockStatus>
         }
     }
 
-    private StoreTransaction overrideTimestamp(final StoreTransaction tx,
+    private StoreTransaction overrideTimestamp(StoreTransaction tx,
                                                final Instant commitTime) throws BackendException {
         StandardBaseTransactionConfig newCfg = new StandardBaseTransactionConfig.Builder(tx.getConfiguration())
                .commitTime(commitTime).build();

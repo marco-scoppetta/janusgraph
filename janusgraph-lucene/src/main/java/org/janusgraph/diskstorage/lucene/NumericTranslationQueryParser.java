@@ -43,7 +43,7 @@ public class NumericTranslationQueryParser extends QueryParser {
     }
 
     @Override
-    protected Query newRangeQuery(final String field, final String start, final String end, final boolean startInclusive,
+    protected Query newRangeQuery(String field, String start, String end, boolean startInclusive,
                                   final boolean endInclusive) {
         Class<?> dataType = getKeyDataType(field);
         if (isPossibleRangeQuery(dataType)) {
@@ -58,7 +58,7 @@ public class NumericTranslationQueryParser extends QueryParser {
     }
 
     @Override
-    protected Query newFieldQuery(final Analyzer analyzer, final String field, final String queryText, final boolean quoted) throws ParseException {
+    protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
         Class<?> dataType = getKeyDataType(field);
         if (isPossibleRangeQuery(dataType) || Boolean.class.equals(dataType)) {
             try {
@@ -71,7 +71,7 @@ public class NumericTranslationQueryParser extends QueryParser {
     }
 
     @Override
-    protected Query newWildcardQuery(final Term t) {
+    protected Query newWildcardQuery(Term t) {
         if (t.field() == null) {
             return super.newWildcardQuery(t);
         }
@@ -87,7 +87,7 @@ public class NumericTranslationQueryParser extends QueryParser {
         return super.newWildcardQuery(t);
     }
 
-    private Query buildNumericRangeQuery(final String field, final Class<?> type, String start, String end, final boolean includeLower,
+    private Query buildNumericRangeQuery(String field, Class<?> type, String start, String end, boolean includeLower,
                                          final boolean includeUpper) {
         if (AttributeUtil.isWholeNumber(type) || isTemporalType(type)) {
             long min;
@@ -119,7 +119,7 @@ public class NumericTranslationQueryParser extends QueryParser {
         }
     }
 
-    private Query buildNumericQuery(final String field, final String value, Class<?> type) {
+    private Query buildNumericQuery(String field, String value, Class<?> type) {
         Query query;
         if (AttributeUtil.isWholeNumber(type) || isTemporalType(type)) {
             if (isMatchAll(value)) {
@@ -147,7 +147,7 @@ public class NumericTranslationQueryParser extends QueryParser {
         return query;
     }
 
-    private Class<?> getKeyDataType(final String field) {
+    private Class<?> getKeyDataType(String field) {
         KeyInformation keyInformation = storeRetriever.get(field);
         if (keyInformation == null) {
             log.warn(String.format("Could not find key information for: %s", field));
@@ -164,22 +164,22 @@ public class NumericTranslationQueryParser extends QueryParser {
         }
     }
 
-    private boolean isPossibleRangeQuery(final Class<?> dataType) {
+    private boolean isPossibleRangeQuery(Class<?> dataType) {
         if (dataType == null) {
             return false;
         }
         return Number.class.isAssignableFrom(dataType) || isTemporalType(dataType);
     }
 
-    private boolean isTemporalType(final Class<?> dataType) {
+    private boolean isTemporalType(Class<?> dataType) {
         return Date.class.equals(dataType) || Instant.class.equals(dataType);
     }
 
-    private boolean isMatchAll(final String value) {
+    private boolean isMatchAll(String value) {
         return value == null || "*".equals(value);
     }
 
-    private void printNumberFormatException(final String field, final Class<?> dataType, final NumberFormatException e) {
+    private void printNumberFormatException(String field, Class<?> dataType, NumberFormatException e) {
         log.warn("Expected Number type for " + field + ":" + dataType, e);
     }
 }

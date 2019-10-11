@@ -75,7 +75,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
      * @return Value stored for the key or null if the configuration property has not (yet) been defined.
      */
     @Override
-    public <O> O get(final String key, final Class<O> dataType) {
+    public <O> O get(String key, Class<O> dataType) {
         StaticBuffer column = string2StaticBuffer(key);
         final KeySliceQuery query = new KeySliceQuery(rowKey, column, BufferUtil.nextBiggerBuffer(column));
         StaticBuffer result = BackendOperation.execute(new BackendOperation.Transactional<StaticBuffer>() {
@@ -110,7 +110,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
         set(key, value, null, false);
     }
 
-    public <O> void set(String key, O value, O expectedValue, final boolean checkExpectedValue) {
+    public <O> void set(String key, O value, O expectedValue, boolean checkExpectedValue) {
         final StaticBuffer column = string2StaticBuffer(key);
         final List<Entry> additions;
         final List<StaticBuffer> deletions;
@@ -166,7 +166,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
             }
 
             @Override
-            public Iterable<String> getKeys(final String prefix) {
+            public Iterable<String> getKeys(String prefix) {
                 final boolean prefixBlank = StringUtils.isBlank(prefix);
                 return entries.keySet().stream().filter(s -> prefixBlank || s.startsWith(prefix)).collect(Collectors.toList());
             }
@@ -219,16 +219,16 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
 
 
 
-    private StaticBuffer string2StaticBuffer(final String s) {
+    private StaticBuffer string2StaticBuffer(String s) {
         ByteBuffer out = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8));
         return StaticArrayBuffer.of(out);
     }
 
-    private String staticBuffer2String(final StaticBuffer s) {
+    private String staticBuffer2String(StaticBuffer s) {
         return new String(s.as(StaticBuffer.ARRAY_FACTORY), StandardCharsets.UTF_8);
     }
 
-    private <O> StaticBuffer object2StaticBuffer(final O value) {
+    private <O> StaticBuffer object2StaticBuffer(O value) {
         if (value == null) throw Graph.Variables.Exceptions.variableValueCanNotBeNull();
         if (!serializer.validDataType(value.getClass()))
             throw Graph.Variables.Exceptions.dataTypeOfVariableValueNotSupported(value);
@@ -237,7 +237,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
         return out.getStaticBuffer();
     }
 
-    private <O> O staticBuffer2Object(final StaticBuffer s, Class<O> dataType) {
+    private <O> O staticBuffer2Object(StaticBuffer s, Class<O> dataType) {
         Object value = serializer.readClassAndObject(s.asReadBuffer());
         Preconditions.checkArgument(dataType.isInstance(value), "Could not deserialize to [%s], got: %s", dataType, value);
         return (O) value;

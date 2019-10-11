@@ -76,14 +76,14 @@ public abstract class JanusGraphSONModule extends TinkerPopJacksonModule {
         }
 
         @Override
-        public void serialize(final RelationIdentifier relationIdentifier, final JsonGenerator jsonGenerator,
+        public void serialize(RelationIdentifier relationIdentifier, JsonGenerator jsonGenerator,
                 final SerializerProvider serializerProvider) throws IOException {
             jsonGenerator.writeString(relationIdentifier.toString());
         }
 
         @Override
-        public void serializeWithType(final RelationIdentifier relationIdentifier, final JsonGenerator jsonGenerator,
-                final SerializerProvider serializerProvider, final TypeSerializer typeSerializer)
+        public void serializeWithType(RelationIdentifier relationIdentifier, JsonGenerator jsonGenerator,
+                final SerializerProvider serializerProvider, TypeSerializer typeSerializer)
                 throws IOException {
             // since jackson 2.9, must keep track of `typeIdDef` in order to close it properly
             final WritableTypeId typeIdDef = typeSerializer.writeTypePrefix(jsonGenerator, typeSerializer.typeId(relationIdentifier, JsonToken.VALUE_STRING));
@@ -101,7 +101,7 @@ public abstract class JanusGraphSONModule extends TinkerPopJacksonModule {
         }
 
         @Override
-        public RelationIdentifier deserialize(final JsonParser jsonParser,
+        public RelationIdentifier deserialize(JsonParser jsonParser,
                 final DeserializationContext deserializationContext) throws IOException {
             jsonParser.nextToken();
             final Map<String, Object> mapData = deserializationContext.readValue(jsonParser, Map.class);
@@ -116,14 +116,14 @@ public abstract class JanusGraphSONModule extends TinkerPopJacksonModule {
         }
 
         @Override
-        public void serialize(final RelationIdentifier relationIdentifier, final JsonGenerator jsonGenerator,
+        public void serialize(RelationIdentifier relationIdentifier, JsonGenerator jsonGenerator,
                               final SerializerProvider serializerProvider) throws IOException {
             jsonGenerator.writeString(relationIdentifier.toString());
         }
 
         @Override
-        public void serializeWithType(final RelationIdentifier relationIdentifier, final JsonGenerator jsonGenerator,
-                                      final SerializerProvider serializerProvider, final TypeSerializer typeSerializer) throws IOException {
+        public void serializeWithType(RelationIdentifier relationIdentifier, JsonGenerator jsonGenerator,
+                                      final SerializerProvider serializerProvider, TypeSerializer typeSerializer) throws IOException {
 
             jsonGenerator.writeStartObject();
             if (typeSerializer != null) jsonGenerator.writeStringField(GraphSONTokens.VALUETYPE, TYPE_NAMESPACE + ":" + TYPE_DEFINITIONS.get(RelationIdentifier.class));
@@ -153,7 +153,7 @@ public abstract class JanusGraphSONModule extends TinkerPopJacksonModule {
         }
 
         @Override
-        public P deserialize(final JsonParser jsonParser, final DeserializationContext deserializationContext) throws IOException {
+        public P deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
             String predicate = null;
             Object value = null;
 
@@ -169,7 +169,7 @@ public abstract class JanusGraphSONModule extends TinkerPopJacksonModule {
 
             try {
                 return JanusGraphPSerializer.createPredicateWithValue(predicate, value);
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
         }

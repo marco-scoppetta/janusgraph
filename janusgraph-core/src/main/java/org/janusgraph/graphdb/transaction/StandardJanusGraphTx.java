@@ -81,7 +81,6 @@ import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.internal.InternalVertexLabel;
 import org.janusgraph.graphdb.internal.JanusGraphSchemaCategory;
 import org.janusgraph.graphdb.internal.RelationCategory;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
 import org.janusgraph.graphdb.query.MetricsQueryExecutor;
 import org.janusgraph.graphdb.query.Query;
 import org.janusgraph.graphdb.query.QueryExecutor;
@@ -131,7 +130,6 @@ import org.janusgraph.graphdb.types.vertices.PropertyKeyVertex;
 import org.janusgraph.graphdb.util.SubQueryIterator;
 import org.janusgraph.graphdb.util.VertexCentricEdgeIterable;
 import org.janusgraph.graphdb.vertices.CacheVertex;
-import org.janusgraph.graphdb.vertices.PreloadedVertex;
 import org.janusgraph.graphdb.vertices.StandardVertex;
 import org.janusgraph.util.datastructures.Retriever;
 import org.janusgraph.util.stats.MetricManager;
@@ -139,7 +137,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -178,7 +175,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     private static final Logger LOG = LoggerFactory.getLogger(StandardJanusGraphTx.class);
 
     private static final Map<Long, InternalRelation> EMPTY_DELETED_RELATIONS = ImmutableMap.of();
-    private static final Duration LOCK_TIMEOUT = Duration.ofMillis(5000L);
 
     /**
      * This is a workaround for #893.  Cache sizes small relative to the level
@@ -270,10 +266,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         this.temporaryIds = buildTemporaryIDsPool();
         this.isOpen = true;
 
-        boolean preloadedData = config.hasPreloadedData();
-        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence(), preloadedData);
-        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence(), preloadedData);
-        this.existingVertexRetriever = new VertexConstructor(false, preloadedData);
+        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence());
+        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence());
+        this.existingVertexRetriever = new VertexConstructor(false);
 
 
         int concurrencyLevel = (config.isSingleThreaded()) ? 1 : 4;
@@ -334,7 +329,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     }
 
     @Override
-    public <I extends Io> I io(final Io.Builder<I> builder) {
+    public <I extends Io> I io(Io.Builder<I> builder) {
         return getGraph().io(builder);
     }
 
@@ -346,10 +341,8 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     }
 
     @Override
-    public FulgoraGraphComputer compute() throws IllegalArgumentException {
-        StandardJanusGraph graph = getGraph();
-        if (isOpen()) commit();
-        return graph.compute();
+    public GraphComputer compute() throws IllegalArgumentException {
+        return null; // TODO think about this at some point in the future.
     }
 
     /**
@@ -607,6 +600,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         }
         List<JanusGraphVertex> result = new ArrayList<>(ids.length);
         LongArrayList vertexIds = new LongArrayList(ids.length);
+
         for (long id : ids) {
             if (isValidVertexId(id)) {
                 if (idManager.isPartitionedVertex(id)) id = idManager.getCanonicalVertexId(id);
@@ -617,6 +611,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                 }
             }
         }
+
         if (!vertexIds.isEmpty()) {
             if (externalVertexRetriever.hasVerifyExistence()) {
                 List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, backendTransaction);
@@ -650,11 +645,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     private class VertexConstructor implements Retriever<Long, InternalVertex> {
 
         private final boolean verifyExistence;
-        private final boolean createStubVertex;
 
-        private VertexConstructor(boolean verifyExistence, boolean createStubVertex) {
+        private VertexConstructor(boolean verifyExistence) {
             this.verifyExistence = verifyExistence;
-            this.createStubVertex = createStubVertex;
         }
 
         boolean hasVerifyExistence() {
@@ -697,8 +690,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             } else if (idManager.isGenericSchemaVertexId(vertexId)) {
                 vertex = new JanusGraphSchemaVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
             } else if (idManager.isUserVertexId(vertexId)) {
-                if (createStubVertex) vertex = new PreloadedVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
-                else vertex = new CacheVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
+                vertex = new CacheVertex(StandardJanusGraphTx.this, vertexId, lifecycle);
             } else throw new IllegalArgumentException("ID could not be recognised");
             return vertex;
         }

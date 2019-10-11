@@ -103,7 +103,7 @@ public class OrderedKeyValueStoreAdapter extends BaseKeyColumnValueAdapter {
 
 
     @Override
-    public KeyIterator getKeys(final KeyRangeQuery keyQuery, final StoreTransaction txh) throws BackendException {
+    public KeyIterator getKeys(KeyRangeQuery keyQuery, StoreTransaction txh) throws BackendException {
         final KVQuery query = new KVQuery(
                 concatenatePrefix(adjustToLength(keyQuery.getKeyStart()), keyQuery.getSliceStart()),
                 concatenatePrefix(adjustToLength(keyQuery.getKeyEnd()), keyQuery.getSliceEnd()), keycolumn -> {
@@ -204,7 +204,7 @@ public class OrderedKeyValueStoreAdapter extends BaseKeyColumnValueAdapter {
                 entry.getValueAs(StaticBuffer.STATIC_FACTORY));
     }
 
-    final KVQuery convertQuery(final KeySliceQuery query) {
+    final KVQuery convertQuery(KeySliceQuery query) {
         Predicate<StaticBuffer> filter = Predicates.alwaysTrue();
         if (!hasFixedKeyLength()) {
             filter = keyAndColumn -> equalKey(keyAndColumn, query.getKey());
@@ -223,7 +223,7 @@ public class OrderedKeyValueStoreAdapter extends BaseKeyColumnValueAdapter {
         return concatenate(front, end, false);
     }
 
-    private StaticBuffer concatenate(StaticBuffer front, StaticBuffer end, final boolean appendLength) {
+    private StaticBuffer concatenate(StaticBuffer front, StaticBuffer end, boolean appendLength) {
         final boolean addKeyLength = !hasFixedKeyLength() && appendLength;
         int length = getLength(front);
 

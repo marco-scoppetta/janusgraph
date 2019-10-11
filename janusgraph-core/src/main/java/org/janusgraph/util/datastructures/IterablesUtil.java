@@ -48,7 +48,7 @@ public class IterablesUtil {
         }
     }
 
-    public static <O> Iterable<O> limitedIterable(final Iterable<O> iterable, final int limit) {
+    public static <O> Iterable<O> limitedIterable(Iterable<O> iterable, int limit) {
         return StreamSupport.stream(iterable.spliterator(), false).limit(limit).collect(Collectors.toList());
     }
 

@@ -75,7 +75,7 @@ public class RandomRemovalListTest {
 
         long sum = 0;
         int numReturned = 0;
-        for (final Integer aList : list) {
+        for (Integer aList : list) {
             sum += aList;
             numReturned++;
         }

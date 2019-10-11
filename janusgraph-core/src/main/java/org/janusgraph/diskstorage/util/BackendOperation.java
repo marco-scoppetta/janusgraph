@@ -58,7 +58,7 @@ public class BackendOperation {
         while (true) {
             try {
                 return exe.call();
-            } catch (final Throwable e) {
+            } catch (Throwable e) {
                 //Find inner-most StorageException
                 Throwable ex = e;
                 BackendException storeEx = null;

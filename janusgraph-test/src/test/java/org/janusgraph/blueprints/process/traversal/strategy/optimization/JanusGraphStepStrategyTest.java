@@ -84,7 +84,7 @@ public class JanusGraphStepStrategyTest {
     public void doTest(Traversal original, Traversal optimized, Collection<TraversalStrategy> otherStrategies) {
         final TraversalStrategies strategies = new DefaultTraversalStrategies();
         strategies.addStrategies(JanusGraphStepStrategy.instance());
-        for (final TraversalStrategy strategy : otherStrategies) {
+        for (TraversalStrategy strategy : otherStrategies) {
             strategies.addStrategies(strategy);
         }
         original.asAdmin().setStrategies(strategies);
@@ -97,7 +97,7 @@ public class JanusGraphStepStrategyTest {
     public void doMultiQueryTest(Traversal original, Traversal expected, Collection<TraversalStrategy> otherStrategies) {
         final TraversalStrategies strategies = new DefaultTraversalStrategies();
         strategies.addStrategies(JanusGraphStepStrategy.instance());
-        for (final TraversalStrategy strategy : otherStrategies) {
+        for (TraversalStrategy strategy : otherStrategies) {
             strategies.addStrategies(strategy);
         }
 
@@ -152,7 +152,7 @@ public class JanusGraphStepStrategyTest {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static GraphTraversal.Admin<?, ?> g_V(final Object... hasKeyValues) {
+    private static GraphTraversal.Admin<?, ?> g_V(Object... hasKeyValues) {
         final GraphTraversal.Admin<?, ?> traversal = new DefaultGraphTraversal<>();
         final JanusGraphStep<Vertex, Vertex> graphStep = new JanusGraphStep<>(new GraphStep<>(traversal, Vertex.class, true));
         for (int i = 0; i < hasKeyValues.length; i++) {
@@ -163,7 +163,7 @@ public class JanusGraphStepStrategyTest {
                 final HasStepFolder.OrderEntry orderEntry = (HasStepFolder.OrderEntry) hasKeyValues[i];
                 graphStep.orderBy(orderEntry.key, orderEntry.order);
             } else if (hasKeyValues[i] instanceof DefaultGraphTraversal &&  ((DefaultGraphTraversal) hasKeyValues[i]).getStartStep() instanceof OrStep){
-                for (final Traversal.Admin<?, ?> child : ((OrStep<?>) ((DefaultGraphTraversal) hasKeyValues[i]).getStartStep()).getLocalChildren()) {
+                for (Traversal.Admin<?, ?> child : ((OrStep<?>) ((DefaultGraphTraversal) hasKeyValues[i]).getStartStep()).getLocalChildren()) {
                     final JanusGraphStep<Vertex, Vertex> localGraphStep = ((JanusGraphStep<Vertex, Vertex>) ((DefaultGraphTraversal) child).getStartStep());
                     graphStep.addLocalAll(localGraphStep.getHasContainers());
                     localGraphStep.getOrders().forEach(orderEntry -> graphStep.localOrderBy(localGraphStep.getHasContainers(), orderEntry.key, orderEntry.order));

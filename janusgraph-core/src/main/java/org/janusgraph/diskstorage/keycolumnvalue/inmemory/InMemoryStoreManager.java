@@ -59,7 +59,7 @@ public class InMemoryStoreManager implements KeyColumnValueStoreManager {
     }
 
     @Override
-    public StoreTransaction beginTransaction(final BaseTransactionConfig config) throws BackendException {
+    public StoreTransaction beginTransaction(BaseTransactionConfig config) throws BackendException {
         return new InMemoryTransaction(config);
     }
 
@@ -90,7 +90,7 @@ public class InMemoryStoreManager implements KeyColumnValueStoreManager {
     }
 
     @Override
-    public KeyColumnValueStore openDatabase(final String name, StoreMetaData.Container metaData) throws BackendException {
+    public KeyColumnValueStore openDatabase(String name, StoreMetaData.Container metaData) throws BackendException {
         if (!stores.containsKey(name)) {
             stores.putIfAbsent(name, new InMemoryKeyColumnValueStore(name));
         }
@@ -122,7 +122,7 @@ public class InMemoryStoreManager implements KeyColumnValueStoreManager {
 
     private static class InMemoryTransaction extends AbstractStoreTransaction {
 
-        public InMemoryTransaction(final BaseTransactionConfig config) {
+        public InMemoryTransaction(BaseTransactionConfig config) {
             super(config);
         }
     }

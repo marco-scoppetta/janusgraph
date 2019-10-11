@@ -44,7 +44,7 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
     private Multiplicity multiplicity;
     private SchemaStatus status = SchemaStatus.ENABLED;
 
-    public StandardRelationTypeMaker(final StandardJanusGraphTx tx, String name,
+    public StandardRelationTypeMaker(StandardJanusGraphTx tx, String name,
                                      final IndexSerializer indexSerializer,
                                      final AttributeHandler attributeHandler) {
         this.tx = Preconditions.checkNotNull(tx);

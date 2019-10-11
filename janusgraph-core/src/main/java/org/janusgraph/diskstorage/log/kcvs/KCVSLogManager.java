@@ -115,7 +115,7 @@ public class KCVSLogManager implements LogManager {
      * @param storeManager
      * @param config
      */
-    public KCVSLogManager(final KeyColumnValueStoreManager storeManager, final Configuration config) {
+    public KCVSLogManager(KeyColumnValueStoreManager storeManager, Configuration config) {
         this(storeManager, config, null);
     }
 

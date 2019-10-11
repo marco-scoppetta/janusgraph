@@ -106,7 +106,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
     /**
      * Whether this query should only focus on the provided vertex representative of a (potentially) partitioned vertex.
      * This effectively disables the automatic querying for other vertex representatives and focuses on the provided
-     * vertex object only. This is used in combination with {@link org.janusgraph.graphdb.vertices.PreloadedVertex}.
+     * vertex object only.
      */
     private boolean queryOnlyGivenVertex = false;
 
@@ -116,7 +116,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
     private boolean restrict2Partitions = true;
 
 
-    public BasicVertexCentricQueryBuilder(final StandardJanusGraphTx tx) {
+    public BasicVertexCentricQueryBuilder(StandardJanusGraphTx tx) {
         super(tx);
         this.tx = Preconditions.checkNotNull(tx);
     }
@@ -194,10 +194,6 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
         return true;
     }
 
-    public boolean hasQueryOnlyGivenVertex() {
-        return queryOnlyGivenVertex;
-    }
-
     public boolean hasQueryOnlyLoaded() {
         return queryOnlyLoaded;
     }
@@ -207,7 +203,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
      * ---------------------------------------------------------------
      */
 
-    protected static Iterable<JanusGraphVertex> edges2Vertices(final Iterable<JanusGraphEdge> edges,
+    protected static Iterable<JanusGraphVertex> edges2Vertices(Iterable<JanusGraphEdge> edges,
                                                                final JanusGraphVertex other) {
         return Iterables.transform(edges, new Function<JanusGraphEdge, JanusGraphVertex>() {
             @Nullable
@@ -218,7 +214,7 @@ public abstract class BasicVertexCentricQueryBuilder<Q extends BaseVertexQuery<Q
         });
     }
 
-    protected VertexList edges2VertexIds(final Iterable<JanusGraphEdge> edges, final JanusGraphVertex other) {
+    protected VertexList edges2VertexIds(Iterable<JanusGraphEdge> edges, JanusGraphVertex other) {
         VertexArrayList vertices = new VertexArrayList(tx);
         for (JanusGraphEdge edge : edges) vertices.add(edge.otherVertex(other));
         return vertices;

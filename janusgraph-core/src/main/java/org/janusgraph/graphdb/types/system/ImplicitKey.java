@@ -65,7 +65,7 @@ public class ImplicitKey extends EmptyRelationType implements SystemRelationType
     private final String name;
     private final long id;
 
-    private ImplicitKey(final long id, final String name, final Class<?> datatype) {
+    private ImplicitKey(long id, String name, Class<?> datatype) {
         Preconditions.checkArgument(StringUtils.isNotBlank(name) && datatype!=null && id>0);
         assert Token.isSystemName(name);
         this.datatype=datatype;

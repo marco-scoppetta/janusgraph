@@ -90,10 +90,10 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
     public <Q extends BaseVertexQuery> Q makeQuery(Q query) {
         query.labels(getEdgeLabels());
         query.direction(getDirection());
-        for (final HasContainer condition : hasContainers) {
+        for (HasContainer condition : hasContainers) {
             query.has(condition.getKey(), JanusGraphPredicate.Converter.convert(condition.getBiPredicate()), condition.getValue());
         }
-        for (final OrderEntry order : orders) query.orderBy(order.key, order.order);
+        for (OrderEntry order : orders) query.orderBy(order.key, order.order);
         if (limit != BaseQuery.NO_LIMIT) query.limit(limit);
         ((BasicVertexCentricQueryBuilder) query).profiler(queryProfiler);
         return query;
@@ -124,7 +124,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
      * will additionally include any cached starts the parent step may have.
      * @param vertices A list of vertices with which to initialise the multiQuery
      */
-    private void initializeMultiQuery(final List<Traverser.Admin<Vertex>> vertices) {
+    private void initializeMultiQuery(List<Traverser.Admin<Vertex>> vertices) {
         assert vertices.size() > 0;
         List<Admin<Vertex>> parentStarts = new ArrayList<>();
         if (vertices.size() == 1 && parentMultiQueryStep != null) {
@@ -183,7 +183,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
     }
 
     @Override
-    protected Iterator<E> flatMap(final Traverser.Admin<Vertex> traverser) {
+    protected Iterator<E> flatMap(Traverser.Admin<Vertex> traverser) {
 
         Iterable<? extends JanusGraphElement> result;
 

@@ -62,14 +62,14 @@ public class PageRankVertexProgram extends StaticVertexProgram<Double> {
     private static final Set<VertexComputeKey> COMPUTE_KEYS = ImmutableSet.of(VertexComputeKey.of(PAGE_RANK, false), VertexComputeKey.of(OUTGOING_EDGE_COUNT, false));
 
     @Override
-    public void loadState(final Graph graph, final Configuration configuration) {
+    public void loadState(Graph graph, Configuration configuration) {
         dampingFactor = configuration.getDouble(DAMPING_FACTOR, 0.85D);
         maxIterations = configuration.getInt(MAX_ITERATIONS, 10);
         vertexCount = configuration.getLong(VERTEX_COUNT, 1L);
     }
 
     @Override
-    public void storeState(final Configuration configuration) {
+    public void storeState(Configuration configuration) {
         configuration.setProperty(VERTEX_PROGRAM, PageRankVertexProgram.class.getName());
         configuration.setProperty(DAMPING_FACTOR, dampingFactor);
         configuration.setProperty(MAX_ITERATIONS, maxIterations);
@@ -148,17 +148,17 @@ public class PageRankVertexProgram extends StaticVertexProgram<Double> {
             super(PageRankVertexProgram.class);
         }
 
-        public Builder vertexCount(final long vertexCount) {
+        public Builder vertexCount(long vertexCount) {
             configuration.setProperty(VERTEX_COUNT, vertexCount);
             return this;
         }
 
-        public Builder dampingFactor(final double dampingFactor) {
+        public Builder dampingFactor(double dampingFactor) {
             configuration.setProperty(DAMPING_FACTOR, dampingFactor);
             return this;
         }
 
-        public Builder iterations(final int iterations) {
+        public Builder iterations(int iterations) {
             configuration.setProperty(MAX_ITERATIONS, iterations);
             return this;
         }

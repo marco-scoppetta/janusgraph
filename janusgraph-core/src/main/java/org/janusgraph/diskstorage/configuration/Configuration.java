@@ -33,7 +33,7 @@ public interface Configuration {
 
     Map<String,Object> getSubset(ConfigNamespace umbrella, String... umbrellaElements);
 
-    Configuration restrictTo(final String... umbrellaElements);
+    Configuration restrictTo(String... umbrellaElements);
 
 
     //--------------------

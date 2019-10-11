@@ -114,7 +114,7 @@ public class FoundationDBKeyValueStore implements OrderedKeyValueStore {
         try {
             final List<KeyValue> results = tx.getRange(foundKey, endKey, query.getLimit());
 
-            for (final KeyValue keyValue : results) {
+            for (KeyValue keyValue : results) {
                 StaticBuffer key = getBuffer(db.unpack(keyValue.getKey()).getBytes(0));
                 if (selector.include(key))
                     result.add(new KeyValueEntry(key, getBuffer(keyValue.getValue())));
@@ -133,7 +133,7 @@ public class FoundationDBKeyValueStore implements OrderedKeyValueStore {
     private class FoundationDBRecordIterator implements RecordIterator<KeyValueEntry> {
         private final Iterator<KeyValueEntry> entries;
 
-        public FoundationDBRecordIterator(final List<KeyValueEntry> result) {
+        public FoundationDBRecordIterator(List<KeyValueEntry> result) {
             this.entries = result.iterator();
         }
 
@@ -166,7 +166,7 @@ public class FoundationDBKeyValueStore implements OrderedKeyValueStore {
 
         try {
             final List<Object[]> preppedQueries = new LinkedList<>();
-            for (final KVQuery query : queries) {
+            for (KVQuery query : queries) {
                 final StaticBuffer keyStart = query.getStart();
                 final StaticBuffer keyEnd = query.getEnd();
                 final KeySelector selector = query.getKeySelector();
@@ -178,7 +178,7 @@ public class FoundationDBKeyValueStore implements OrderedKeyValueStore {
 
             for (Map.Entry<KVQuery, List<KeyValue>> entry : result.entrySet()) {
                 final List<KeyValueEntry> results = new ArrayList<>();
-                for (final KeyValue keyValue : entry.getValue()) {
+                for (KeyValue keyValue : entry.getValue()) {
                     final StaticBuffer key = getBuffer(db.unpack(keyValue.getKey()).getBytes(0));
                     if (entry.getKey().getKeySelector().include(key))
                         results.add(new KeyValueEntry(key, getBuffer(keyValue.getValue())));

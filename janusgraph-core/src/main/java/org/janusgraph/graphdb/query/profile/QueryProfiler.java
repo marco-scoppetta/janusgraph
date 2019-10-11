@@ -101,7 +101,7 @@ public interface QueryProfiler {
         long resultSize = 0;
         if (multiQuery && profiler!=QueryProfiler.NO_OP) {
             //The result set is a collection of collections, but don't do this computation if profiling is disabled
-            for (final Object r : result) {
+            for (Object r : result) {
                 if (r instanceof Collection) resultSize+=((Collection)r).size();
                 else resultSize++;
             }

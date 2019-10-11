@@ -191,7 +191,7 @@ public class JanusGraphManager implements GraphManager {
     }
 
     @Override
-    public void rollback(final Set<String> graphSourceNamesToCloseTxOn) {
+    public void rollback(Set<String> graphSourceNamesToCloseTxOn) {
         commitOrRollback(graphSourceNamesToCloseTxOn, false);
     }
 
@@ -204,7 +204,7 @@ public class JanusGraphManager implements GraphManager {
     }
 
     @Override
-    public void commit(final Set<String> graphSourceNamesToCloseTxOn) {
+    public void commit(Set<String> graphSourceNamesToCloseTxOn) {
         commitOrRollback(graphSourceNamesToCloseTxOn, true);
     }
 

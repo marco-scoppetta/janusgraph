@@ -106,10 +106,10 @@ public class QueryUtil {
         if (!(condition instanceof And)) {
             return false;
         }
-        for (final Condition<?> child : ((And<?>) condition).getChildren()) {
+        for (Condition<?> child : ((And<?>) condition).getChildren()) {
             if (!isQNFLiteralOrNot(child)) {
                 if (child instanceof Or) {
-                    for (final Condition<?> child2 : ((Or<?>) child).getChildren()) {
+                    for (Condition<?> child2 : ((Or<?>) child).getChildren()) {
                         if (!isQNFLiteralOrNot(child2)) return false;
                     }
                 } else {
@@ -157,7 +157,7 @@ public class QueryUtil {
      */
     public static <E extends JanusGraphElement> And<E> constraints2QNF(StandardJanusGraphTx tx, List<PredicateCondition<String, E>> constraints) {
         final And<E> conditions = new And<>(constraints.size() + 4);
-        for (final PredicateCondition<String, E> atom : constraints) {
+        for (PredicateCondition<String, E> atom : constraints) {
             final RelationType type = getType(tx, atom.getKey());
 
             if (type == null) {
@@ -186,7 +186,7 @@ public class QueryUtil {
                 final Collection values = (Collection) value;
                 if (predicate == Contain.NOT_IN) {
                     if (values.isEmpty()) continue; //Simply ignore since trivially satisfied
-                    for (final Object inValue : values)
+                    for (Object inValue : values)
                         addConstraint(type, Cmp.NOT_EQUAL, inValue, conditions, tx);
                 } else {
                     Preconditions.checkArgument(predicate == Contain.IN);
@@ -196,7 +196,7 @@ public class QueryUtil {
                         addConstraint(type, Cmp.EQUAL, values.iterator().next(), conditions, tx);
                     } else {
                         final Or<E> nested = new Or<>(values.size());
-                        for (final Object invalue : values)
+                        for (Object invalue : values)
                             addConstraint(type, Cmp.EQUAL, invalue, nested, tx);
                         conditions.add(nested);
                     }
@@ -219,7 +219,7 @@ public class QueryUtil {
         return conditions;
     }
 
-    private static <E extends JanusGraphElement> And<E> addConstraint(final RelationType type, AndJanusPredicate predicate, List<Object> values, And<E> and, StandardJanusGraphTx tx) {
+    private static <E extends JanusGraphElement> And<E> addConstraint(RelationType type, AndJanusPredicate predicate, List<Object> values, And<E> and, StandardJanusGraphTx tx) {
         for (int i = 0 ; i < values.size(); i++) {
             final JanusGraphPredicate janusGraphPredicate = predicate.get(i);
             if (janusGraphPredicate instanceof AndJanusPredicate) {
@@ -240,7 +240,7 @@ public class QueryUtil {
         return and;
     }
 
-    private static <E extends JanusGraphElement> Or<E> addConstraint(final RelationType type, OrJanusPredicate predicate, List<Object> values, Or<E> or, StandardJanusGraphTx tx) {
+    private static <E extends JanusGraphElement> Or<E> addConstraint(RelationType type, OrJanusPredicate predicate, List<Object> values, Or<E> or, StandardJanusGraphTx tx) {
         for (int i = 0 ; i < values.size(); i++) {
             final JanusGraphPredicate janusGraphPredicate = predicate.get(i);
             if (janusGraphPredicate instanceof AndJanusPredicate) {
@@ -277,7 +277,7 @@ public class QueryUtil {
     public static Map.Entry<RelationType,Collection> extractOrCondition(Or<JanusGraphRelation> condition) {
         RelationType masterType = null;
         final List<Object> values = new ArrayList<>();
-        for (final Condition c : condition.getChildren()) {
+        for (Condition c : condition.getChildren()) {
             if (!(c instanceof PredicateCondition)) return null;
             final PredicateCondition<RelationType, JanusGraphRelation> atom = (PredicateCondition)c;
             if (atom.getPredicate()!=Cmp.EQUAL) return null;
@@ -294,7 +294,7 @@ public class QueryUtil {
     }
 
 
-    public static <R> List<R> processIntersectingRetrievals(List<IndexCall<R>> retrievals, final int limit) {
+    public static <R> List<R> processIntersectingRetrievals(List<IndexCall<R>> retrievals, int limit) {
         Preconditions.checkArgument(!retrievals.isEmpty());
         Preconditions.checkArgument(limit >= 0, "Invalid limit: %s", limit);
         List<R> results;
@@ -311,11 +311,11 @@ public class QueryUtil {
         do {
             exhaustedResults = true;
             results = null;
-            for (final IndexCall<R> call : retrievals) {
+            for (IndexCall<R> call : retrievals) {
                 Collection<R> subResult;
                 try {
                     subResult = call.call(subLimit);
-                } catch (final Exception e) {
+                } catch (Exception e) {
                     throw new JanusGraphException("Could not process individual retrieval call ", e);
                 }
 

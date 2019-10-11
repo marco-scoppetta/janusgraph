@@ -18,31 +18,46 @@ package org.janusgraph.graphdb;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.LongArrayList;
-import com.google.common.collect.*;
-import org.janusgraph.core.*;
-import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
-import org.janusgraph.graphdb.database.idassigner.placement.PropertyPlacementStrategy;
-import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.VertexLabel;
+import org.janusgraph.core.VertexList;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
+import org.janusgraph.graphdb.database.idassigner.VertexIDAssigner;
+import org.janusgraph.graphdb.database.idassigner.placement.PropertyPlacementStrategy;
 import org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy;
 import org.janusgraph.graphdb.idmanagement.IDManager;
-import org.janusgraph.olap.OLAPTest;
 import org.janusgraph.util.datastructures.AbstractLongListUtil;
-import org.apache.tinkerpop.gremlin.process.computer.ComputerResult;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Set;
 
-import static org.janusgraph.testutil.JanusGraphAssert.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.janusgraph.testutil.JanusGraphAssert.assertCount;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests graph and vertex partitioning
@@ -59,12 +74,12 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
     @Override
     public WriteConfiguration getConfigurationWithRandomKeyspace() {
         WriteConfiguration config = getBaseConfiguration();
-        ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,config, BasicConfiguration.Restriction.NONE);
+        ModifiableConfiguration modifiableConfiguration = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         // Let GraphDatabaseConfiguration's config freezer set CLUSTER_PARTITION
         //modifiableConfiguration.set(GraphDatabaseConfiguration.CLUSTER_PARTITION,true);
-        modifiableConfiguration.set(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS,numPartitions);
+        modifiableConfiguration.set(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS, numPartitions);
         //uses SimpleBulkPlacementStrategy by default
-        modifiableConfiguration.set(SimpleBulkPlacementStrategy.CONCURRENT_PARTITIONS,3*numPartitions);
+        modifiableConfiguration.set(SimpleBulkPlacementStrategy.CONCURRENT_PARTITIONS, 3 * numPartitions);
         return config;
     }
 
@@ -93,9 +108,9 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
     public void testPartitionHashes() {
         assertEquals(8, idManager.getPartitionBound());
         Set<Long> hashes = Sets.newHashSet();
-        for (long i=1;i<idManager.getPartitionBound()*2;i++) hashes.add(idManager.getPartitionHashForId(i));
-        assertTrue(hashes.size()>idManager.getPartitionBound()/2);
-        assertNotEquals(idManager.getPartitionHashForId(101),idManager.getPartitionHashForId(102));
+        for (long i = 1; i < idManager.getPartitionBound() * 2; i++) hashes.add(idManager.getPartitionHashForId(i));
+        assertTrue(hashes.size() > idManager.getPartitionBound() / 2);
+        assertNotEquals(idManager.getPartitionHashForId(101), idManager.getPartitionHashForId(102));
     }
 
     @Test
@@ -168,7 +183,7 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
             JanusGraphVertexProperty p = (JanusGraphVertexProperty) getOnlyElement(g.properties("gid"));
             assertEquals(canonicalPartition, getPartitionID(p));
             for (Iterator<VertexProperty<Object>> niter = g.properties("name"); niter.hasNext(); ) {
-                assertEquals(canonicalPartition,getPartitionID((JanusGraphVertex) niter.next().element()));
+                assertEquals(canonicalPartition, getPartitionID((JanusGraphVertex) niter.next().element()));
             }
 
             //Copied from above
@@ -288,14 +303,14 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
         }
     }
 
-    private enum CommitMode { BATCH, PER_VERTEX, PER_CLUSTER }
+    private enum CommitMode {BATCH, PER_VERTEX, PER_CLUSTER}
 
     private int setupGroupClusters(int[] groupDegrees, CommitMode commitMode) {
         mgmt.makeVertexLabel("person").make();
         mgmt.makeVertexLabel("group").partition().make();
         makeVertexIndexedKey("groupid", String.class);
         makeKey("name", String.class);
-        makeKey("clusterId",String.class);
+        makeKey("clusterId", String.class);
         makeLabel("member");
         makeLabel("contain");
 
@@ -304,19 +319,19 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
         int numVertices = 0;
         JanusGraphVertex[] groups = new JanusGraphVertex[groupDegrees.length];
         for (int i = 0; i < groupDegrees.length; i++) {
-            groups[i]=tx.addVertex("group");
-            groups[i].property("groupid","group"+i);
+            groups[i] = tx.addVertex("group");
+            groups[i].property("groupid", "group" + i);
             numVertices++;
-            if (commitMode==CommitMode.PER_VERTEX) newTx();
+            if (commitMode == CommitMode.PER_VERTEX) newTx();
             for (int noEdges = 0; noEdges < groupDegrees[i]; noEdges++) {
-                JanusGraphVertex g = vInTx(groups[i],tx);
-                JanusGraphVertex p = tx.addVertex("name","person"+i+":"+noEdges,"clusterId","group"+i);
+                JanusGraphVertex g = vInTx(groups[i], tx);
+                JanusGraphVertex p = tx.addVertex("name", "person" + i + ":" + noEdges, "clusterId", "group" + i);
                 numVertices++;
-                p.addEdge("member",g);
+                p.addEdge("member", g);
                 g.addEdge("contain", p);
-                if (commitMode==CommitMode.PER_VERTEX) newTx();
+                if (commitMode == CommitMode.PER_VERTEX) newTx();
             }
-            if (commitMode==CommitMode.PER_CLUSTER) newTx();
+            if (commitMode == CommitMode.PER_CLUSTER) newTx();
         }
         newTx();
         return numVertices;
@@ -329,111 +344,54 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
 
     @Test
     public void testPartitionSpreadFlushBatch() {
-        testPartitionSpread(true,true);
+        testPartitionSpread(true, true);
     }
 
     @Test
     public void testPartitionSpreadFlushNoBatch() {
-        testPartitionSpread(true,false);
+        testPartitionSpread(true, false);
     }
 
     @Test
     public void testPartitionSpreadNoFlushBatch() {
-        testPartitionSpread(false,true);
+        testPartitionSpread(false, true);
     }
 
     @Test
     public void testPartitionSpreadNoFlushNoBatch() {
-        testPartitionSpread(false,false);
+        testPartitionSpread(false, false);
     }
 
     private void testPartitionSpread(boolean flush, boolean batchCommit) {
         Object[] options = {option(GraphDatabaseConfiguration.IDS_FLUSH), flush};
         clopen(options);
 
-        int[] groupDegrees = {10,15,10,17,10,4,7,20,11};
-        int numVertices = setupGroupClusters(groupDegrees,batchCommit?CommitMode.BATCH:CommitMode.PER_VERTEX);
+        int[] groupDegrees = {10, 15, 10, 17, 10, 4, 7, 20, 11};
+        int numVertices = setupGroupClusters(groupDegrees, batchCommit ? CommitMode.BATCH : CommitMode.PER_VERTEX);
 
         IntSet partitionIds = new IntHashSet(numVertices); //to track the "spread" of partition ids
-        for (int i=0;i<groupDegrees.length;i++) {
-            JanusGraphVertex g = getOnlyVertex(tx.query().has("groupid","group"+i));
-            assertCount(groupDegrees[i],g.edges(Direction.OUT,"contain"));
-            assertCount(groupDegrees[i],g.edges(Direction.IN,"member"));
-            assertCount(groupDegrees[i],g.query().direction(Direction.OUT).edges());
-            assertCount(groupDegrees[i],g.query().direction(Direction.IN).edges());
-            assertCount(groupDegrees[i]*2,g.query().edges());
+        for (int i = 0; i < groupDegrees.length; i++) {
+            JanusGraphVertex g = getOnlyVertex(tx.query().has("groupid", "group" + i));
+            assertCount(groupDegrees[i], g.edges(Direction.OUT, "contain"));
+            assertCount(groupDegrees[i], g.edges(Direction.IN, "member"));
+            assertCount(groupDegrees[i], g.query().direction(Direction.OUT).edges());
+            assertCount(groupDegrees[i], g.query().direction(Direction.IN).edges());
+            assertCount(groupDegrees[i] * 2, g.query().edges());
             for (Object o : g.query().direction(Direction.IN).labels("member").vertices()) {
                 JanusGraphVertex v = (JanusGraphVertex) o;
                 int pid = getPartitionID(v);
                 partitionIds.add(pid);
                 assertEquals(g, getOnlyElement(v.query().direction(Direction.OUT).labels("member").vertices()));
                 VertexList vertexList = v.query().direction(Direction.IN).labels("contain").vertexIds();
-                assertEquals(1,vertexList.size());
-                assertEquals(pid,idManager.getPartitionId(vertexList.getID(0)));
-                assertEquals(g,vertexList.get(0));
+                assertEquals(1, vertexList.size());
+                assertEquals(pid, idManager.getPartitionId(vertexList.getID(0)));
+                assertEquals(g, vertexList.get(0));
             }
         }
         if (flush || !batchCommit) { //In these cases we would expect significant spread across partitions
-            assertTrue(partitionIds.size()>numPartitions/2); //This is a probabilistic test that might fail
+            assertTrue(partitionIds.size() > numPartitions / 2); //This is a probabilistic test that might fail
         } else {
-            assertEquals(1,partitionIds.size()); //No spread in this case
-        }
-    }
-
-    @Test
-    public void testVertexPartitionOlapBatch() throws Exception {
-        testVertexPartitionOlap(CommitMode.BATCH);
-    }
-
-    @Test
-    public void testVertexPartitionOlapCluster() throws Exception {
-        testVertexPartitionOlap(CommitMode.PER_CLUSTER);
-    }
-
-    @Test
-    public void testVertexPartitionOlapIndividual() throws Exception {
-        testVertexPartitionOlap(CommitMode.PER_VERTEX);
-    }
-
-    private void testVertexPartitionOlap(CommitMode commitMode) throws Exception {
-        Object[] options = {option(GraphDatabaseConfiguration.IDS_FLUSH), false};
-        clopen(options);
-
-//        int[] groupDegrees = {10,20,30};
-        int[] groupDegrees = {2};
-
-        int numVertices = setupGroupClusters(groupDegrees,commitMode);
-
-        Map<Long,Integer> degreeMap = new HashMap<>(groupDegrees.length);
-        for (int i = 0; i < groupDegrees.length; i++) {
-            degreeMap.put(getOnlyVertex(tx.query().has("groupid","group"+i)).longId(),groupDegrees[i]);
-        }
-
-        clopen(options);
-
-        //Test OLAP works with partitioned vertices
-        JanusGraphComputer computer = graph.compute(FulgoraGraphComputer.class);
-        computer.resultMode(JanusGraphComputer.ResultMode.NONE);
-        computer.workers(1);
-        computer.program(new OLAPTest.DegreeCounter());
-        computer.mapReduce(new OLAPTest.DegreeMapper());
-        ComputerResult result = computer.submit().get();
-
-        assertTrue(result.memory().exists(OLAPTest.DegreeMapper.DEGREE_RESULT));
-        Map<Long,Integer> degrees = result.memory().get(OLAPTest.DegreeMapper.DEGREE_RESULT);
-        assertNotNull(degrees);
-        assertEquals(numVertices,degrees.size());
-        final IDManager idManager = graph.getIDManager();
-
-        for (Map.Entry<Long,Integer> entry : degrees.entrySet()) {
-            long vid = entry.getKey();
-            Integer degree = entry.getValue();
-            if (idManager.isPartitionedVertex(vid)) {
-//                System.out.println("Partitioned: " + degree );
-                assertEquals(degreeMap.get(vid),degree);
-            } else {
-                assertEquals(1, (long) degree);
-            }
+            assertEquals(1, partitionIds.size()); //No spread in this case
         }
     }
 
@@ -454,38 +412,38 @@ public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
     @Test
     public void testKeyBasedGraphPartitioning() {
         Object[] options = {option(GraphDatabaseConfiguration.IDS_FLUSH), false,
-                            option(VertexIDAssigner.PLACEMENT_STRATEGY), PropertyPlacementStrategy.class.getName(),
+                option(VertexIDAssigner.PLACEMENT_STRATEGY), PropertyPlacementStrategy.class.getName(),
                 option(PropertyPlacementStrategy.PARTITION_KEY), "clusterId"};
         clopen(options);
 
-        int[] groupDegrees = {5,5,5,5,5,5,5,5};
-        int numVertices = setupGroupClusters(groupDegrees,CommitMode.PER_VERTEX);
+        int[] groupDegrees = {5, 5, 5, 5, 5, 5, 5, 5};
+        int numVertices = setupGroupClusters(groupDegrees, CommitMode.PER_VERTEX);
 
         IntSet partitionIds = new IntHashSet(numVertices); //to track the "spread" of partition ids
-        for (int i=0;i<groupDegrees.length;i++) {
-            JanusGraphVertex g = getOnlyVertex(tx.query().has("groupid","group"+i));
+        for (int i = 0; i < groupDegrees.length; i++) {
+            JanusGraphVertex g = getOnlyVertex(tx.query().has("groupid", "group" + i));
             int partitionId = -1;
             for (Object o : g.query().direction(Direction.IN).labels("member").vertices()) {
                 JanusGraphVertex v = (JanusGraphVertex) o;
-                if (partitionId<0) partitionId = getPartitionID(v);
-                assertEquals(partitionId,getPartitionID(v));
+                if (partitionId < 0) partitionId = getPartitionID(v);
+                assertEquals(partitionId, getPartitionID(v));
                 partitionIds.add(partitionId);
             }
         }
-        assertTrue(partitionIds.size()>numPartitions/2); //This is a probabilistic test that might fail
+        assertTrue(partitionIds.size() > numPartitions / 2); //This is a probabilistic test that might fail
     }
 
 
     public int getPartitionID(JanusGraphVertex vertex) {
         long p = idManager.getPartitionId(vertex.longId());
-        assertTrue(p>=0 && p<idManager.getPartitionBound() && p<Integer.MAX_VALUE);
-        return (int)p;
+        assertTrue(p >= 0 && p < idManager.getPartitionBound() && p < Integer.MAX_VALUE);
+        return (int) p;
     }
 
     public int getPartitionID(JanusGraphRelation relation) {
-        long p = relation.longId() & (idManager.getPartitionBound()-1);
-        assertTrue(p>=0 && p<idManager.getPartitionBound() && p<Integer.MAX_VALUE);
-        return (int)p;
+        long p = relation.longId() & (idManager.getPartitionBound() - 1);
+        assertTrue(p >= 0 && p < idManager.getPartitionBound() && p < Integer.MAX_VALUE);
+        return (int) p;
     }
 
 }

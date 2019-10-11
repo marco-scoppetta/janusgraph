@@ -26,27 +26,27 @@ class CQLColValGetter implements GetColVal<Tuple3<StaticBuffer, StaticBuffer, Ro
 
     private final EntryMetaData[] schema;
 
-    CQLColValGetter(final EntryMetaData[] schema) {
+    CQLColValGetter(EntryMetaData[] schema) {
         this.schema = schema;
     }
 
     @Override
-    public StaticBuffer getColumn(final Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
+    public StaticBuffer getColumn(Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
         return tuple._1;
     }
 
     @Override
-    public StaticBuffer getValue(final Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
+    public StaticBuffer getValue(Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
         return tuple._2;
     }
 
     @Override
-    public EntryMetaData[] getMetaSchema(final Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
+    public EntryMetaData[] getMetaSchema(Tuple3<StaticBuffer, StaticBuffer, Row> tuple) {
         return this.schema;
     }
 
     @Override
-    public Object getMetaData(final Tuple3<StaticBuffer, StaticBuffer, Row> tuple, final EntryMetaData metaData) {
+    public Object getMetaData(Tuple3<StaticBuffer, StaticBuffer, Row> tuple, EntryMetaData metaData) {
         switch (metaData) {
             case TIMESTAMP:
                 return tuple._3.getLong(CQLKeyColumnValueStore.WRITETIME_COLUMN_NAME);

@@ -70,7 +70,7 @@ public abstract class IndexProviderTest {
         return new StandardKeyInformation(clazz, cardinality, paras);
     }
 
-    public static KeyInformation.IndexRetriever getIndexRetriever(final Map<String,KeyInformation> mappings) {
+    public static KeyInformation.IndexRetriever getIndexRetriever(Map<String,KeyInformation> mappings) {
         return new KeyInformation.IndexRetriever() {
 
             @Override
@@ -86,7 +86,7 @@ public abstract class IndexProviderTest {
         };
     }
 
-    public static Map<String,KeyInformation> getMapping(final IndexFeatures indexFeatures, final String englishAnalyzerName, final String keywordAnalyzerName) {
+    public static Map<String,KeyInformation> getMapping(IndexFeatures indexFeatures, String englishAnalyzerName, String keywordAnalyzerName) {
         Preconditions.checkArgument(indexFeatures.supportsStringMapping(Mapping.TEXTSTRING) ||
                 (indexFeatures.supportsStringMapping(Mapping.TEXT) && indexFeatures.supportsStringMapping(Mapping.STRING)),
                 "Index must support string and text mapping");
@@ -195,7 +195,7 @@ public abstract class IndexProviderTest {
         final Multimap<String, Object> doc3 = getDocument("Hello Bob, are you there?", -500, 10.1, Geoshape.point(47.0, 10.0), Geoshape.box(46.9, 9.9, 47.1, 10.1), Arrays.asList("7", "8", "9"), Sets.newHashSet("7", "8"), Instant.ofEpochSecond(3),
             false);
 
-        for (final String store : stores) {
+        for (String store : stores) {
             initialize(store);
 
             add(store, "doc1", doc1, true);
@@ -218,7 +218,7 @@ public abstract class IndexProviderTest {
 
         clopen();
 
-        for (final String store : stores) {
+        for (String store : stores) {
             //Token
             List<String> result = tx.queryStream(new IndexQuery(store, PredicateCondition.of(TEXT, Text.CONTAINS, "world")))
                 .collect(Collectors.toList());
@@ -314,11 +314,11 @@ public abstract class IndexProviderTest {
                 result = tx.queryStream(new IndexQuery(store, PredicateCondition.of(TEXT, Text.CONTAINS_REGEX, "e[l]+(.*)"))).collect(Collectors.toList());
                 assertTrue(result.isEmpty());
             }
-            for (final JanusGraphPredicate tp : new Text[]{Text.PREFIX, Text.REGEX}) {
+            for (JanusGraphPredicate tp : new Text[]{Text.PREFIX, Text.REGEX}) {
                 try {
                     assertEquals(0, tx.queryStream(new IndexQuery(store, PredicateCondition.of(TEXT, tp, "tzubull"))).count());
                     if (indexFeatures.supportsStringMapping(Mapping.TEXT)) fail();
-                } catch (final IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {}
             }
             //String
             assertEquals(1, tx.queryStream(new IndexQuery(store, PredicateCondition.of(NAME, Cmp.EQUAL, "Tomorrow is the world"))).count());
@@ -347,14 +347,14 @@ public abstract class IndexProviderTest {
             try {
                 tx.queryStream(new IndexQuery(store, PredicateCondition.of(NAME, Mockito.mock(Cmp.class), "value")));
                 fail("should fail");
-            } catch (final IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException ignored) {
             }
 
-            for (final JanusGraphPredicate tp : new Text[]{Text.CONTAINS,Text.CONTAINS_PREFIX, Text.CONTAINS_REGEX}) {
+            for (JanusGraphPredicate tp : new Text[]{Text.CONTAINS,Text.CONTAINS_PREFIX, Text.CONTAINS_REGEX}) {
                 try {
                     assertEquals(0, tx.queryStream(new IndexQuery(store, PredicateCondition.of(NAME, tp, "tzubull"))).count());
                     if (indexFeatures.supportsStringMapping(Mapping.STRING)) fail();
-                } catch (final IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {}
             }
             if (index.supports(new StandardKeyInformation(String.class, Cardinality.SINGLE), Text.REGEX)) {
                 assertEquals(1, tx.queryStream(new IndexQuery(store, PredicateCondition.of(NAME, Text.REGEX, "Tomo[r]+ow is.*world"))).count());
@@ -557,7 +557,7 @@ public abstract class IndexProviderTest {
 
         clopen();
 
-        for (final String store : stores) {
+        for (String store : stores) {
 
             List<String> result = tx.queryStream(new IndexQuery(store, PredicateCondition.of(TEXT, Text.CONTAINS, "world")))
                     .collect(Collectors.toList());
@@ -1195,7 +1195,7 @@ public abstract class IndexProviderTest {
 
 
     protected void initialize(String store) throws BackendException {
-        for (final Map.Entry<String,KeyInformation> info : allKeys.entrySet()) {
+        for (Map.Entry<String,KeyInformation> info : allKeys.entrySet()) {
             final KeyInformation keyInfo = info.getValue();
             if (index.supports(keyInfo)) index.register(store,info.getKey(),keyInfo,tx);
         }
@@ -1206,7 +1206,7 @@ public abstract class IndexProviderTest {
     }
 
     private void add(String store, String documentId, Multimap<String, Object> doc, boolean isNew, int ttlInSeconds) {
-        for (final Map.Entry<String, Object> kv : doc.entries()) {
+        for (Map.Entry<String, Object> kv : doc.entries()) {
             if (!index.supports(allKeys.get(kv.getKey())))
                 continue;
 
@@ -1219,7 +1219,7 @@ public abstract class IndexProviderTest {
     }
 
     private void remove(String store, String documentId, Multimap<String, Object> doc, boolean deleteAll) {
-        for (final Map.Entry<String, Object> kv : doc.entries()) {
+        for (Map.Entry<String, Object> kv : doc.entries()) {
             if (index.supports(allKeys.get(kv.getKey()))) {
                 tx.delete(store, documentId, kv.getKey(), kv.getValue(), deleteAll);
             }
@@ -1227,7 +1227,7 @@ public abstract class IndexProviderTest {
     }
 
 
-    public Multimap<String, Object> getDocument(final String txt, final long time, final double weight, final Geoshape location,
+    public Multimap<String, Object> getDocument(String txt, long time, double weight, Geoshape location,
                                                 final Geoshape boundary, List<String> phoneList, Set<String> phoneSet, Instant date,
                                                 final Boolean bool) {
         final HashMultimap<String, Object> values = HashMultimap.create();
@@ -1240,12 +1240,12 @@ public abstract class IndexProviderTest {
         values.put(DATE, date);
         values.put(BOOLEAN, bool);
         if (indexFeatures.supportsCardinality(Cardinality.LIST)) {
-            for (final String phone : phoneList) {
+            for (String phone : phoneList) {
                 values.put(PHONE_LIST, phone);
             }
         }
         if(indexFeatures.supportsCardinality(Cardinality.SET)) {
-            for (final String phone : phoneSet) {
+            for (String phone : phoneSet) {
                 values.put(PHONE_SET, phone);
             }
         }
@@ -1266,12 +1266,12 @@ public abstract class IndexProviderTest {
     }
 
     public static void printResult(Iterable<RawQuery.Result<String>> result) {
-        for (final RawQuery.Result<String> r : result) {
+        for (RawQuery.Result<String> r : result) {
             System.out.println(r.getResult() + ":"+r.getScore());
         }
     }
 
-    private Multimap<String, Object> getDocument(final long time, final double weight) {
+    private Multimap<String, Object> getDocument(long time, double weight) {
         final Multimap<String, Object> toReturn = HashMultimap.create();
         toReturn.put(NAME, "Hello world");
         toReturn.put(TIME, time);

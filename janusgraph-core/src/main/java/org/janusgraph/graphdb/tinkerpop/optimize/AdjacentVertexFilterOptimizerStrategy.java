@@ -52,7 +52,7 @@ public class AdjacentVertexFilterOptimizerStrategy extends AbstractTraversalStra
 
 
     @Override
-    public void apply(final Traversal.Admin<?, ?> traversal) {
+    public void apply(Traversal.Admin<?, ?> traversal) {
 
         TraversalHelper.getStepsOfClass(TraversalFilterStep.class, traversal).forEach(originalStep -> {
             // Check if this filter traversal matches the pattern: _.inV/outV/otherV.is(x)

@@ -236,7 +236,7 @@ public class StringSerializer implements OrderPreservingSerializer<String>, Supp
             }
 
             @Override
-            public String decompress(final ScanBuffer buffer, final int numBytes) {
+            public String decompress(ScanBuffer buffer, int numBytes) {
                 try {
                     InputStream in = new GZIPInputStream(new InputStream() {
 

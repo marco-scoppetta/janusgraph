@@ -40,8 +40,7 @@ import java.util.Map;
  */
 public class HadoopScanRunner {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(HadoopScanRunner.class);
+    private static final Logger log = LoggerFactory.getLogger(HadoopScanRunner.class);
 
     /**
      * Run a ScanJob on Hadoop MapReduce.

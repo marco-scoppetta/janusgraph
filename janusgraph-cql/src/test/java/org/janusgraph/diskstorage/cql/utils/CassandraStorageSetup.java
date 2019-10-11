@@ -61,7 +61,7 @@ public class CassandraStorageSetup {
                 try {
                     FileUtils.deleteDirectory(new File(p.dataPath));
                     FileUtils.deleteQuietly(new File((new File(p.dataPath)).getParent() + File.separator + "commitlog"));
-                } catch (final IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -81,7 +81,7 @@ public class CassandraStorageSetup {
         return paths;
     }
 
-    private static String loadAbsoluteDirectoryPath(final String name, final String prop, final boolean mustExistAndBeAbsolute) {
+    private static String loadAbsoluteDirectoryPath(String name, String prop, boolean mustExistAndBeAbsolute) {
         String s = System.getProperty(prop);
 
         if (null == s) {
@@ -123,7 +123,7 @@ public class CassandraStorageSetup {
         return config;
     }
 
-    public static ModifiableConfiguration enableSSL(final ModifiableConfiguration mc) {
+    public static ModifiableConfiguration enableSSL(ModifiableConfiguration mc) {
         mc.set(SSL_ENABLED, true);
         mc.set(STORAGE_HOSTS, new String[]{HOSTNAME != null ? HOSTNAME : "127.0.0.1"});
         mc.set(SSL_TRUSTSTORE_LOCATION, Joiner.on(File.separator).join("target", "cassandra", "murmur-ssl", "conf", "test.truststore"));
@@ -134,7 +134,7 @@ public class CassandraStorageSetup {
     /**
      * Cassandra only accepts keyspace names 48 characters long or shorter made up of alphanumeric characters and underscores.
      */
-    private static String cleanKeyspaceName(final String raw) {
+    private static String cleanKeyspaceName(String raw) {
         Preconditions.checkNotNull(raw);
         Preconditions.checkArgument(0 < raw.length());
 
@@ -150,7 +150,7 @@ public class CassandraStorageSetup {
         private final String yamlPath;
         private final String dataPath;
 
-        public Paths(final String yamlPath, final String dataPath) {
+        public Paths(String yamlPath, String dataPath) {
             this.yamlPath = yamlPath;
             this.dataPath = dataPath;
         }

@@ -204,7 +204,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 //        Backend backend = getBackend(config);
 //        assertStorageExists(backend, true);
 //        clearGraph(config);
-//        try { backend.close(); } catch (final Exception e) { /* Most backends do not support closing after clearing */}
+//        try { backend.close(); } catch (Exception e) { /* Most backends do not support closing after clearing */}
 //        try (Backend newBackend = getBackend(config)) {
 //            assertStorageExists(newBackend, false);
 //        }
@@ -213,7 +213,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
     private static void assertStorageExists(Backend backend, boolean exists) throws Exception {
         final String suffix = exists ? "should exist before clearing" : "should not exist after clearing";
         assertTrue(backend.getStoreManager().exists() == exists, "graph " + suffix);
-        for (final IndexInformation index : backend.getIndexInformation().values()) {
+        for (IndexInformation index : backend.getIndexInformation().values()) {
             assertTrue(((IndexProvider) index).exists() == exists, "index " + suffix);
         }
     }
@@ -230,11 +230,11 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         Edge e = v.addEdge("knows", v, "name", "Hulu Bubab");
         assertCount(1, tx.query().has("name", Text.CONTAINS, "marko").vertices());
         assertCount(1, tx.query().has("name", Text.CONTAINS, "Hulu").edges());
-        for (final Vertex u : tx.getVertices()) assertEquals("Marko Rodriguez", u.value("name"));
+        for (Vertex u : tx.getVertices()) assertEquals("Marko Rodriguez", u.value("name"));
         clopen();
         assertCount(1, tx.query().has("name", Text.CONTAINS, "marko").vertices());
         assertCount(1, tx.query().has("name", Text.CONTAINS, "Hulu").edges());
-        for (final Vertex u : tx.getVertices()) assertEquals("Marko Rodriguez", u.value("name"));
+        for (Vertex u : tx.getVertices()) assertEquals("Marko Rodriguez", u.value("name"));
         v = getOnlyVertex(tx.query().has("name", Text.CONTAINS, "marko"));
         v.property(VertexProperty.Cardinality.single, "name", "Marko");
         e = getOnlyEdge(v.query().direction(Direction.OUT));
@@ -242,12 +242,12 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         assertCount(1, tx.query().has("name", Text.CONTAINS, "marko").vertices());
         assertCount(1, tx.query().has("name", Text.CONTAINS, "Rubu").edges());
         assertCount(0, tx.query().has("name", Text.CONTAINS, "Hulu").edges());
-        for (final Vertex u : tx.getVertices()) assertEquals("Marko", u.value("name"));
+        for (Vertex u : tx.getVertices()) assertEquals("Marko", u.value("name"));
         clopen();
         assertCount(1, tx.query().has("name", Text.CONTAINS, "marko").vertices());
         assertCount(1, tx.query().has("name", Text.CONTAINS, "Rubu").edges());
         assertCount(0, tx.query().has("name", Text.CONTAINS, "Hulu").edges());
-        for (final Vertex u : tx.getVertices()) assertEquals("Marko", u.value("name"));
+        for (Vertex u : tx.getVertices()) assertEquals("Marko", u.value("name"));
     }
 
     @Test
@@ -431,7 +431,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             try {
                 checkIndexingCounts(words, numV, originalNumV, true);
                 status = 0;
-            } catch (final AssertionError e) {
+            } catch (AssertionError e) {
                 if (retry >= RETRY_COUNT-1) throw e;
                 Thread.sleep(RETRY_INTERVAL);
             }
@@ -450,16 +450,16 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
     }
 
     private void checkIndexingCounts(String[] words, int numV, int originalNumV, boolean checkOrder) {
-        for (final String word : words) {
+        for (String word : words) {
             final int expectedSize = numV / words.length;
             assertCount(expectedSize, tx.query().has("text", Text.CONTAINS, word).vertices());
             assertCount(expectedSize, tx.query().has("text", Text.CONTAINS, word).edges());
 
             //Test ordering
             if (checkOrder) {
-                for (final String orderKey : new String[]{"time", "category"}) {
-                    for (final Order order : Order.values()) {
-                        for (final JanusGraphQuery traversal : ImmutableList.of(
+                for (String orderKey : new String[]{"time", "category"}) {
+                    for (Order order : Order.values()) {
+                        for (JanusGraphQuery traversal : ImmutableList.of(
                             tx.query().has("text", Text.CONTAINS, word).orderBy(orderKey, order.getTP()),
                             tx.query().has("text", Text.CONTAINS, word).orderBy(orderKey, order.getTP())
                         )) {
@@ -608,7 +608,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             try {
                 assertEquals(v1, getOnlyVertex(tx.query().has("instant", Cmp.EQUAL, firstTimestamp)));
                 fail("Should have failed to update the index");
-            } catch (final Exception ignored) {
+            } catch (Exception ignored) {
 
             }
         }
@@ -718,19 +718,19 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             //Already exists
             mgmt.buildIndex("index2", Vertex.class).addKey(weight).buildMixedIndex(INDEX);
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
         try {
             //Already exists
             mgmt.buildIndex("index2", Vertex.class).addKey(weight).buildCompositeIndex();
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
         try {
             //Key is already added
             mgmt.addIndexKey(index2, weight);
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
 
         finishSchema();
@@ -764,19 +764,19 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             //Already exists
             mgmt.buildIndex("index2", Vertex.class).addKey(weight).buildMixedIndex(INDEX);
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
         try {
             //Already exists
             mgmt.buildIndex("index2", Vertex.class).addKey(weight).buildCompositeIndex();
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
         try {
             //Key is already added
             mgmt.addIndexKey(index2, weight);
             fail();
-        } catch (final IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException ignored) {
         }
 
 
@@ -1238,7 +1238,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 1, new boolean[]{true, true}, "mixed");
         evaluateQuery(tx.query().has("name", Text.CONTAINS_FUZZY, "Midle"), ElementCategory.VERTEX,
                 1, new boolean[]{true, true}, "mixed");
-        for (final Vertex u : tx.getVertices()) {
+        for (Vertex u : tx.getVertices()) {
             final String n = u.value("name");
             if (n.endsWith("Don")) {
                 u.remove();
@@ -1449,7 +1449,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         finishSchema();
 
         JanusGraphIndex index = mgmt.getGraphIndex("theIndex");
-        for (final PropertyKey key : index.getFieldKeys()) {
+        for (PropertyKey key : index.getFieldKeys()) {
             assertEquals(SchemaStatus.ENABLED, index.getIndexStatus(key));
         }
 
@@ -1509,7 +1509,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         finishSchema();
 
         index = mgmt.getGraphIndex("theIndex");
-        for (final PropertyKey key : index.getFieldKeys()) {
+        for (PropertyKey key : index.getFieldKeys()) {
             assertEquals(SchemaStatus.DISABLED, index.getIndexStatus(key));
         }
 
@@ -1523,7 +1523,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
     private void addVertex(int time, String text, double height, String[] phones) {
         newTx();
         final JanusGraphVertex v = tx.addVertex("text", text, "time", time, "height", height);
-        for (final String phone : phones) {
+        for (String phone : phones) {
             v.property("phone", phone);
         }
 
@@ -1907,7 +1907,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
                 //This should throw an exception
                 mgmt.buildIndex("collectionIndex", Vertex.class).addKey(stringProperty, getStringMapping()).buildMixedIndex(INDEX);
                 fail("Should have thrown an exception");
-            } catch (final JanusGraphException ignored) {
+            } catch (JanusGraphException ignored) {
 
             }
         }
@@ -2075,7 +2075,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         //key1 now has status ENABLED, let's ensure we can watch for REGISTERED and ENABLED
         try {
             ManagementSystem.awaitGraphIndexStatus(graph, "randomMixedIndex").status(SchemaStatus.REGISTERED, SchemaStatus.ENABLED).call();
-        } catch (final Exception e) {
+        } catch (Exception e) {
             fail("Failed to awaitGraphIndexStatus on multiple statuses.");
         }
     }
@@ -2159,7 +2159,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
         testOr(graph);
     }
 
-    private void testOr(final Graph aGraph) {
+    private void testOr(Graph aGraph) {
         final GraphTraversalSource g = aGraph.traversal();
         final Vertex hiro = g.addV().property("name", "Hiro").property("age", 2).property("length", 90).next();
         final Vertex totoro = g.addV().property("name", "Totoro").property("age", 1).next();
@@ -2224,7 +2224,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             customGraph.tx().commit();
             g.V().or(__.has("name", "Totoro"),__.has("age", 2)).hasNext();
             fail("should fail");
-        } catch (final JanusGraphException e){
+        } catch (JanusGraphException e){
             assertTrue(e.getMessage().contains("Could not find a suitable index to answer graph query and graph scans are disabled"));
         } finally {
             if (customGraph != null) {
@@ -2250,7 +2250,7 @@ public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
             customGraph.tx().commit();
             g.V().has("age", P.gte(4).or(P.lt(2))).hasNext();
             fail("should fail");
-        } catch (final JanusGraphException e){
+        } catch (JanusGraphException e){
             assertTrue(e.getMessage().contains("Could not find a suitable index to answer graph query and graph scans are disabled"));
         } finally {
             if (customGraph != null) {

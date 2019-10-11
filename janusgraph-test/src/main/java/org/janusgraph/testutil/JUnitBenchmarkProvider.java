@@ -158,7 +158,7 @@ public class JUnitBenchmarkProvider {
             return ImmutableMap.of();
         }
 
-        try (final BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             return loadScalarsUnsafe(file, reader);
         } catch (IOException e) {
             throw new RuntimeException(e);

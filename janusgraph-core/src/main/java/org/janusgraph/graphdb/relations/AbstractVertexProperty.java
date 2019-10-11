@@ -59,7 +59,7 @@ public abstract class AbstractVertexProperty<V> extends AbstractTypedRelation im
     }
 
     @Override
-    public <U> Iterator<Property<U>> properties(final String... propertyKeys) {
+    public <U> Iterator<Property<U>> properties(String... propertyKeys) {
         return super.properties(propertyKeys);
     }
 

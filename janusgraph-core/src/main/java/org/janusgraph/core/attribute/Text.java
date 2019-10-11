@@ -322,25 +322,25 @@ public enum Text implements JanusGraphPredicate {
     public final static Set<Text> HAS_CONTAINS = Collections
             .unmodifiableSet(EnumSet.of(CONTAINS, CONTAINS_PREFIX, CONTAINS_REGEX, CONTAINS_FUZZY));
 
-    public static <V> P<V> textContains(final V value) {
+    public static <V> P<V> textContains(V value) {
         return new P(Text.CONTAINS, value);
     }
-    public static <V> P<V> textContainsPrefix(final V value) {
+    public static <V> P<V> textContainsPrefix(V value) {
         return new P(Text.CONTAINS_PREFIX, value);
     }
-    public static <V> P<V> textContainsRegex(final V value) {
+    public static <V> P<V> textContainsRegex(V value) {
         return new P(Text.CONTAINS_REGEX, value);
     }
-    public static <V> P<V> textPrefix(final V value) {
+    public static <V> P<V> textPrefix(V value) {
         return new P(Text.PREFIX, value);
     }
-    public static <V> P<V> textRegex(final V value) {
+    public static <V> P<V> textRegex(V value) {
         return new P(Text.REGEX, value);
     }
-    public static <V> P<V> textContainsFuzzy(final V value) {
+    public static <V> P<V> textContainsFuzzy(V value) {
         return new P(Text.CONTAINS_FUZZY, value);
     }
-    public static <V> P<V> textFuzzy(final V value) {
+    public static <V> P<V> textFuzzy(V value) {
         return new P(Text.FUZZY, value);
     }
 }

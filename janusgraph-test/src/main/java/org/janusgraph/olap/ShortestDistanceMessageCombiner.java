@@ -26,7 +26,7 @@ public class ShortestDistanceMessageCombiner implements MessageCombiner<Long> {
     }
 
     @Override
-    public Long combine(final Long messageA, final Long messageB) {
+    public Long combine(Long messageA, Long messageB) {
         return Math.min(messageA, messageB);
     }
 

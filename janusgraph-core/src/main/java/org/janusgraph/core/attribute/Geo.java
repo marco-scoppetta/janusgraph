@@ -156,16 +156,16 @@ public enum Geo implements JanusGraphPredicate {
 
     //////////////// statics
 
-    public static <V> P<V> geoIntersect(final V value) {
+    public static <V> P<V> geoIntersect(V value) {
         return new P(Geo.INTERSECT, value);
     }
-    public static <V> P<V> geoDisjoint(final V value) {
+    public static <V> P<V> geoDisjoint(V value) {
         return new P(Geo.DISJOINT, value);
     }
-    public static <V> P<V> geoWithin(final V value) {
+    public static <V> P<V> geoWithin(V value) {
         return new P(Geo.WITHIN, value);
     }
-    public static <V> P<V> geoContains(final V value) {
+    public static <V> P<V> geoContains(V value) {
         return new P(Geo.CONTAINS, value);
     }
 }

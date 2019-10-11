@@ -337,7 +337,7 @@ public class ElasticSearchIndex implements IndexProvider {
 
         try {
             client.clusterHealthRequest(config.get(HEALTH_REQUEST_TIMEOUT));
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException(e.getMessage(), e);
         }
 
@@ -375,7 +375,7 @@ public class ElasticSearchIndex implements IndexProvider {
                 client.createStoredScript(storedScriptId, preparedScript);
             }
 
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException(e.getMessage(), e);
         }
     }
@@ -399,7 +399,7 @@ public class ElasticSearchIndex implements IndexProvider {
 
                 try {
                     client.updateClusterSettings(settings);
-                } catch (final IOException e) {
+                } catch (IOException e) {
                     throw new PermanentBackendException(e.getMessage(), e);
                 }
             }
@@ -428,7 +428,7 @@ public class ElasticSearchIndex implements IndexProvider {
             try {
                 log.debug("Sleeping {} ms after {} index creation returned from actionGet()", createSleep, index);
                 Thread.sleep(createSleep);
-            } catch (final InterruptedException e) {
+            } catch (InterruptedException e) {
                 throw new JanusGraphException("Interrupted while waiting for index to settle in", e);
             }
         }
@@ -449,7 +449,7 @@ public class ElasticSearchIndex implements IndexProvider {
 
         try {
             return clientMode.connect(config);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new JanusGraphException(e);
         }
     }
@@ -519,13 +519,13 @@ public class ElasticSearchIndex implements IndexProvider {
                     //If it is dynamic, we push the unknown property 'key'
                     this.pushMapping(store, key, information);
                 }
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new PermanentBackendException(e);
             }
         } else {
             try {
                 checkForOrCreateIndex(indexStoreName);
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new PermanentBackendException(e);
             }
             this.pushMapping(store, key, information);
@@ -637,7 +637,7 @@ public class ElasticSearchIndex implements IndexProvider {
 
         try {
             client.createMapping(getIndexStoreName(store), store, mapping);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw convert(e);
         }
     }
@@ -653,19 +653,19 @@ public class ElasticSearchIndex implements IndexProvider {
         return AttributeUtil.isString(information.getDataType()) && getStringMapping(information)==Mapping.TEXTSTRING;
     }
 
-    public Map<String, Object> getNewDocument(final List<IndexEntry> additions,
+    public Map<String, Object> getNewDocument(List<IndexEntry> additions,
                                               KeyInformation.StoreRetriever information) throws BackendException {
         // JSON writes duplicate fields one after another, which forces us
         // at this stage to make de-duplication on the IndexEntry list. We don't want to pay the
         // price map storage on the Mutation level because none of other backends need that.
 
         final Multimap<String, IndexEntry> unique = LinkedListMultimap.create();
-        for (final IndexEntry e : additions) {
+        for (IndexEntry e : additions) {
             unique.put(e.field, e);
         }
 
         final Map<String, Object> doc = new HashMap<>();
-        for (final Map.Entry<String, Collection<IndexEntry>> add : unique.asMap().entrySet()) {
+        for (Map.Entry<String, Collection<IndexEntry>> add : unique.asMap().entrySet()) {
             final KeyInformation keyInformation = information.get(add.getKey());
             final Object value;
             switch (keyInformation.getCardinality()) {
@@ -737,13 +737,13 @@ public class ElasticSearchIndex implements IndexProvider {
                 final Map<String,Object> map = geoshape.toMap();
                 map.put("radius", map.get("radius") + ((Map<String, String>) map.remove("properties")).get("radius_units"));
                 return map;
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new IllegalArgumentException("Invalid geoshape: " + geoshape, e);
             }
         } else {
             try {
                 return geoshape.toMap();
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new IllegalArgumentException("Invalid geoshape: " + geoshape, e);
             }
         }
@@ -754,11 +754,11 @@ public class ElasticSearchIndex implements IndexProvider {
                        BaseTransaction tx) throws BackendException {
         final List<ElasticSearchMutation> requests = new ArrayList<>();
         try {
-            for (final Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
+            for (Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
                 final List<ElasticSearchMutation> requestByStore = new ArrayList<>();
                 final String storeName = stores.getKey();
                 final String indexStoreName = getIndexStoreName(storeName);
-                for (final Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
+                for (Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
                     final String documentId = entry.getKey();
                     final IndexMutation mutation = entry.getValue();
                     assert mutation.isConsolidated();
@@ -823,7 +823,7 @@ public class ElasticSearchIndex implements IndexProvider {
             if (!requests.isEmpty()) {
                 client.bulkRequest(requests, null);
             }
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log.error("Failed to execute bulk Elasticsearch mutation", e);
             throw convert(e);
         }
@@ -857,7 +857,7 @@ public class ElasticSearchIndex implements IndexProvider {
     private Map<String,Object> getAdditionDoc(KeyInformation.IndexRetriever information,
                                               String store, IndexMutation mutation) throws PermanentBackendException {
         final Map<String,Object> doc = new HashMap<>();
-        for (final IndexEntry e : mutation.getAdditions()) {
+        for (IndexEntry e : mutation.getAdditions()) {
             final KeyInformation keyInformation = information.get(store).get(e.field);
             if (keyInformation.getCardinality() == Cardinality.SINGLE) {
                 doc.put(e.field, convertToEsType(e.value, Mapping.getMapping(keyInformation)));
@@ -875,11 +875,11 @@ public class ElasticSearchIndex implements IndexProvider {
                         BaseTransaction tx) throws BackendException {
         final List<ElasticSearchMutation> requests = new ArrayList<>();
         try {
-            for (final Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
+            for (Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
                 final List<ElasticSearchMutation> requestByStore = new ArrayList<>();
                 final String store = stores.getKey();
                 final String indexStoreName = getIndexStoreName(store);
-                for (final Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
+                for (Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
                     final String docID = entry.getKey();
                     final List<IndexEntry> content = entry.getValue();
                     if (content == null || content.size() == 0) {
@@ -905,7 +905,7 @@ public class ElasticSearchIndex implements IndexProvider {
             }
             if (!requests.isEmpty())
                 client.bulkRequest(requests, null);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw convert(e);
         }
     }
@@ -1144,7 +1144,7 @@ public class ElasticSearchIndex implements IndexProvider {
             final Stream<RawQuery.Result<String>> toReturn
                     = StreamSupport.stream(Spliterators.spliteratorUnknownSize(resultIterator, Spliterator.ORDERED), false);
             return (query.hasLimit() ? toReturn.limit(query.getLimit()) : toReturn).map(RawQuery.Result::getResult);
-        } catch (final IOException | UncheckedIOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new PermanentBackendException(e);
         }
     }
@@ -1204,7 +1204,7 @@ public class ElasticSearchIndex implements IndexProvider {
                 getIndexStoreName(query.getStore()),
                 requestBody,
                 useScroll);
-        } catch (final IOException | UncheckedIOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new PermanentBackendException(e);
         }
     }
@@ -1214,14 +1214,14 @@ public class ElasticSearchIndex implements IndexProvider {
             return client.countTotal(
                 getIndexStoreName(query.getStore()),
                 compat.createRequestBody(compat.queryString(query.getQuery()), query.getParameters()));
-        } catch (final IOException | UncheckedIOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new PermanentBackendException(e);
         }
     }
 
-    private void addOrderToQuery(KeyInformation.IndexRetriever informations, ElasticSearchRequest sr, final List<IndexQuery.OrderEntry> orders,
+    private void addOrderToQuery(KeyInformation.IndexRetriever informations, ElasticSearchRequest sr, List<IndexQuery.OrderEntry> orders,
                                  String store) {
-        for (final IndexQuery.OrderEntry orderEntry : orders) {
+        for (IndexQuery.OrderEntry orderEntry : orders) {
             final String order = orderEntry.getOrder().name();
             final KeyInformation information = informations.get(store).get(orderEntry.getKey());
             final Mapping mapping = Mapping.getMapping(information);
@@ -1329,7 +1329,7 @@ public class ElasticSearchIndex implements IndexProvider {
     public void close() throws BackendException {
         try {
             client.close();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException(e);
         }
 
@@ -1339,7 +1339,7 @@ public class ElasticSearchIndex implements IndexProvider {
     public void clearStorage() throws BackendException {
         try {
             client.deleteIndex(indexName);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw new PermanentBackendException("Could not delete index " + indexName, e);
         } finally {
             close();
@@ -1350,7 +1350,7 @@ public class ElasticSearchIndex implements IndexProvider {
     public boolean exists() throws BackendException {
         try {
             return client.indexExists(indexName);
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException("Could not check if index " + indexName + " exists", e);
         }
     }

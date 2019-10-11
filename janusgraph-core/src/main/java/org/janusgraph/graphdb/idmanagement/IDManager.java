@@ -16,7 +16,7 @@ package org.janusgraph.graphdb.idmanagement;
 
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.InvalidIDException;
+import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.graphdb.database.idhandling.VariableLong;
@@ -456,7 +456,7 @@ public class IDManager {
         else if (VertexIDType.PartitionedVertex.is(vertexId)) type = VertexIDType.PartitionedVertex;
         else if (VertexIDType.UnmodifiableVertex.is(vertexId)) type = VertexIDType.UnmodifiableVertex;
         if (null == type) {
-            throw new InvalidIDException("Vertex ID " + vertexId + " has unrecognized type");
+            throw new JanusGraphException("Vertex ID " + vertexId + " has unrecognized type");
         }
         return type;
     }

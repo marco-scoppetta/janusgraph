@@ -66,7 +66,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
 
     protected IndexRepairJob(IndexRepairJob job) { super(job); }
 
-    public IndexRepairJob(final String indexName, final String indexType) {
+    public IndexRepairJob(String indexName, String indexType) {
         super(indexName,indexType);
     }
 
@@ -182,7 +182,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                 }
 
             } else throw new UnsupportedOperationException("Unsupported index found: "+index);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             managementSystem.rollback();
             writeTx.rollback();
             metrics.incrementCustom(FAILED_TX);

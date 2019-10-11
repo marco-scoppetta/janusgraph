@@ -29,7 +29,7 @@ public class OrJanusPredicate extends ConnectiveJanusPredicate {
         super();
     }
 
-    public OrJanusPredicate(final List<JanusGraphPredicate> predicates) {
+    public OrJanusPredicate(List<JanusGraphPredicate> predicates) {
         super(predicates);
     }
 

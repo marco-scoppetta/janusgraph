@@ -184,9 +184,9 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
      * @throws org.janusgraph.diskstorage.BackendException
      */
     void checkAllExpectedValues() throws BackendException {
-        for (final ExpectedValueCheckingStore store : expectedValuesByStore.keySet()) {
+        for (ExpectedValueCheckingStore store : expectedValuesByStore.keySet()) {
             final Map<KeyColumn, StaticBuffer> m = expectedValuesByStore.get(store);
-            for (final KeyColumn kc : m.keySet()) {
+            for (KeyColumn kc : m.keySet()) {
                 checkSingleExpectedValue(kc, m.get(kc), store);
             }
         }
@@ -211,8 +211,8 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
         final Map<KeyColumn, StaticBuffer> m = expectedValuesByStore.computeIfAbsent(store, k -> new HashMap<>());
     }
 
-    private void checkSingleExpectedValue(final KeyColumn kc,
-                                          final StaticBuffer ev, final ExpectedValueCheckingStore store) throws BackendException {
+    private void checkSingleExpectedValue(KeyColumn kc,
+                                          final StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
         BackendOperation.executeDirect(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -226,8 +226,8 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
         },maxReadTime);
     }
 
-    private void checkSingleExpectedValueUnsafe(final KeyColumn kc,
-                                                final StaticBuffer ev, final ExpectedValueCheckingStore store) throws BackendException {
+    private void checkSingleExpectedValueUnsafe(KeyColumn kc,
+                                                final StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
         final StaticBuffer nextBuf = BufferUtil.nextBiggerBuffer(kc.getColumn());
         KeySliceQuery ksq = new KeySliceQuery(kc.getKey(), kc.getColumn(), nextBuf);
         // Call getSlice on the wrapped store using the quorum+ consistency tx

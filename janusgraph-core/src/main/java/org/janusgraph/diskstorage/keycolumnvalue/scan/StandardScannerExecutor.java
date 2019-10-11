@@ -64,10 +64,10 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
     private List<BlockingQueue<SliceResult>> dataQueues;
     private DataPuller[] pullThreads;
 
-    StandardScannerExecutor(final ScanJob job, final Consumer<ScanMetrics> finishJob,
-                            final KeyColumnValueStore store, final StoreTransaction storeTx,
+    StandardScannerExecutor(ScanJob job, Consumer<ScanMetrics> finishJob,
+                            final KeyColumnValueStore store, StoreTransaction storeTx,
                             final StoreFeatures storeFeatures,
-                            final int numProcessors, final int workBlockSize,
+                            final int numProcessors, int workBlockSize,
                             final Configuration jobConfiguration,
                             final Configuration graphConfiguration) throws BackendException {
         this.job = job;

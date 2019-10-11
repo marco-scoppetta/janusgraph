@@ -136,7 +136,7 @@ public interface JanusGraphPredicate extends BiPredicate<Object, Object> {
             return convertInternal(p)!=null;
         }
 
-        public static HasContainer convert(final HasContainer container){
+        public static HasContainer convert(HasContainer container){
             if (!(container.getPredicate() instanceof ConnectiveP)) {
                 return container;
             }
@@ -144,7 +144,7 @@ public interface JanusGraphPredicate extends BiPredicate<Object, Object> {
             return new HasContainer(container.getKey(), new ConnectiveJanusGraphP(connectivePredicate, convert(((ConnectiveP<?>) container.getPredicate()), connectivePredicate)));
         }
 
-        public static ConnectiveJanusPredicate instanceConnectiveJanusPredicate(final P<?> predicate) {
+        public static ConnectiveJanusPredicate instanceConnectiveJanusPredicate(P<?> predicate) {
             final ConnectiveJanusPredicate connectivePredicate;
             if (predicate.getClass().isAssignableFrom(AndP.class)){
                 connectivePredicate = new AndJanusPredicate();
@@ -156,9 +156,9 @@ public interface JanusGraphPredicate extends BiPredicate<Object, Object> {
             return connectivePredicate;
         }
 
-        public static List<Object> convert(final ConnectiveP<?> predicate, final ConnectiveJanusPredicate connectivePredicate) {
+        public static List<Object> convert(ConnectiveP<?> predicate, ConnectiveJanusPredicate connectivePredicate) {
             final List<Object> toReturn = new ArrayList<>();
-            for (final P<?> p : predicate.getPredicates()){
+            for (P<?> p : predicate.getPredicates()){
                 if (p instanceof ConnectiveP) {
                     final ConnectiveJanusPredicate subPredicate = instanceConnectiveJanusPredicate(p);
                     toReturn.add(convert((ConnectiveP<?>)p, subPredicate));

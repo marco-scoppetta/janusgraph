@@ -68,9 +68,9 @@ class SolrResultIterator<E> implements Iterator<E> {
                 solrQuery.setStart(numBatches * batchSize + offset);
                 solrClient.queryAndStreamResponse(collection, solrQuery, new SolrCallbackHandler(this, getFieldValue));
                 numBatches++;
-            } catch (final SolrServerException e) {
+            } catch (SolrServerException e) {
                 throw new UncheckedSolrException(e.getMessage(), e);
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new UncheckedIOException(e.getMessage(), e);
             }
         }
@@ -82,7 +82,7 @@ class SolrResultIterator<E> implements Iterator<E> {
         try {
             count++;
             return queue.take();
-        } catch (final InterruptedException e) {
+        } catch (InterruptedException e) {
              throw new UncheckedIOException(new IOException("Interrupted waiting on queue", e));
         }
     }

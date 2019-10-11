@@ -44,7 +44,7 @@ public class BasicAuthHttpClientConfigCallbackTest {
         when(httpAsyncClientBuilderMock.setDefaultCredentialsProvider(any())).thenReturn(httpAsyncClientBuilderMock);
     }
 
-    private CredentialsProvider basicAuthTestBase(final String realm) {
+    private CredentialsProvider basicAuthTestBase(String realm) {
         final BasicAuthHttpClientConfigCallback cb = new BasicAuthHttpClientConfigCallback(realm,
             BasicAuthHttpClientConfigCallbackTest.HTTP_USER, BasicAuthHttpClientConfigCallbackTest.HTTP_PASSWORD);
 

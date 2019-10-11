@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * underlying KeyColumnValueStore which is the basic operation underlying the
  * Fulgora OLAP component of JanusGraph.
  * <p>
- * Hence, this is effectively a benchmark for {@link org.janusgraph.olap.OLAPTest}
+ * Hence, this is effectively a benchmark for OLAPTest
  * or at least the primitive backend operations used therein.
  * <p>
  *
@@ -88,7 +88,7 @@ public abstract class JanusGraphIterativeBenchmark extends JanusGraphBaseTest {
     }
 
 
-    public void loadData(final int numVertices, final int numThreads) throws Exception {
+    public void loadData(int numVertices, int numThreads) throws Exception {
         makeKey("w", Integer.class);
         PropertyKey time = makeKey("t", Long.class);
         ((StandardEdgeLabelMaker) mgmt.makeEdgeLabel("l")).sortKey(time).make();

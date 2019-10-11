@@ -175,7 +175,7 @@ public class ConfiguredGraphFactory {
      * open your graph using graph.graphname without having to supply the
      * Configuration or File each time using the {@link org.janusgraph.core.ConfiguredGraphFactory}.
      */
-    public static void createConfiguration(final Configuration config) {
+    public static void createConfiguration(Configuration config) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         configManagementGraph.createConfiguration(config);
     }
@@ -187,7 +187,7 @@ public class ConfiguredGraphFactory {
      * this template configuration to create a graph using the
      * ConfiguredGraphFactory create signature and supplying a new graphName.
      */
-    public static void createTemplateConfiguration(final Configuration config) {
+    public static void createTemplateConfiguration(Configuration config) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         configManagementGraph.createTemplateConfiguration(config);
     }
@@ -199,7 +199,7 @@ public class ConfiguredGraphFactory {
      * NOTE: The updated configuration is only guaranteed to take effect if the {@link Graph} corresponding to
      * graphName has been closed and reopened on every JanusGraph Node.
      */
-    public static void updateConfiguration(final String graphName, final Configuration config) {
+    public static void updateConfiguration(String graphName, Configuration config) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         removeGraphFromCache(graphName);
         configManagementGraph.updateConfiguration(graphName, config);
@@ -212,7 +212,7 @@ public class ConfiguredGraphFactory {
      * 1) be closed and reopened on every JanusGraph Node 2) have its corresponding Configuration removed
      * and 3) recreate the graph-- before the update is guaranteed to take effect.
      */
-    public static void updateTemplateConfiguration(final Configuration config) {
+    public static void updateTemplateConfiguration(Configuration config) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         configManagementGraph.updateTemplateConfiguration(config);
     }
@@ -220,13 +220,13 @@ public class ConfiguredGraphFactory {
     /**
      * Remove Configuration according to graphName
      */
-    public static void removeConfiguration(final String graphName) {
+    public static void removeConfiguration(String graphName) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         removeGraphFromCache(graphName);
         configManagementGraph.removeConfiguration(graphName);
     }
 
-    private static void removeGraphFromCache(final String graphName) {
+    private static void removeGraphFromCache(String graphName) {
 
         try {
             final JanusGraph graph = open(graphName);
@@ -238,7 +238,7 @@ public class ConfiguredGraphFactory {
         }
     }
 
-    private static void removeGraphFromCache(final JanusGraph graph) {
+    private static void removeGraphFromCache(JanusGraph graph) {
         final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
         Preconditions.checkNotNull(jgm, JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG);
         jgm.removeGraph(((StandardJanusGraph) graph).getGraphName());
@@ -261,7 +261,7 @@ public class ConfiguredGraphFactory {
      *
      * @return Map&lt;String, Object&gt;
      */
-    public static Map<String, Object> getConfiguration(final String configName) {
+    public static Map<String, Object> getConfiguration(String configName) {
         final ConfigurationManagementGraph configManagementGraph = getConfigGraphManagementInstance();
         return configManagementGraph.getConfiguration(configName);
     }

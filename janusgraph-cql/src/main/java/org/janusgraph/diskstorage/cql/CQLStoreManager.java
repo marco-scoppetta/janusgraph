@@ -279,7 +279,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     }
 
     @VisibleForTesting
-    Map<String, String> getCompressionOptions(final String name) throws BackendException {
+    Map<String, String> getCompressionOptions(String name) throws BackendException {
         KeyspaceMetadata keyspaceMetadata1 = this.session.getMetadata().getKeyspace(this.keyspace)
                 .orElseThrow(() -> new PermanentBackendException(String.format("Unknown keyspace '%s'", this.keyspace)));
 
@@ -292,7 +292,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     }
 
     @VisibleForTesting
-    TableMetadata getTableMetadata(final String name) throws BackendException {
+    TableMetadata getTableMetadata(String name) throws BackendException {
         final KeyspaceMetadata keyspaceMetadata = (this.session.getMetadata().getKeyspace(this.keyspace))
                 .orElseThrow(() -> new PermanentBackendException(String.format("Unknown keyspace '%s'", this.keyspace)));
         return keyspaceMetadata.getTable(name)
@@ -315,12 +315,12 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     }
 
     @Override
-    public KeyColumnValueStore openDatabase(final String name, final Container metaData) throws BackendException {
+    public KeyColumnValueStore openDatabase(String name, Container metaData) throws BackendException {
         return this.openStores.computeIfAbsent(name, n -> new CQLKeyColumnValueStore(this, n, getStorageConfig(), () -> this.openStores.remove(n)));
     }
 
     @Override
-    public StoreTransaction beginTransaction(final BaseTransactionConfig config) throws BackendException {
+    public StoreTransaction beginTransaction(BaseTransactionConfig config) throws BackendException {
         return new CQLTransaction(config);
     }
 
@@ -350,7 +350,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     }
 
     @Override
-    public void mutateMany(final Map<String, Map<StaticBuffer, KCVMutation>> mutations, final StoreTransaction txh) throws BackendException {
+    public void mutateMany(Map<String, Map<StaticBuffer, KCVMutation>> mutations, StoreTransaction txh) throws BackendException {
         if (this.atomicBatch) {
             mutateManyLogged(mutations, txh);
         } else {
@@ -359,7 +359,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     }
 
     // Use a single logged batch
-    private void mutateManyLogged(final Map<String, Map<StaticBuffer, KCVMutation>> mutations, final StoreTransaction txh) throws BackendException {
+    private void mutateManyLogged(Map<String, Map<StaticBuffer, KCVMutation>> mutations, StoreTransaction txh) throws BackendException {
         MaskedTimestamp commitTime = new MaskedTimestamp(txh);
         long deletionTime = commitTime.getDeletionTime(this.times);
         long additionTime = commitTime.getAdditionTime(this.times);

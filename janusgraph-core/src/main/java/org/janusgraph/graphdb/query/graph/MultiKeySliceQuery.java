@@ -45,7 +45,7 @@ public class MultiKeySliceQuery extends BaseQuery implements BackendQuery<MultiK
         return newQuery;
     }
 
-    public List<EntryList> execute(final BackendTransaction tx) {
+    public List<EntryList> execute(BackendTransaction tx) {
         int total = 0;
         final List<EntryList> result = new ArrayList<>(Math.min(getLimit(), queries.size()));
         for (KeySliceQuery ksq : queries) {

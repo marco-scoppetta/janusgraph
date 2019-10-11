@@ -50,7 +50,7 @@ public class IndexTransaction implements BaseTransaction, LoggableTransaction {
 
     private Map<String,Map<String,IndexMutation>> mutations;
 
-    public IndexTransaction(final IndexProvider index, final KeyInformation.IndexRetriever keyInformation,
+    public IndexTransaction(IndexProvider index, KeyInformation.IndexRetriever keyInformation,
                             BaseTransactionConfig config,
                             Duration maxWriteTime) throws BackendException {
         Preconditions.checkNotNull(index);

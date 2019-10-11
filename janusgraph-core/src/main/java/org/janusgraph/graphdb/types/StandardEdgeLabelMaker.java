@@ -35,8 +35,8 @@ public class StandardEdgeLabelMaker extends StandardRelationTypeMaker implements
 
     private Direction unidirectionality;
 
-    public StandardEdgeLabelMaker(final StandardJanusGraphTx tx,
-                                  final String name, final IndexSerializer indexSerializer,
+    public StandardEdgeLabelMaker(StandardJanusGraphTx tx,
+                                  final String name, IndexSerializer indexSerializer,
                                   final AttributeHandler attributeHandler) {
         super(tx, name, indexSerializer, attributeHandler);
         unidirectionality = Direction.BOTH;

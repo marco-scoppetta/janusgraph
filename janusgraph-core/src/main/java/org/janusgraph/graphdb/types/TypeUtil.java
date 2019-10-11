@@ -114,7 +114,7 @@ public class TypeUtil {
                 Iterables.size(type.getRelationIndexes())>1; //The type itself is also returned as an index
     }
 
-    private static <T> T getTypeModifier(final SchemaSource schema,
+    private static <T> T getTypeModifier(SchemaSource schema,
                                          final ModifierType modifierType,
                                          final T defaultValue) {
         for (SchemaSource.Entry entry : schema.getRelated(TypeDefinitionCategory.TYPE_MODIFIER, Direction.OUT)) {
@@ -132,7 +132,7 @@ public class TypeUtil {
         return getTypeModifier(schema, ModifierType.CONSISTENCY, ConsistencyModifier.DEFAULT);
     }
 
-    public static int getTTL(final SchemaSource schema) {
+    public static int getTTL(SchemaSource schema) {
         return getTypeModifier(schema, ModifierType.TTL, 0);
     }
 }

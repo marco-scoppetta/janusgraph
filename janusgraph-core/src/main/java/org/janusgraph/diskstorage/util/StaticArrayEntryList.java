@@ -43,7 +43,7 @@ public class StaticArrayEntryList extends AbstractList<Entry> implements EntryLi
     private final RelationCache[] caches;
     private final EntryMetaData[] metaDataSchema;
 
-    private StaticArrayEntryList(final byte[] data, final long[] limitAndValuePos, final EntryMetaData[] metaDataSchema) {
+    private StaticArrayEntryList(byte[] data, long[] limitAndValuePos, EntryMetaData[] metaDataSchema) {
         Preconditions.checkArgument(data != null && data.length > 0);
         Preconditions.checkArgument(limitAndValuePos!=null && limitAndValuePos.length>0);
         Preconditions.checkArgument(metaDataSchema!=null);
@@ -101,7 +101,7 @@ public class StaticArrayEntryList extends AbstractList<Entry> implements EntryLi
         private final int index;
         private final Map<EntryMetaData,Object> metadata;
 
-        public StaticEntry(final int index, final int offset, final int limit, final int valuePos,
+        public StaticEntry(int index, int offset, int limit, int valuePos,
                            final Map<EntryMetaData,Object> metadata) {
             super(data, offset, limit, valuePos);
             this.index=index;
@@ -307,7 +307,7 @@ public class StaticArrayEntryList extends AbstractList<Entry> implements EntryLi
         private final byte[] data;
         private int dataOffset=0;
 
-        private CopyFactory(final byte[] data) {
+        private CopyFactory(byte[] data) {
             this.data=data;
         }
 

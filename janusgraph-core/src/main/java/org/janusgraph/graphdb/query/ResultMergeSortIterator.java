@@ -102,8 +102,8 @@ public class ResultMergeSortIterator<R> implements Iterator<R> {
         throw new UnsupportedOperationException();
     }
 
-    public static<R> Iterable<R> mergeSort(final Iterable<R> first, final Iterable<R> second,
-                                           final Comparator<R> comparator, final boolean filterDuplicates) {
+    public static<R> Iterable<R> mergeSort(Iterable<R> first, Iterable<R> second,
+                                           final Comparator<R> comparator, boolean filterDuplicates) {
         return () -> new ResultMergeSortIterator<>(first.iterator(),second.iterator(),comparator,filterDuplicates);
     }
 

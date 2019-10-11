@@ -61,8 +61,8 @@ public class IDPoolTest {
         testIDPoolWith(partitionID -> new StandardIDPool(idAuthority, partitionID, partitionID, Integer.MAX_VALUE, Duration.ofMillis(2000), 0.2), 10, 20, 100000);
     }
 
-    private void testIDPoolWith(IDPoolFactory poolFactory, final int numPartitions,
-                                       final int numThreads, final int attemptsPerThread) throws InterruptedException {
+    private void testIDPoolWith(IDPoolFactory poolFactory, int numPartitions,
+                                       final int numThreads, int attemptsPerThread) throws InterruptedException {
         final Random random = new Random();
         final IntSet[] ids = new IntSet[numPartitions];
         final StandardIDPool[] idPools = new StandardIDPool[numPartitions];
@@ -90,7 +90,7 @@ public class IDPoolTest {
             threads[i].start();
         }
         for (int i = 0; i < numThreads; i++) threads[i].join();
-        for (final StandardIDPool idPool : idPools) idPool.close();
+        for (StandardIDPool idPool : idPools) idPool.close();
         //Verify consecutive id assignment
         for (int i = 0; i < ids.length; i++) {
             IntSet set = ids[i];

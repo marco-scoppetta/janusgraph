@@ -65,7 +65,7 @@ public interface JanusGraphQuery<Q extends JanusGraphQuery<Q>> {
      * @param max The maximum number of results to return
      * @return This query
      */
-    Q limit(final int max);
+    Q limit(int max);
 
     /**
      * Orders the element results of this query according

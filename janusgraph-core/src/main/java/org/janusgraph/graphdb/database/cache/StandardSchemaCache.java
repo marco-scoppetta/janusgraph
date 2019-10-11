@@ -61,11 +61,11 @@ public class StandardSchemaCache implements SchemaCache {
     private volatile ConcurrentMap<Long, EntryList> schemaRelations;
     private final Cache<Long, EntryList> schemaRelationsBackup;
 
-    public StandardSchemaCache(final StoreRetrieval retriever) {
+    public StandardSchemaCache(StoreRetrieval retriever) {
         this(MAX_CACHED_TYPES_DEFAULT, retriever);
     }
 
-    public StandardSchemaCache(final int size, final StoreRetrieval retriever) {
+    public StandardSchemaCache(int size, StoreRetrieval retriever) {
         Preconditions.checkArgument(size > 0, "Size must be positive");
         Preconditions.checkNotNull(retriever);
         maxCachedTypes = size;
@@ -86,7 +86,7 @@ public class StandardSchemaCache implements SchemaCache {
 
 
     @Override
-    public Long getSchemaId(final String schemaName) {
+    public Long getSchemaId(String schemaName) {
         ConcurrentMap<String, Long> types = typeNames;
         Long id;
         if (types == null) {
@@ -118,7 +118,7 @@ public class StandardSchemaCache implements SchemaCache {
         return id;
     }
 
-    private long getIdentifier(final long schemaId, final SystemRelationType type, final Direction dir) {
+    private long getIdentifier(long schemaId, SystemRelationType type, Direction dir) {
         int edgeDir = EdgeDirection.position(dir);
         assert edgeDir == 0 || edgeDir == 1;
 
@@ -136,7 +136,7 @@ public class StandardSchemaCache implements SchemaCache {
     }
 
     @Override
-    public EntryList getSchemaRelations(final long schemaId, final BaseRelationType type, final Direction dir) {
+    public EntryList getSchemaRelations(long schemaId, BaseRelationType type, Direction dir) {
         assert IDManager.isSystemRelationTypeId(type.longId()) && type.longId() > 0;
         Preconditions.checkArgument(IDManager.VertexIDType.Schema.is(schemaId));
         Preconditions.checkArgument((Long.MAX_VALUE >>> (SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT)) >= schemaId);
@@ -176,7 +176,7 @@ public class StandardSchemaCache implements SchemaCache {
     }
 
     @Override
-    public void expireSchemaElement(final long schemaId) {
+    public void expireSchemaElement(long schemaId) {
         //1) expire relations
         final long cutTypeId = (schemaId >>> SCHEMAID_BACK_SHIFT);
         ConcurrentMap<Long, EntryList> types = schemaRelations;

@@ -86,7 +86,7 @@ public class CQLStoreTest extends KeyColumnValueStoreTest {
         return getCQLConfiguration(TEST_KEYSPACE_NAME);
     }
 
-    private CQLStoreManager openStorageManager(final Configuration c) throws BackendException {
+    private CQLStoreManager openStorageManager(Configuration c) throws BackendException {
         return new CQLStoreManager(c);
     }
 

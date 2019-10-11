@@ -54,7 +54,7 @@ public class ExpirationKCVSCache extends KCVSCache {
     private final CleanupThread cleanupThread;
 
 
-    public ExpirationKCVSCache(final KeyColumnValueStore store, String metricsName, final long cacheTimeMS, final long invalidationGracePeriodMS, final long maximumByteSize) {
+    public ExpirationKCVSCache(KeyColumnValueStore store, String metricsName, long cacheTimeMS, long invalidationGracePeriodMS, long maximumByteSize) {
         super(store, metricsName);
         Preconditions.checkArgument(cacheTimeMS > 0, "Cache expiration must be positive: %s", cacheTimeMS);
         Preconditions.checkArgument(System.currentTimeMillis()+1000L*3600*24*365*100+cacheTimeMS>0,"Cache expiration time too large, overflow may occur: %s",cacheTimeMS);
@@ -78,7 +78,7 @@ public class ExpirationKCVSCache extends KCVSCache {
     }
 
     @Override
-    public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh) throws BackendException {
+    public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) throws BackendException {
         incActionBy(1, CacheMetricsAction.RETRIEVAL,txh);
         if (isExpired(query)) {
             incActionBy(1, CacheMetricsAction.MISS,txh);
@@ -98,7 +98,7 @@ public class ExpirationKCVSCache extends KCVSCache {
     }
 
     @Override
-    public Map<StaticBuffer,EntryList> getSlice(final List<StaticBuffer> keys, final SliceQuery query, final StoreTransaction txh) throws BackendException {
+    public Map<StaticBuffer,EntryList> getSlice(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException {
         final Map<StaticBuffer,EntryList> results = new HashMap<>(keys.size());
         final List<StaticBuffer> remainingKeys = new ArrayList<>(keys.size());
         KeySliceQuery[] ksqs = new KeySliceQuery[keys.size()];
@@ -149,7 +149,7 @@ public class ExpirationKCVSCache extends KCVSCache {
         super.close();
     }
 
-    private boolean isExpired(final KeySliceQuery query) {
+    private boolean isExpired(KeySliceQuery query) {
         Long until = expiredKeys.get(query.getKey());
         if (until==null) return false;
         if (isBeyondExpirationTime(until)) {

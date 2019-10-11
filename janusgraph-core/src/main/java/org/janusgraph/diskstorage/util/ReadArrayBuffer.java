@@ -159,7 +159,7 @@ public class ReadArrayBuffer extends StaticArrayBuffer implements ReadBuffer {
     }
 
     @Override
-    public<T> T asRelative(final Factory<T> factory) {
+    public<T> T asRelative(Factory<T> factory) {
         if (position==0) return as(factory);
         else {
             return as((array, offset, limit) -> factory.get(array,offset+position,limit));

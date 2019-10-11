@@ -30,7 +30,7 @@ public abstract class ConnectiveJanusPredicate extends ArrayList<JanusGraphPredi
         super();
     }
 
-    public ConnectiveJanusPredicate(final List<JanusGraphPredicate> predicates) {
+    public ConnectiveJanusPredicate(List<JanusGraphPredicate> predicates) {
         super(predicates);
     }
 

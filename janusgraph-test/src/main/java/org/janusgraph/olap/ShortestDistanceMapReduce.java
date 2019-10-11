@@ -35,28 +35,28 @@ public class ShortestDistanceMapReduce extends StaticMapReduce<Object, Long, Obj
 
     }
 
-    private ShortestDistanceMapReduce(final String memoryKey) {
+    private ShortestDistanceMapReduce(String memoryKey) {
         this.memoryKey = memoryKey;
     }
 
     @Override
-    public void storeState(final Configuration configuration) {
+    public void storeState(Configuration configuration) {
         super.storeState(configuration);
         configuration.setProperty(SHORTEST_DISTANCE_MEMORY_KEY, this.memoryKey);
     }
 
     @Override
-    public void loadState(final Graph graph, final Configuration configuration) {
+    public void loadState(Graph graph, Configuration configuration) {
         this.memoryKey = configuration.getString(SHORTEST_DISTANCE_MEMORY_KEY, DEFAULT_MEMORY_KEY);
     }
 
     @Override
-    public boolean doStage(final Stage stage) {
+    public boolean doStage(Stage stage) {
         return stage.equals(Stage.MAP);
     }
 
     @Override
-    public void map(final Vertex vertex, final MapEmitter<Object, Long> emitter) {
+    public void map(Vertex vertex, MapEmitter<Object, Long> emitter) {
         final Property distance = vertex.property(ShortestDistanceVertexProgram.DISTANCE);
         if (distance.isPresent()) {
             emitter.emit(vertex.id(), (Long) distance.value());
@@ -64,7 +64,7 @@ public class ShortestDistanceMapReduce extends StaticMapReduce<Object, Long, Obj
     }
 
     @Override
-    public Iterator<KeyValue<Object, Long>> generateFinalResult(final Iterator<KeyValue<Object, Long>> keyValues) {
+    public Iterator<KeyValue<Object, Long>> generateFinalResult(Iterator<KeyValue<Object, Long>> keyValues) {
         return keyValues;
     }
 
@@ -92,7 +92,7 @@ public class ShortestDistanceMapReduce extends StaticMapReduce<Object, Long, Obj
 
         }
 
-        public Builder memoryKey(final String memoryKey) {
+        public Builder memoryKey(String memoryKey) {
             this.memoryKey = memoryKey;
             return this;
         }

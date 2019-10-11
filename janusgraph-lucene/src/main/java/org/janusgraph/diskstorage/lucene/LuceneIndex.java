@@ -142,7 +142,7 @@ public class LuceneIndex implements IndexProvider {
             }
             log.debug("Opening store directory [{}]", path);
             return FSDirectory.open(path.toPath());
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException("Could not open directory: " + dir, e);
         }
     }
@@ -157,7 +157,7 @@ public class LuceneIndex implements IndexProvider {
             try {
                 writer = new IndexWriter(getStoreDirectory(store), iwc);
                 writers.put(store, writer);
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new PermanentBackendException("Could not create writer", e);
             }
         }
@@ -213,11 +213,11 @@ public class LuceneIndex implements IndexProvider {
         final Transaction ltx = (Transaction) tx;
         writerLock.lock();
         try {
-            for (final Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
+            for (Map.Entry<String, Map<String, IndexMutation>> stores : mutations.entrySet()) {
                 mutateStores(stores, information);
             }
             ltx.postCommit();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException("Could not update Lucene index", e);
         } finally {
             writerLock.unlock();
@@ -232,7 +232,7 @@ public class LuceneIndex implements IndexProvider {
             reader = DirectoryReader.open(writer, true, true);
             final IndexSearcher searcher = new IndexSearcher(reader);
             final KeyInformation.StoreRetriever storeRetriever = information.get(storeName);
-            for (final Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
+            for (Map.Entry<String, IndexMutation> entry : stores.getValue().entrySet()) {
                 final String documentId = entry.getKey();
                 final IndexMutation mutation = entry.getValue();
 
@@ -247,7 +247,7 @@ public class LuceneIndex implements IndexProvider {
                 final Document doc = retrieveOrCreate(documentId, searcher);
 
                 Preconditions.checkNotNull(doc);
-                for (final IndexEntry del : mutation.getDeletions()) {
+                for (IndexEntry del : mutation.getDeletions()) {
                     Preconditions.checkArgument(!del.hasMetaData(), "Lucene index does not support indexing meta data: %s", del);
                     String fieldName = del.field;
                     if (log.isTraceEnabled()) {
@@ -287,7 +287,7 @@ public class LuceneIndex implements IndexProvider {
     public void restore(Map<String, Map<String, List<IndexEntry>>> documents, KeyInformation.IndexRetriever information, BaseTransaction tx) throws BackendException {
         writerLock.lock();
         try {
-            for (final Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
+            for (Map.Entry<String, Map<String, List<IndexEntry>>> stores : documents.entrySet()) {
                 IndexReader reader = null;
                 try {
                     final String store = stores.getKey();
@@ -296,7 +296,7 @@ public class LuceneIndex implements IndexProvider {
                     reader = DirectoryReader.open(writer, true, true);
                     final IndexSearcher searcher = new IndexSearcher(reader);
 
-                    for (final Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
+                    for (Map.Entry<String, List<IndexEntry>> entry : stores.getValue().entrySet()) {
                         final String docID = entry.getKey();
                         final List<IndexEntry> content = entry.getValue();
 
@@ -321,7 +321,7 @@ public class LuceneIndex implements IndexProvider {
                 }
             }
             tx.commit();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException("Could not update Lucene index", e);
         } finally {
             writerLock.unlock();
@@ -352,10 +352,10 @@ public class LuceneIndex implements IndexProvider {
         return doc;
     }
 
-    private void addToDocument(Document doc, List<IndexEntry> content, final KeyInformation.StoreRetriever information, boolean isNew) {
+    private void addToDocument(Document doc, List<IndexEntry> content, KeyInformation.StoreRetriever information, boolean isNew) {
         Preconditions.checkNotNull(doc);
 
-        for (final IndexEntry e : content) {
+        for (IndexEntry e : content) {
             Preconditions.checkArgument(!e.hasMetaData(), "Lucene index does not support indexing meta data: %s", e);
             if (log.isTraceEnabled()) {
                 log.trace("Adding field [{}] on document [{}]", e.field, doc.get(DOCID));
@@ -369,7 +369,7 @@ public class LuceneIndex implements IndexProvider {
         buildIndexFields(doc, information).forEach(doc::add);
     }
 
-    private void removeFieldIfNeeded(final Document doc, final IndexEntry e, final KeyInformation ki) {
+    private void removeFieldIfNeeded(Document doc, IndexEntry e, KeyInformation ki) {
         boolean isSingle = ki.getCardinality() == Cardinality.SINGLE;
         boolean isSet = ki.getCardinality() == Cardinality.SET;
         Iterator<IndexableField> it = doc.iterator();
@@ -385,7 +385,7 @@ public class LuceneIndex implements IndexProvider {
         }
     }
 
-    private String convertToStringValue(final KeyInformation ki, Object value) {
+    private String convertToStringValue(KeyInformation ki, Object value) {
         String converted;
         if (value instanceof Number) {
             converted = value.toString();
@@ -411,7 +411,7 @@ public class LuceneIndex implements IndexProvider {
     }
 
     // NOTE: new SET/LIST store fields must be sync with convertToStringValue
-    private Field buildStoreField(final String fieldName, final Object value, final KeyInformation keyInformation) {
+    private Field buildStoreField(String fieldName, Object value, KeyInformation keyInformation) {
         final Field field;
         if (value instanceof Number) {
             if (AttributeUtil.isWholeNumber((Number) value)) {
@@ -452,7 +452,7 @@ public class LuceneIndex implements IndexProvider {
         return field;
     }
 
-    private List<IndexableField> buildIndexFields(final Document doc, final KeyInformation.StoreRetriever information) {
+    private List<IndexableField> buildIndexFields(Document doc, KeyInformation.StoreRetriever information) {
         List<IndexableField> fields = new ArrayList<>();
         for (IndexableField field : doc.getFields()) {
             String fieldName = field.name();
@@ -560,7 +560,7 @@ public class LuceneIndex implements IndexProvider {
                 result.add(field == null ? null : field.stringValue());
             }
             return result.stream();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException("Could not execute Lucene query", e);
         }
     }
@@ -617,7 +617,7 @@ public class LuceneIndex implements IndexProvider {
         }
     }
 
-    private void tokenize(SearchParams params, final Mapping mapping, final LuceneCustomAnalyzer delegatingAnalyzer, String value, String key, JanusGraphPredicate janusgraphPredicate) {
+    private void tokenize(SearchParams params, Mapping mapping, LuceneCustomAnalyzer delegatingAnalyzer, String value, String key, JanusGraphPredicate janusgraphPredicate) {
         final Analyzer analyzer = delegatingAnalyzer.getWrappedAnalyzer(key);
         final List<String>    terms = customTokenize(analyzer, key, value);
         if (terms.isEmpty()) {
@@ -651,7 +651,7 @@ public class LuceneIndex implements IndexProvider {
         } else {
             // at the moment, this is only walked for EQUAL and Text.CONTAINS (String and Text mappings)
             final BooleanQuery.Builder q = new BooleanQuery.Builder();
-            for (final String term : terms) {
+            for (String term : terms) {
                 q.add(new TermQuery(new Term(key, term)), BooleanClause.Occur.MUST);
             }
             params.addQuery(q.build());
@@ -665,7 +665,7 @@ public class LuceneIndex implements IndexProvider {
         return delegatingAnalyzers.get(store);
     }
 
-    private SearchParams convertQuery(Condition<?> condition, final KeyInformation.StoreRetriever information, final LuceneCustomAnalyzer delegatingAnalyzer) {
+    private SearchParams convertQuery(Condition<?> condition, KeyInformation.StoreRetriever information, LuceneCustomAnalyzer delegatingAnalyzer) {
         final SearchParams params = new SearchParams();
         if (condition instanceof PredicateCondition) {
             final PredicateCondition<String, ?> atom = (PredicateCondition) condition;
@@ -716,7 +716,7 @@ public class LuceneIndex implements IndexProvider {
                         } else if (janusgraphPredicate == Text.CONTAINS_FUZZY) {
                             value = ((String) value).toLowerCase();
                             final Builder b = new BooleanQuery.Builder();
-                            for (final String term : Text.tokenize((String) value)) {
+                            for (String term : Text.tokenize((String) value)) {
                                 b.add(new FuzzyQuery(new Term(key, term)), BooleanClause.Occur.MUST);
                             }
                             params.addQuery(b.build());
@@ -772,12 +772,12 @@ public class LuceneIndex implements IndexProvider {
             params.addQuery(new MatchAllDocsQuery(), BooleanClause.Occur.MUST);
             params.addParams(childParams, BooleanClause.Occur.MUST_NOT);
         } else if (condition instanceof And) {
-            for (final Condition c : condition.getChildren()) {
+            for (Condition c : condition.getChildren()) {
                 final SearchParams childParams = convertQuery(c, information, delegatingAnalyzer);
                 params.addParams(childParams, BooleanClause.Occur.MUST);
             }
         } else if (condition instanceof Or) {
-            for (final Condition c : condition.getChildren()) {
+            for (Condition c : condition.getChildren()) {
                 final SearchParams childParams = convertQuery(c, information, delegatingAnalyzer);
                 params.addParams(childParams, BooleanClause.Occur.SHOULD);
             }
@@ -798,7 +798,7 @@ public class LuceneIndex implements IndexProvider {
         try {
             q = getQueryParser(query.getStore(), information).parse(query.getQuery());
             // Lucene query parser does not take additional parameters so any parameters on the RawQuery are ignored.
-        } catch (final ParseException e) {
+        } catch (ParseException e) {
             throw new PermanentBackendException("Could not parse raw query: " + query.getQuery(), e);
         }
 
@@ -826,7 +826,7 @@ public class LuceneIndex implements IndexProvider {
                 result.add(new RawQuery.Result<>(field == null ? null : field.stringValue(), docs.scoreDocs[i].score));
             }
             return result.stream();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException("Could not execute Lucene query", e);
         }
     }
@@ -836,7 +836,7 @@ public class LuceneIndex implements IndexProvider {
         final Query q;
         try {
             q = getQueryParser(query.getStore(), information).parse(query.getQuery());
-        } catch (final ParseException e) {
+        } catch (ParseException e) {
             throw new PermanentBackendException("Could not parse raw query: " + query.getQuery(), e);
         }
 
@@ -851,7 +851,7 @@ public class LuceneIndex implements IndexProvider {
             final TopDocs docs = searcher.search(q, 1);
             log.debug("Executed query [{}] in {} ms", q, System.currentTimeMillis() - time);
             return docs.totalHits;
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new TemporaryBackendException("Could not execute Lucene query", e);
         }
     }
@@ -919,8 +919,8 @@ public class LuceneIndex implements IndexProvider {
     @Override
     public void close() throws BackendException {
         try {
-            for (final IndexWriter w : writers.values()) w.close();
-        } catch (final IOException e) {
+            for (IndexWriter w : writers.values()) w.close();
+        } catch (IOException e) {
             throw new PermanentBackendException("Could not close writers", e);
         }
     }
@@ -929,7 +929,7 @@ public class LuceneIndex implements IndexProvider {
     public void clearStorage() throws BackendException {
         try {
             FileUtils.deleteDirectory(new File(basePath));
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new PermanentBackendException("Could not delete lucene directory: " + basePath, e);
         }
     }
@@ -937,9 +937,9 @@ public class LuceneIndex implements IndexProvider {
     @Override
     public boolean exists() throws BackendException {
         if (Files.exists(Paths.get(basePath))) {
-            try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(basePath))) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get(basePath))) {
                 return dirStream.iterator().hasNext();
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new PermanentBackendException("Could not read lucene directory: " + basePath, e);
             }
         } else {
@@ -964,9 +964,9 @@ public class LuceneIndex implements IndexProvider {
                 try {
                     reader = DirectoryReader.open(getStoreDirectory(store));
                     searcher = new IndexSearcher(reader);
-                } catch (final IndexNotFoundException e) {
+                } catch (IndexNotFoundException e) {
                     searcher = null;
-                } catch (final IOException e) {
+                } catch (IOException e) {
                     throw new PermanentBackendException("Could not open index reader on store: " + store, e);
                 }
                 searchers.put(store, searcher);
@@ -992,10 +992,10 @@ public class LuceneIndex implements IndexProvider {
 
         private void close() throws BackendException {
             try {
-                for (final IndexSearcher searcher : searchers.values()) {
+                for (IndexSearcher searcher : searchers.values()) {
                     if (searcher != null) searcher.getIndexReader().close();
                 }
-            } catch (final IOException e) {
+            } catch (IOException e) {
                 throw new PermanentBackendException("Could not close searcher", e);
             }
         }

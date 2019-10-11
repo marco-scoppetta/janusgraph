@@ -62,7 +62,7 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
     }
 
     @Override
-    public void loadState(final Graph graph, final Configuration configuration) {
+    public void loadState(Graph graph, Configuration configuration) {
         maxDepth = configuration.getInt(MAX_DEPTH);
         seed = configuration.getLong(SEED);
         weightProperty = configuration.getString(WEIGHT_PROPERTY, "distance");
@@ -71,7 +71,7 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
     }
 
     @Override
-    public void storeState(final Configuration configuration) {
+    public void storeState(Configuration configuration) {
         configuration.setProperty(VERTEX_PROGRAM, ShortestDistanceVertexProgram.class.getName());
         configuration.setProperty(MAX_DEPTH, maxDepth);
     }
@@ -87,7 +87,7 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
     }
 
     @Override
-    public Set<MessageScope> getMessageScopes(final Memory memory) {
+    public Set<MessageScope> getMessageScopes(Memory memory) {
         final Set<MessageScope> set = new HashSet<>();
         set.add(incidentMessageScope);
         return set;
@@ -104,12 +104,12 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
     }
 
     @Override
-    public void setup(final Memory memory) {
+    public void setup(Memory memory) {
 
     }
 
     @Override
-    public void execute(final Vertex vertex, Messenger<Long> messenger, final Memory memory) {
+    public void execute(Vertex vertex, Messenger<Long> messenger, Memory memory) {
         if (memory.isInitialIteration()) {
             if (vertex.id().equals(seed)) {
                 // The seed sends a single message to start the computation
@@ -141,7 +141,7 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
     }
 
     @Override
-    public boolean terminate(final Memory memory) {
+    public boolean terminate(Memory memory) {
         return memory.getIteration() >= this.maxDepth;
     }
 
@@ -162,12 +162,12 @@ public class ShortestDistanceVertexProgram extends StaticVertexProgram<Long> {
             super(ShortestDistanceVertexProgram.class);
         }
 
-        public Builder maxDepth(final int maxDepth) {
+        public Builder maxDepth(int maxDepth) {
             this.configuration.setProperty(MAX_DEPTH, maxDepth);
             return this;
         }
 
-        public Builder seed(final long seed) {
+        public Builder seed(long seed) {
             this.configuration.setProperty(SEED, seed);
             return this;
         }

@@ -45,8 +45,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
     private final boolean assignIDsImmediately;
 
-    private boolean preloadedData = false;
-
     private final DefaultSchemaMaker defaultSchemaMaker;
 
     private boolean verifyExternalVertexExistence = true;
@@ -202,12 +200,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         return this;
     }
 
-    public TransactionBuilder setPreloadedData(boolean preloaded) {
-        this.preloadedData = preloaded;
-        return this;
-    }
-
-
     @Override
     public TransactionBuilder customOption(String k, Object v) {
         if (null == writableCustomOptions)
@@ -219,7 +211,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     @Override
     public StandardJanusGraphTx start() {
         TransactionConfiguration immutable = new ImmutableTxCfg(isReadOnly, hasEnabledBatchLoading,
-                assignIDsImmediately, preloadedData, forceIndexUsage, verifyExternalVertexExistence,
+                assignIDsImmediately, forceIndexUsage, verifyExternalVertexExistence,
                 verifyInternalVertexExistence,
                 propertyPrefetching, singleThreaded, threadBound, getTimestampProvider(), userCommitTime,
                 indexCacheWeight, getVertexCacheSize(), getDirtyVertexSize(),
@@ -241,11 +233,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
     @Override
     public final boolean hasAssignIDsImmediately() {
         return assignIDsImmediately;
-    }
-
-    @Override
-    public boolean hasPreloadedData() {
-        return preloadedData;
     }
 
     @Override
@@ -357,7 +344,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         private final boolean isReadOnly;
         private final boolean hasEnabledBatchLoading;
         private final boolean hasAssignIDsImmediately;
-        private final boolean hasPreloadedData;
         private final boolean hasForceIndexUsage;
         private final boolean hasVerifyExternalVertexExistence;
         private final boolean hasVerifyInternalVertexExistence;
@@ -376,7 +362,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         ImmutableTxCfg(boolean isReadOnly,
                        boolean hasEnabledBatchLoading,
                        boolean hasAssignIDsImmediately,
-                       boolean hasPreloadedData,
                        boolean hasForceIndexUsage,
                        boolean hasVerifyExternalVertexExistence,
                        boolean hasVerifyInternalVertexExistence,
@@ -390,7 +375,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
             this.isReadOnly = isReadOnly;
             this.hasEnabledBatchLoading = hasEnabledBatchLoading;
             this.hasAssignIDsImmediately = hasAssignIDsImmediately;
-            this.hasPreloadedData = hasPreloadedData;
             this.hasForceIndexUsage = hasForceIndexUsage;
             this.hasVerifyExternalVertexExistence = hasVerifyExternalVertexExistence;
             this.hasVerifyInternalVertexExistence = hasVerifyInternalVertexExistence;
@@ -423,11 +407,6 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
         @Override
         public boolean hasAssignIDsImmediately() {
             return hasAssignIDsImmediately;
-        }
-
-        @Override
-        public boolean hasPreloadedData() {
-            return hasPreloadedData;
         }
 
         @Override
