@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * underlying KeyColumnValueStore which is the basic operation underlying the
  * Fulgora OLAP component of JanusGraph.
  * <p>
- * Hence, this is effectively a benchmark for {@link org.janusgraph.olap.OLAPTest}
+ * Hence, this is effectively a benchmark for OLAPTest
  * or at least the primitive backend operations used therein.
  * <p>
  *
