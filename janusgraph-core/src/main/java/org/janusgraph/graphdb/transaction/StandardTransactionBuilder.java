@@ -49,7 +49,7 @@ public class StandardTransactionBuilder implements TransactionConfiguration, Tra
 
     private boolean verifyExternalVertexExistence = true;
 
-    private boolean verifyInternalVertexExistence = false;
+    private boolean  verifyInternalVertexExistence = false;
 
     private final boolean propertyPrefetching;
 

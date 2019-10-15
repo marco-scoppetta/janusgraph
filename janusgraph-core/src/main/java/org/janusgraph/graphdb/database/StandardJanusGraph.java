@@ -327,7 +327,7 @@ public class StandardJanusGraph implements JanusGraph {
         public void doOpen() {
             StandardJanusGraphTx tx = localJanusTransaction.get();
             if (tx != null && tx.isOpen()) throw Transaction.Exceptions.transactionAlreadyOpen();
-            tx = (StandardJanusGraphTx) newThreadBoundTransaction();
+            tx = newThreadBoundTransaction();
             localJanusTransaction.set(tx);
         }
 

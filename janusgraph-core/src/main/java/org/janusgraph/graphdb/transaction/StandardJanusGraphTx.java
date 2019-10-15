@@ -611,18 +611,8 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         }
 
         if (!vertexIds.isEmpty()) {
-            if (internalVertexRetriever.hasVerifyExistence()) {
-                List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, backendTransaction);
-                for (int i = 0; i < vertexIds.size(); i++) {
-                    if (!existence.get(i).isEmpty()) {
-                        long id = vertexIds.get(i);
-                        result.add(vertexCache.get(id, existingVertexRetriever));
-                    }
-                }
-            } else {
-                for (int i = 0; i < vertexIds.size(); i++) {
-                    result.add(vertexCache.get(vertexIds.get(i), internalVertexRetriever));
-                }
+            for (int i = 0; i < vertexIds.size(); i++) {
+                result.add(vertexCache.get(vertexIds.get(i), internalVertexRetriever));
             }
         }
         //Filter out potentially removed vertices
@@ -701,7 +691,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         if (label == null) label = BaseVertexLabel.DEFAULT_VERTEXLABEL;
         Preconditions.checkArgument(vertexId == null || IDManager.VertexIDType.NormalVertex.is(vertexId), "Not a valid vertex id: %s", vertexId);
         Preconditions.checkArgument(vertexId == null || ((InternalVertexLabel) label).hasDefaultConfiguration(), "Cannot only use default vertex labels: %s", label);
-        Preconditions.checkArgument(vertexId == null || !config.hasVerifyExternalVertexExistence() || !containsVertex(vertexId), "Vertex with given id already exists: %s", vertexId);
         StandardVertex vertex = new StandardVertex(this, IDManager.getTemporaryVertexID(IDManager.VertexIDType.NormalVertex, temporaryIds.nextID()), ElementLifeCycle.New);
         if (vertexId != null) {
             vertex.setId(vertexId);
