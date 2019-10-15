@@ -25,6 +25,7 @@ import org.janusgraph.graphdb.transaction.addedrelations.AddedRelationsContainer
 import org.janusgraph.graphdb.transaction.addedrelations.ConcurrentAddedRelations;
 import org.janusgraph.graphdb.transaction.addedrelations.SimpleAddedRelations;
 import org.janusgraph.util.datastructures.Retriever;
+
 import java.util.List;
 
 /**
@@ -35,16 +36,16 @@ public class StandardVertex extends AbstractVertex {
 
     private final Object lifecycleMutex = new Object();
     private volatile byte lifecycle;
-    private volatile AddedRelationsContainer addedRelations=AddedRelationsContainer.EMPTY;
+    private volatile AddedRelationsContainer addedRelations = AddedRelationsContainer.EMPTY;
 
     public StandardVertex(StandardJanusGraphTx tx, long id, byte lifecycle) {
         super(tx, id);
-        this.lifecycle=lifecycle;
+        this.lifecycle = lifecycle;
     }
 
     public final void updateLifeCycle(ElementLifeCycle.Event event) {
-        synchronized(lifecycleMutex) {
-            this.lifecycle = ElementLifeCycle.update(lifecycle,event);
+        synchronized (lifecycleMutex) {
+            this.lifecycle = ElementLifeCycle.update(lifecycle, event);
         }
     }
 
@@ -58,13 +59,13 @@ public class StandardVertex extends AbstractVertex {
     @Override
     public boolean addRelation(InternalRelation r) {
         Preconditions.checkArgument(r.isNew());
-        if (addedRelations==AddedRelationsContainer.EMPTY) {
+        if (addedRelations == AddedRelationsContainer.EMPTY) {
             if (tx().getConfiguration().isSingleThreaded()) {
-                addedRelations=new SimpleAddedRelations();
+                addedRelations = new SimpleAddedRelations();
             } else {
                 synchronized (this) {
-                    if (addedRelations==AddedRelationsContainer.EMPTY)
-                        addedRelations=new ConcurrentAddedRelations();
+                    if (addedRelations == AddedRelationsContainer.EMPTY)
+                        addedRelations = new ConcurrentAddedRelations();
                 }
             }
         }
@@ -102,7 +103,7 @@ public class StandardVertex extends AbstractVertex {
     @Override
     public synchronized void remove() {
         super.remove();
-        ((StandardVertex)it()).updateLifeCycle(ElementLifeCycle.Event.REMOVED);
+        ((StandardVertex) it()).updateLifeCycle(ElementLifeCycle.Event.REMOVED);
     }
 
     @Override
