@@ -250,7 +250,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
     private volatile boolean isOpen;
 
     private final VertexConstructor existingVertexRetriever;
-    private final VertexConstructor externalVertexRetriever;
     private final VertexConstructor internalVertexRetriever;
 
     public StandardJanusGraphTx(StandardJanusGraph graph, TransactionConfiguration config) {
@@ -266,7 +265,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         this.temporaryIds = buildTemporaryIDsPool();
         this.isOpen = true;
 
-        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence());
         this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence());
         this.existingVertexRetriever = new VertexConstructor(false);
 
@@ -586,7 +584,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         //Make canonical partitioned vertex id
         if (idManager.isPartitionedVertex(vertexId)) vertexId = idManager.getCanonicalVertexId(vertexId);
 
-        InternalVertex v = vertexCache.get(vertexId, externalVertexRetriever);
+        InternalVertex v = vertexCache.get(vertexId, internalVertexRetriever);
         return (null == v || v.isRemoved()) ? null : v;
     }
 
@@ -613,7 +611,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         }
 
         if (!vertexIds.isEmpty()) {
-            if (externalVertexRetriever.hasVerifyExistence()) {
+            if (internalVertexRetriever.hasVerifyExistence()) {
                 List<EntryList> existence = graph.edgeMultiQuery(vertexIds, graph.vertexExistenceQuery, backendTransaction);
                 for (int i = 0; i < vertexIds.size(); i++) {
                     if (!existence.get(i).isEmpty()) {
@@ -623,7 +621,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
                 }
             } else {
                 for (int i = 0; i < vertexIds.size(); i++) {
-                    result.add(vertexCache.get(vertexIds.get(i), externalVertexRetriever));
+                    result.add(vertexCache.get(vertexIds.get(i), internalVertexRetriever));
                 }
             }
         }
@@ -662,8 +660,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             byte lifecycle = ElementLifeCycle.Loaded;
             long canonicalVertexId = idManager.isPartitionedVertex(vertexId) ? idManager.getCanonicalVertexId(vertexId) : vertexId;
             if (verifyExistence) {
-                if (graph.edgeQuery(canonicalVertexId, graph.vertexExistenceQuery, backendTransaction).isEmpty())
+                if (graph.edgeQuery(canonicalVertexId, graph.vertexExistenceQuery, backendTransaction).isEmpty()) {
                     lifecycle = ElementLifeCycle.Removed;
+                }
             }
             if (canonicalVertexId != vertexId) {
                 //Take lifecycle from canonical representative
