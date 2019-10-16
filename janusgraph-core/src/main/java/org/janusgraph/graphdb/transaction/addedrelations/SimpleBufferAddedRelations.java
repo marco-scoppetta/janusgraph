@@ -17,11 +17,12 @@ package org.janusgraph.graphdb.transaction.addedrelations;
 import com.google.common.base.Predicate;
 import org.janusgraph.graphdb.internal.InternalRelation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 
 public class SimpleBufferAddedRelations implements AddedRelationsContainer {
 
@@ -45,9 +46,9 @@ public class SimpleBufferAddedRelations implements AddedRelationsContainer {
     @Override
     public boolean remove(InternalRelation relation) {
         if (added.isEmpty()) return false;
-        if (deleted==null) deleted = new ArrayList<>(INITIAL_DELETED_SIZE);
+        if (deleted == null) deleted = new ArrayList<>(INITIAL_DELETED_SIZE);
         boolean del = deleted.add(relation);
-        if (deleted.size()>MAX_DELETED_SIZE) cleanup();
+        if (deleted.size() > MAX_DELETED_SIZE) cleanup();
         return del;
     }
 
@@ -58,14 +59,14 @@ public class SimpleBufferAddedRelations implements AddedRelationsContainer {
     }
 
     private void cleanup() {
-        if (deleted==null || deleted.isEmpty()) return;
+        if (deleted == null || deleted.isEmpty()) return;
         final Set<InternalRelation> deletedSet = new HashSet<>(deleted);
-        deleted=null;
-        final List<InternalRelation> newlyAdded = new ArrayList<>(added.size()-deletedSet.size()/2);
+        deleted = null;
+        final List<InternalRelation> newlyAdded = new ArrayList<>(added.size() - deletedSet.size() / 2);
         for (InternalRelation r : added) {
             if (!deletedSet.contains(r)) newlyAdded.add(r);
         }
-        added=newlyAdded;
+        added = newlyAdded;
     }
 
     @Override
