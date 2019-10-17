@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 /**
  * Utility class for merging and sorting lists of longs
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class AbstractLongListUtil {
 
@@ -80,7 +79,6 @@ public class AbstractLongListUtil {
             } else if (a.get(counterA) < b.get(counterB)) {
                 counterA++;
             } else {
-                assert a.get(counterA) > b.get(counterB);
                 counterB++;
             }
         }

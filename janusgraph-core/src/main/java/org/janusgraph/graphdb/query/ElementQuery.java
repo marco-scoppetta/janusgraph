@@ -22,7 +22,7 @@ import java.util.Comparator;
  * A query that returns {@link JanusGraphElement}s. This query can consist of multiple sub-queries that together
  * form the desired result set.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public interface ElementQuery<R extends JanusGraphElement,B extends BackendQuery<B>> extends Query {

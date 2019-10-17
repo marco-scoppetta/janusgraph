@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Tests general LOG implementations
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public abstract class LogTest {
 

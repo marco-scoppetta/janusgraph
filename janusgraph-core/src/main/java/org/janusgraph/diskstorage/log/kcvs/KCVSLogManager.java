@@ -43,7 +43,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
  * Implementation of {@link LogManager} against an arbitrary {@link KeyColumnValueStoreManager}. Issues {@link Log} instances
  * which wrap around a {@link KeyColumnValueStore}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 @PreInitializeConfigOptions
 public class KCVSLogManager implements LogManager {

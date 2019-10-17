@@ -20,7 +20,7 @@ package org.janusgraph.diskstorage;
  * <p>
  * Any IDBlock implementation must be completely thread-safe.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface IDBlock {
 

@@ -17,14 +17,6 @@ package org.janusgraph.graphdb.tinkerpop.optimize;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import org.apache.tinkerpop.gremlin.structure.Property;
-import org.janusgraph.core.*;
-import org.janusgraph.graphdb.query.BaseQuery;
-import org.janusgraph.graphdb.query.Query;
-import org.janusgraph.graphdb.query.JanusGraphPredicate;
-import org.janusgraph.graphdb.query.profile.QueryProfiler;
-import org.janusgraph.graphdb.query.vertex.BasicVertexCentricQueryBuilder;
-import org.janusgraph.graphdb.tinkerpop.profile.TP3ProfileWrapper;
 import org.apache.tinkerpop.gremlin.process.traversal.Order;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.step.Profiling;
@@ -33,14 +25,30 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
 import org.apache.tinkerpop.gremlin.process.traversal.util.FastNoSuchElementException;
 import org.apache.tinkerpop.gremlin.process.traversal.util.MutableMetrics;
 import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.apache.tinkerpop.gremlin.structure.util.wrapped.WrappedVertex;
+import org.janusgraph.core.BaseVertexQuery;
+import org.janusgraph.core.JanusGraphMultiVertexQuery;
+import org.janusgraph.core.JanusGraphProperty;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexQuery;
+import org.janusgraph.graphdb.query.BaseQuery;
+import org.janusgraph.graphdb.query.JanusGraphPredicate;
+import org.janusgraph.graphdb.query.Query;
+import org.janusgraph.graphdb.query.profile.QueryProfiler;
+import org.janusgraph.graphdb.query.vertex.BasicVertexCentricQueryBuilder;
+import org.janusgraph.graphdb.tinkerpop.profile.TP3ProfileWrapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-
-public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements HasStepFolder<Element, E>, Profiling, MultiQueriable<Element,E> {
+public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements HasStepFolder<Element, E>, Profiling, MultiQueriable<Element, E> {
 
     private boolean initialized = false;
     private boolean useMultiQuery = false;
@@ -60,7 +68,7 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
     }
 
     private <Q extends BaseVertexQuery> Q makeQuery(Q query) {
-        final String[] keys = getPropertyKeys();
+        String[] keys = getPropertyKeys();
         query.keys(keys);
         for (HasContainer condition : hasContainers) {
             query.has(condition.getKey(), JanusGraphPredicate.Converter.convert(condition.getBiPredicate()), condition.getValue());
@@ -75,20 +83,16 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
         if (getReturnType().forProperties()) {
             return (Iterator<E>) iterable.iterator();
         }
-        assert getReturnType().forValues();
         return (Iterator<E>) Iterators.transform(iterable.iterator(), Property::value);
     }
 
     private void initialize() {
-        assert !initialized;
         initialized = true;
-        assert getReturnType().forProperties() || (orders.isEmpty() && hasContainers.isEmpty());
 
         if (!starts.hasNext()) throw FastNoSuchElementException.instance();
-        final List<Traverser.Admin<Element>> elements = new ArrayList<>();
+        List<Traverser.Admin<Element>> elements = new ArrayList<>();
         starts.forEachRemaining(elements::add);
         starts.add(elements.iterator());
-        assert elements.size() > 0;
 
         useMultiQuery = useMultiQuery && elements.stream().allMatch(e -> e.get() instanceof Vertex);
 
@@ -100,12 +104,12 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
     /**
      * This initialisation method is called the first time this instance is used and also when
      * an attempt to retrieve a vertex from the cached multiQuery results doesn't find an entry.
-     * @param vertices A list of vertices with which to initialise the multiQuery
+     *
+     * @param list list of vertices with which to initialise the multiQuery
      */
     private void initializeMultiQuery(List<Traverser.Admin<Element>> list) {
-        assert list.size() > 0;
-        final JanusGraphMultiVertexQuery multiQuery = JanusGraphTraversalUtil.getTx(traversal).multiQuery();
-        list.forEach(v -> multiQuery.addVertex((Vertex)v.get()));
+        JanusGraphMultiVertexQuery multiQuery = JanusGraphTraversalUtil.getTx(traversal).multiQuery();
+        list.forEach(v -> multiQuery.addVertex((Vertex) v.get()));
         makeQuery(multiQuery);
 
         Map<JanusGraphVertex, Iterable<? extends JanusGraphProperty>> results = multiQuery.properties();
@@ -131,22 +135,19 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
             }
             return convertIterator(multiQueryResults.get(traverser.get()));
         } else if (traverser.get() instanceof JanusGraphVertex || traverser.get() instanceof WrappedVertex) {
-            final JanusGraphVertexQuery query = makeQuery((JanusGraphTraversalUtil.getJanusGraphVertex(traverser)).query());
+            JanusGraphVertexQuery query = makeQuery((JanusGraphTraversalUtil.getJanusGraphVertex(traverser)).query());
             return convertIterator(query.properties());
         } else {
             //It is some other element (edge or vertex property)
             Iterator<E> iterator;
             if (getReturnType().forValues()) {
-                assert orders.isEmpty() && hasContainers.isEmpty();
                 iterator = traverser.get().values(getPropertyKeys());
             } else {
-                //this asks for properties
-                assert orders.isEmpty();
                 //HasContainers don't apply => empty result set
                 if (!hasContainers.isEmpty()) return Collections.emptyIterator();
                 iterator = (Iterator<E>) traverser.get().properties(getPropertyKeys());
             }
-            if (limit!=Query.NO_LIMIT) iterator = Iterators.limit(iterator,limit);
+            if (limit != Query.NO_LIMIT) iterator = Iterators.limit(iterator, limit);
             return iterator;
         }
     }
@@ -159,7 +160,7 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
 
     @Override
     public JanusGraphPropertiesStep<E> clone() {
-        final JanusGraphPropertiesStep<E> clone = (JanusGraphPropertiesStep<E>) super.clone();
+        JanusGraphPropertiesStep<E> clone = (JanusGraphPropertiesStep<E>) super.clone();
         clone.initialized = false;
         return clone;
     }
@@ -190,7 +191,7 @@ public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements Ha
 
     @Override
     public void localOrderBy(List<HasContainer> hasContainers, String key, Order order) {
-       throw new UnsupportedOperationException("LocalOrderBy is not supported for properties step.");
+        throw new UnsupportedOperationException("LocalOrderBy is not supported for properties step.");
     }
 
     @Override

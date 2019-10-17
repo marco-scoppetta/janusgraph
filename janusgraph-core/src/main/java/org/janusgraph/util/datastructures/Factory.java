@@ -19,7 +19,7 @@ package org.janusgraph.util.datastructures;
  *
  * @param <O> Type created by the factory
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface Factory<O> {
 

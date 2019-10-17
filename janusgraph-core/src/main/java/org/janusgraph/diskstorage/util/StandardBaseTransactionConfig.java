@@ -25,7 +25,7 @@ import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import java.time.Instant;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+
  * @author Dan LaRocque (dalaro@hopcount.org)
  */
 public class StandardBaseTransactionConfig implements BaseTransactionConfig {

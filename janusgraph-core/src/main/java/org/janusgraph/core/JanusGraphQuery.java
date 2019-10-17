@@ -25,7 +25,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.Order;
  * been defined for the keys. See {@link org.janusgraph.core.schema.JanusGraphManagement} for more information
  * on how to define index structures in JanusGraph.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  * @since 0.3.0
  */
 

@@ -42,7 +42,7 @@ import java.util.function.BiPredicate;
  * <p>
  * This class contains a subclass used to convert Tinkerpop's {@link BiPredicate} implementations to the corresponding JanusGraph predicates.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface JanusGraphPredicate extends BiPredicate<Object, Object> {
 

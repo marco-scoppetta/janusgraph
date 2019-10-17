@@ -26,7 +26,7 @@ import java.util.stream.StreamSupport;
 /**
  * Utility class for interacting with {@link Iterable}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class IterablesUtil {
 

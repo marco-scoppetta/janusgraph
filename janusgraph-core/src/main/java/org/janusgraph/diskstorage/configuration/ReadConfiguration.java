@@ -21,7 +21,7 @@ import java.io.Closeable;
 /**
  *
  * Read-Only configuration which does not handle namespacing (umbrellaElementes and roots)
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface ReadConfiguration extends Closeable {
 

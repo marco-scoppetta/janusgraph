@@ -25,7 +25,7 @@ import org.janusgraph.graphdb.database.idhandling.VariableLong;
  * Handles the allocation of ids based on the type of element
  * Responsible for the bit-wise pattern of JanusGraph's internal id scheme.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class IDManager {
 
@@ -338,7 +338,6 @@ public class IDManager {
         abstract boolean isProper();
 
         public final long addPadding(long count) {
-            assert offset() > 0;
             Preconditions.checkArgument(count > 0 && count < (1L << (TOTAL_BITS - offset())), "Count out of range for type [%s]: %s", this, count);
             return (count << offset()) | suffix();
         }
@@ -367,7 +366,7 @@ public class IDManager {
     /**
      * Number of bits that need to be reserved from the type ids for storing additional information during serialization
      */
-    public static final int TYPE_LEN_RESERVE = 3;
+    private static final int TYPE_LEN_RESERVE = 3;
 
     /**
      * Total number of bits available to a JanusGraph assigned id
@@ -416,7 +415,6 @@ public class IDManager {
         partitionIDBound = (1L << (partitionBits));
 
         relationCountBound = partitionBits == 0 ? Long.MAX_VALUE : (1L << (TOTAL_BITS - partitionBits));
-        assert VertexIDType.NormalVertex.offset() > 0;
         vertexCountBound = (1L << (TOTAL_BITS - partitionBits - USERVERTEX_PADDING_BITWIDTH));
 
 
@@ -468,10 +466,7 @@ public class IDManager {
 
     public long getPartitionId(long vertexId) {
         if (VertexIDType.Schema.is(vertexId)) return SCHEMA_PARTITION;
-        assert isUserVertexId(vertexId) && getUserVertexIDType(vertexId) != null;
-        long partition = (vertexId >>> USERVERTEX_PADDING_BITWIDTH) & (partitionIDBound - 1);
-        assert partition >= 0;
-        return partition;
+        return (vertexId >>> USERVERTEX_PADDING_BITWIDTH) & (partitionIDBound - 1);
     }
 
     public StaticBuffer getKey(long vertexId) {
@@ -479,12 +474,9 @@ public class IDManager {
             //No partition for schema vertices
             return BufferUtil.getLongBuffer(vertexId);
         } else {
-            assert isUserVertexId(vertexId);
             VertexIDType type = getUserVertexIDType(vertexId);
-            assert type.offset() == USERVERTEX_PADDING_BITWIDTH;
             long partition = getPartitionId(vertexId);
             long count = vertexId >>> (partitionBits + USERVERTEX_PADDING_BITWIDTH);
-            assert count > 0;
             long keyId = (partition << partitionOffset) | type.addPadding(count);
             return BufferUtil.getLongBuffer(keyId);
         }
@@ -528,7 +520,6 @@ public class IDManager {
             result = result ^ ((id >>> offset) & (partitionIDBound - 1));
             offset += partitionBits;
         }
-        assert result >= 0 && result < partitionIDBound;
         return result;
     }
 
@@ -550,13 +541,11 @@ public class IDManager {
     public long getPartitionedVertexId(long partitionedVertexId, long otherPartition) {
         Preconditions.checkArgument(VertexIDType.PartitionedVertex.is(partitionedVertexId));
         long count = partitionedVertexId >>> (partitionBits + USERVERTEX_PADDING_BITWIDTH);
-        assert count > 0;
         return constructId(count, otherPartition, VertexIDType.PartitionedVertex);
     }
 
     public long[] getPartitionedVertexRepresentatives(long partitionedVertexId) {
         Preconditions.checkArgument(isPartitionedVertex(partitionedVertexId));
-        assert getPartitionBound() < Integer.MAX_VALUE;
         long[] ids = new long[(int) getPartitionBound()];
         for (int i = 0; i < getPartitionBound(); i++) {
             ids[i] = getPartitionedVertexId(partitionedVertexId, i);
@@ -570,25 +559,11 @@ public class IDManager {
      *
      * @param id long id
      * @return a corresponding JanusGraph vertex id
-     * @see #fromVertexId(long)
      */
     public long toVertexId(long id) {
         Preconditions.checkArgument(id > 0, "Vertex id must be positive: %s", id);
         Preconditions.checkArgument(vertexCountBound > id, "Vertex id is too large: %s", id);
         return id << (partitionBits + USERVERTEX_PADDING_BITWIDTH);
-    }
-
-    /**
-     * Converts a JanusGraph vertex id to the user provided id as the inverse mapping of {@link #toVertexId(long)}.
-     *
-     * @param id JanusGraph vertex id (must be positive)
-     * @return original user provided id
-     * @see #toVertexId(long)
-     */
-    public long fromVertexId(long id) {
-        Preconditions.checkArgument(id >>> USERVERTEX_PADDING_BITWIDTH + partitionBits > 0
-                && id <= (vertexCountBound - 1) << USERVERTEX_PADDING_BITWIDTH + partitionBits, "Invalid vertex id provided: %s", id);
-        return id >> USERVERTEX_PADDING_BITWIDTH + partitionBits;
     }
 
     public boolean isPartitionedVertex(long id) {

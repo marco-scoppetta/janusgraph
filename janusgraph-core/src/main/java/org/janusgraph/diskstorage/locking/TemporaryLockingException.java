@@ -24,7 +24,7 @@ import org.janusgraph.diskstorage.TemporaryBackendException;
  * modifies the underlying lock state between the failure and follow-up request.
  * <p>
  * 
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class TemporaryLockingException extends TemporaryBackendException {

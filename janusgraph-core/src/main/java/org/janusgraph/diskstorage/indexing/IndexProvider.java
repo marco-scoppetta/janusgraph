@@ -30,7 +30,7 @@ import com.google.common.base.Preconditions;
  * External index for querying.
  * An index can contain an arbitrary number of index stores which are updated and queried separately.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public interface IndexProvider extends IndexInformation {

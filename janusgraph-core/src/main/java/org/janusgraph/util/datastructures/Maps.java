@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Utility class for Maps
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class Maps {
 

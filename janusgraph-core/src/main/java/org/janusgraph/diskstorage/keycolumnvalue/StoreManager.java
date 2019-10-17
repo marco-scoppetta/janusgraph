@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Generic interface to a backend storage engine.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public interface StoreManager {

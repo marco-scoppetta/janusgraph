@@ -23,7 +23,7 @@ import org.janusgraph.core.JanusGraphException;
  * <p>
  * This process is started via {@link org.janusgraph.core.JanusGraphFactory}
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface TransactionRecovery {
 

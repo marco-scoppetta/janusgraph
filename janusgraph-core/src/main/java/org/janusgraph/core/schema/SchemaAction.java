@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * Update actions to be executed through {@link JanusGraphManagement} in {@link JanusGraphManagement#updateIndex(Index, SchemaAction)}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public enum SchemaAction {
 

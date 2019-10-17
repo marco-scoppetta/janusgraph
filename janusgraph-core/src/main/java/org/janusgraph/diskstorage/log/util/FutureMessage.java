@@ -24,7 +24,7 @@ import org.janusgraph.diskstorage.log.Message;
  *
  * This class can be used by {@link org.janusgraph.diskstorage.log.Log} implementations to wrap messages.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class FutureMessage<M extends Message> extends AbstractFuture<Message> {
 

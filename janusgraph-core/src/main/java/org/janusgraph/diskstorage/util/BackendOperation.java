@@ -37,9 +37,7 @@ public class BackendOperation {
     private static final double PERTURBATION_PERCENTAGE = 0.2;
 
     private static Duration pertubTime(Duration duration) {
-        Duration newDuration = duration.dividedBy((int) (2.0 / (1 + (random.nextDouble() * 2 - 1.0) * PERTURBATION_PERCENTAGE)));
-        assert !duration.isZero() : duration;
-        return newDuration;
+        return duration.dividedBy((int) (2.0 / (1 + (random.nextDouble() * 2 - 1.0) * PERTURBATION_PERCENTAGE)));
     }
 
     public static <V> V execute(Callable<V> exe, Duration totalWaitTime) throws JanusGraphException {
@@ -67,7 +65,7 @@ public class BackendOperation {
                 } while ((ex = ex.getCause()) != null);
 
 
-                if (storeEx != null && storeEx instanceof TemporaryBackendException) {
+                if (storeEx instanceof TemporaryBackendException) {
                     lastException = storeEx; // if this is a temporary exception, don't throw immediately but retry for a totalWaitTime time before throwing
                 } else if (e instanceof BackendException) {
                     throw (BackendException) e;
@@ -86,7 +84,7 @@ public class BackendOperation {
                     throw new PermanentBackendException("Interrupted while waiting to retry failed backend operation", r);
                 }
             } else {
-                break;
+                break; // TODO: super lol to while(true) and else break;, refactor this beauty at some point
             }
             waitTime = pertubTime(waitTime.multipliedBy(2));
         }

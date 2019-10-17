@@ -20,7 +20,7 @@ import org.janusgraph.core.JanusGraphTransaction;
  * Allows the user to define custom behavior to process those transactional changes that are recorded in a transaction LOG.
  * {@link ChangeProcessor}s are registered with a transaction LOG processor in the {@link LogProcessorBuilder}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface ChangeProcessor {
 

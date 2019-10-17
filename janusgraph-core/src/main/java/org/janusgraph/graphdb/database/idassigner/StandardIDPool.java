@@ -14,6 +14,16 @@
 
 package org.janusgraph.graphdb.database.idassigner;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.IDAuthority;
+import org.janusgraph.diskstorage.IDBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -26,22 +36,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.IDBlock;
-
-import org.janusgraph.diskstorage.IDAuthority;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
 
 public class StandardIDPool implements IDPool {
-
     private static final Logger LOG = LoggerFactory.getLogger(StandardIDPool.class);
     private static final int RENEW_ID_COUNT = 100;
 
@@ -107,7 +103,6 @@ public class StandardIDPool implements IDPool {
         currentBlock = UNINITIALIZED_BLOCK;
         currentIndex = 0;
         renewBlockIndex = 0;
-
         nextBlock = null;
 
         // daemon=true would probably be fine too
@@ -116,12 +111,8 @@ public class StandardIDPool implements IDPool {
                 .setDaemon(false)
                 .setNameFormat("JanusGraphID(" + partition + ")(" + idNamespace + ")[%d]")
                 .build());
-        //exec.allowCoreThreadTimeOut(false);
-        //exec.prestartCoreThread();
         idBlockFuture = null;
-
         closeBlockers = new ArrayDeque<>(4);
-
         closed = false;
     }
 
@@ -162,7 +153,6 @@ public class StandardIDPool implements IDPool {
     }
 
     private synchronized void nextBlock() throws InterruptedException {
-        assert currentIndex == currentBlock.numIds();
         Preconditions.checkState(!closed, "ID Pool has been closed for partition(%s)-namespace(%s) - cannot apply for new id block",
                 partition, idNamespace);
 
@@ -183,19 +173,12 @@ public class StandardIDPool implements IDPool {
 
         LOG.debug("ID partition({})-namespace({}) acquired block: [{}]", partition, idNamespace, currentBlock);
 
-        assert currentBlock.numIds() > 0;
-
         nextBlock = null;
-
-        assert RENEW_ID_COUNT > 0;
         renewBlockIndex = Math.max(0, currentBlock.numIds() - Math.max(RENEW_ID_COUNT, Math.round(currentBlock.numIds() * renewBufferPercentage)));
-        assert renewBlockIndex < currentBlock.numIds() && renewBlockIndex >= currentIndex;
     }
 
     @Override
     public synchronized long nextID() {
-        assert currentIndex <= currentBlock.numIds();
-
         if (currentIndex == currentBlock.numIds()) {
             try {
                 nextBlock();
@@ -246,7 +229,6 @@ public class StandardIDPool implements IDPool {
     }
 
     private static class IDBlockGetter implements Callable<IDBlock> {
-
         private final Stopwatch alive;
         private final IDAuthority idAuthority;
         private final int partition;
@@ -254,7 +236,7 @@ public class StandardIDPool implements IDPool {
         private final Duration renewTimeout;
         private volatile boolean stopRequested;
 
-        public IDBlockGetter(IDAuthority idAuthority, int partition, int idNamespace, Duration renewTimeout) {
+        IDBlockGetter(IDAuthority idAuthority, int partition, int idNamespace, Duration renewTimeout) {
             this.idAuthority = idAuthority;
             this.partition = partition;
             this.idNamespace = idNamespace;

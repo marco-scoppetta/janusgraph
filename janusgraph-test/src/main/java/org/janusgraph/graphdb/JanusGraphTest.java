@@ -205,7 +205,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+
  * @author Joshua Shinavier (http://fortytwo.net)
  */
 public abstract class JanusGraphTest extends JanusGraphBaseTest {

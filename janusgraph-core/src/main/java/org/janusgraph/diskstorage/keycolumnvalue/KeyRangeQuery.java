@@ -30,7 +30,7 @@ import java.util.Objects;
  * returned per key which fall into the specified slice range and NOT to the
  * maximum number of keys returned.
  * 
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class KeyRangeQuery extends SliceQuery {

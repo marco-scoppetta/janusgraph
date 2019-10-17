@@ -15,25 +15,21 @@
 package org.janusgraph.graphdb.relations;
 
 import com.google.common.base.Preconditions;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.graphdb.internal.InternalVertex;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
-
 
 public abstract class AbstractEdge extends AbstractTypedRelation implements JanusGraphEdge {
 
     private InternalVertex start;
     private InternalVertex end;
 
-    public AbstractEdge(long id, EdgeLabel label, InternalVertex start, InternalVertex end) {
+    AbstractEdge(long id, EdgeLabel label, InternalVertex start, InternalVertex end) {
         super(id, label);
-
-        assert start != null && end != null;
         this.start = start;
         this.end = end;
     }
@@ -81,8 +77,7 @@ public abstract class AbstractEdge extends AbstractTypedRelation implements Janu
 
     @Override
     public int getLen() {
-        assert !type.isUnidirected(Direction.IN);
-        return type.isUnidirected(Direction.OUT)?1:2;
+        return type.isUnidirected(Direction.OUT) ? 1 : 2;
     }
 
     @Override

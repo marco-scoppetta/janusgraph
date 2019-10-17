@@ -34,7 +34,7 @@ import com.google.common.collect.Sets;
  * Comparison relations for text objects. These comparisons are based on a tokenized representation
  * of the text, i.e. the text is considered as a set of word tokens.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public enum Text implements JanusGraphPredicate {

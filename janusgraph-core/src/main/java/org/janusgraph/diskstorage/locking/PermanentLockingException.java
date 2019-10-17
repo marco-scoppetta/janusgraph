@@ -23,7 +23,7 @@ import org.janusgraph.diskstorage.PermanentBackendException;
  * the underlying lock state in some way.
  * <p>
  * 
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class PermanentLockingException extends PermanentBackendException {

@@ -17,7 +17,7 @@ package org.janusgraph.diskstorage;
 /**
  * Represents a transaction for a particular storage backend.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public interface BaseTransaction {

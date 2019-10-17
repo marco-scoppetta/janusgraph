@@ -77,7 +77,7 @@ import static org.janusgraph.util.encoding.StringEncoding.UTF8_CHARSET;
  * consistent, this protocol guarantees unique id block assignments.
  * <p>
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalProvider, IDAuthority {

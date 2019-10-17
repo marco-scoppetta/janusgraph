@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * Wraps the transaction handle of an index and buffers all mutations against an index for efficiency.
  * Also acts as a proxy to the {@link IndexProvider} methods.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class IndexTransaction implements BaseTransaction, LoggableTransaction {

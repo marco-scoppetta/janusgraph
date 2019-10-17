@@ -22,7 +22,7 @@ package org.janusgraph.diskstorage;
  * If this exception is thrown it indicates that retrying the same operation might potentially
  * lead to success (but not necessarily)
  * <p>
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class TemporaryBackendException extends BackendException {

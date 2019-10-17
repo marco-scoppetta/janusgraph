@@ -17,7 +17,7 @@ package org.janusgraph.core;
 /**
  * Represents an entity that can be uniquely identified by a long id.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface Idfiable {
 

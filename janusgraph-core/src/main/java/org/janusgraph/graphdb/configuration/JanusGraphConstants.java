@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * Collection of constants used throughput the JanusGraph codebase.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class JanusGraphConstants {
 

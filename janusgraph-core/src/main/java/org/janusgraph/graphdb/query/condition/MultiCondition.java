@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * @see And
  * @see Or
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayList<Condition<E>> implements Condition<E> {
 

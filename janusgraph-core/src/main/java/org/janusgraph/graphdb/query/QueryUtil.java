@@ -15,29 +15,44 @@
 package org.janusgraph.graphdb.query;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
-import org.janusgraph.core.*;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.RelationType;
 import org.janusgraph.core.attribute.Cmp;
 import org.janusgraph.core.attribute.Contain;
 import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.predicate.AndJanusPredicate;
-import org.janusgraph.graphdb.predicate.ConnectiveJanusPredicate;
 import org.janusgraph.graphdb.predicate.OrJanusPredicate;
-import org.janusgraph.graphdb.query.condition.*;
+import org.janusgraph.graphdb.query.condition.And;
+import org.janusgraph.graphdb.query.condition.Condition;
+import org.janusgraph.graphdb.query.condition.MultiCondition;
+import org.janusgraph.graphdb.query.condition.Not;
+import org.janusgraph.graphdb.query.condition.Or;
+import org.janusgraph.graphdb.query.condition.PredicateCondition;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
-import java.util.*;
+
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods used in query optimization and processing.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class QueryUtil {
 
     public static int adjustLimitForTxModifications(StandardJanusGraphTx tx, int uncoveredAndConditions, int limit) {
-        assert limit > 0 && limit <= 1000000000; //To make sure limit computation does not overflow
-        assert uncoveredAndConditions >= 0;
-
         if (uncoveredAndConditions > 0) {
             final int maxMultiplier = Integer.MAX_VALUE / limit;
             limit = limit * Math.min(maxMultiplier, (int) Math.pow(2, uncoveredAndConditions)); //(limit*3)/2+1;
@@ -50,54 +65,44 @@ public class QueryUtil {
     }
 
     public static int convertLimit(long limit) {
-        assert limit>=0;
-        if (limit>=Integer.MAX_VALUE) return Integer.MAX_VALUE;
-        else return (int)limit;
+        if (limit >= Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        else return (int) limit;
     }
 
     public static int mergeLowLimits(int limit1, int limit2) {
-        assert limit1>=0 && limit2>=0;
-        return Math.max(limit1,limit2);
+        return Math.max(limit1, limit2);
     }
 
     public static int mergeHighLimits(int limit1, int limit2) {
-        assert limit1>=0 && limit2>=0;
-        return Math.min(limit1,limit2);
+        return Math.min(limit1, limit2);
     }
 
     public static InternalRelationType getType(StandardJanusGraphTx tx, String typeName) {
-        final RelationType t = tx.getRelationType(typeName);
+        RelationType t = tx.getRelationType(typeName);
         if (t == null && !tx.getConfiguration().getAutoSchemaMaker().ignoreUndefinedQueryTypes()) {
             throw new IllegalArgumentException("Undefined type used in query: " + typeName);
         }
         return (InternalRelationType) t;
     }
 
-    public static Iterable<JanusGraphVertex> getVertices(StandardJanusGraphTx tx,
-                                                    PropertyKey key, Object equalityCondition) {
-        return tx.query().has(key,Cmp.EQUAL,equalityCondition).vertices();
+    public static Iterable<JanusGraphVertex> getVertices(StandardJanusGraphTx tx, PropertyKey key, Object equalityCondition) {
+        return tx.query().has(key, Cmp.EQUAL, equalityCondition).vertices();
     }
 
-    public static Iterable<JanusGraphVertex> getVertices(StandardJanusGraphTx tx,
-                                                    String key, Object equalityCondition) {
-        return tx.query().has(key,Cmp.EQUAL,equalityCondition).vertices();
+    public static Iterable<JanusGraphVertex> getVertices(StandardJanusGraphTx tx, String key, Object equalityCondition) {
+        return tx.query().has(key, Cmp.EQUAL, equalityCondition).vertices();
     }
 
-    public static Iterable<JanusGraphEdge> getEdges(StandardJanusGraphTx tx,
-                                                    PropertyKey key, Object equalityCondition) {
-        return tx.query().has(key,Cmp.EQUAL,equalityCondition).edges();
+    public static Iterable<JanusGraphEdge> getEdges(StandardJanusGraphTx tx, PropertyKey key, Object equalityCondition) {
+        return tx.query().has(key, Cmp.EQUAL, equalityCondition).edges();
     }
 
-    public static Iterable<JanusGraphEdge> getEdges(StandardJanusGraphTx tx,
-                                               String key, Object equalityCondition) {
-        return tx.query().has(key,Cmp.EQUAL,equalityCondition).edges();
+    public static Iterable<JanusGraphEdge> getEdges(StandardJanusGraphTx tx, String key, Object equalityCondition) {
+        return tx.query().has(key, Cmp.EQUAL, equalityCondition).edges();
     }
 
     /**
      * Query-normal-form (QNF) for JanusGraph is a variant of CNF (conjunctive normal form) with negation inlined where possible
-     *
-     * @param condition
-     * @return
      */
     public static boolean isQueryNormalForm(Condition<?> condition) {
         if (isQNFLiteralOrNot(condition)) {
@@ -124,7 +129,7 @@ public class QueryUtil {
         if (!(condition instanceof Not)) {
             return isQNFLiteral(condition);
         }
-        final Condition child = ((Not) condition).getChild();
+        Condition child = ((Not) condition).getChild();
         return isQNFLiteral(child) && (!(child instanceof PredicateCondition) || !((PredicateCondition) child).getPredicate().hasNegation());
     }
 
@@ -135,7 +140,7 @@ public class QueryUtil {
     public static <E extends JanusGraphElement> Condition<E> simplifyQNF(Condition<E> condition) {
         Preconditions.checkArgument(isQueryNormalForm(condition));
         if (condition.numChildren() == 1) {
-            final Condition<E> child = ((And<E>) condition).get(0);
+            Condition<E> child = ((And<E>) condition).get(0);
             if (child.getType() == Condition.Type.LITERAL) return child;
         }
         return condition;
@@ -149,14 +154,10 @@ public class QueryUtil {
      * Prepares the constraints from the query builder into a QNF compliant condition.
      * If the condition is invalid or trivially false, it returns null.
      *
-     * @param tx
-     * @param constraints
-     * @param <E>
-     * @return
      * @see #isQueryNormalForm(org.janusgraph.graphdb.query.condition.Condition)
      */
     public static <E extends JanusGraphElement> And<E> constraints2QNF(StandardJanusGraphTx tx, List<PredicateCondition<String, E>> constraints) {
-        final And<E> conditions = new And<>(constraints.size() + 4);
+        And<E> conditions = new And<>(constraints.size() + 4);
         for (PredicateCondition<String, E> atom : constraints) {
             final RelationType type = getType(tx, atom.getKey());
 
@@ -168,14 +169,13 @@ public class QueryUtil {
                 return null;
             }
 
-            final Object value = atom.getValue();
-            final JanusGraphPredicate predicate = atom.getPredicate();
+            Object value = atom.getValue();
+            JanusGraphPredicate predicate = atom.getPredicate();
 
 
             if (type.isPropertyKey()) {
-                final PropertyKey key = (PropertyKey) type;
-                assert predicate.isValidCondition(value);
-                Preconditions.checkArgument(key.dataType()==Object.class || predicate.isValidValueType(key.dataType()), "Data type of key is not compatible with condition");
+                PropertyKey key = (PropertyKey) type;
+                Preconditions.checkArgument(key.dataType() == Object.class || predicate.isValidValueType(key.dataType()), "Data type of key is not compatible with condition");
             } else { //its a label
                 Preconditions.checkArgument(((EdgeLabel) type).isUnidirected());
                 Preconditions.checkArgument(predicate.isValidValueType(JanusGraphVertex.class), "Data type of key is not compatible with condition");
@@ -183,7 +183,7 @@ public class QueryUtil {
 
             if (predicate instanceof Contain) {
                 //Rewrite contains conditions
-                final Collection values = (Collection) value;
+                Collection values = (Collection) value;
                 if (predicate == Contain.NOT_IN) {
                     if (values.isEmpty()) continue; //Simply ignore since trivially satisfied
                     for (Object inValue : values)
@@ -192,7 +192,8 @@ public class QueryUtil {
                     Preconditions.checkArgument(predicate == Contain.IN);
                     if (values.isEmpty()) {
                         return null; //Cannot be satisfied
-                    } if (values.size() == 1) {
+                    }
+                    if (values.size() == 1) {
                         addConstraint(type, Cmp.EQUAL, values.iterator().next(), conditions, tx);
                     } else {
                         final Or<E> nested = new Or<>(values.size());
@@ -206,8 +207,8 @@ public class QueryUtil {
                     return null;
                 }
             } else if (predicate instanceof OrJanusPredicate) {
-                final List<Object> values = (List<Object>) (value);
-                final Or<E> nested = addConstraint(type, (OrJanusPredicate) predicate, values, new Or<>(values.size()), tx);
+                List<Object> values = (List<Object>) (value);
+                Or<E> nested = addConstraint(type, (OrJanusPredicate) predicate, values, new Or<>(values.size()), tx);
                 if (nested == null) {
                     return null;
                 }
@@ -220,15 +221,15 @@ public class QueryUtil {
     }
 
     private static <E extends JanusGraphElement> And<E> addConstraint(RelationType type, AndJanusPredicate predicate, List<Object> values, And<E> and, StandardJanusGraphTx tx) {
-        for (int i = 0 ; i < values.size(); i++) {
-            final JanusGraphPredicate janusGraphPredicate = predicate.get(i);
+        for (int i = 0; i < values.size(); i++) {
+            JanusGraphPredicate janusGraphPredicate = predicate.get(i);
             if (janusGraphPredicate instanceof AndJanusPredicate) {
                 if (addConstraint(type, (AndJanusPredicate) (janusGraphPredicate), (List<Object>) (values.get(i)), and, tx) == null) {
                     return null;
                 }
             } else if (predicate.get(i) instanceof OrJanusPredicate) {
-                final List<Object> childValues = (List<Object>) (values.get(i));
-                final Or<E> nested = addConstraint(type, (OrJanusPredicate) (janusGraphPredicate), childValues, new Or<>(childValues.size()), tx);
+                List<Object> childValues = (List<Object>) (values.get(i));
+                Or<E> nested = addConstraint(type, (OrJanusPredicate) (janusGraphPredicate), childValues, new Or<>(childValues.size()), tx);
                 if (nested == null) {
                     return null;
                 }
@@ -241,11 +242,11 @@ public class QueryUtil {
     }
 
     private static <E extends JanusGraphElement> Or<E> addConstraint(RelationType type, OrJanusPredicate predicate, List<Object> values, Or<E> or, StandardJanusGraphTx tx) {
-        for (int i = 0 ; i < values.size(); i++) {
-            final JanusGraphPredicate janusGraphPredicate = predicate.get(i);
+        for (int i = 0; i < values.size(); i++) {
+            JanusGraphPredicate janusGraphPredicate = predicate.get(i);
             if (janusGraphPredicate instanceof AndJanusPredicate) {
-                final List<Object> childValues = (List<Object>) (values.get(i));
-                final And<E> nested = addConstraint(type, (AndJanusPredicate) janusGraphPredicate, childValues, new And<>(childValues.size()), tx);
+                List<Object> childValues = (List<Object>) (values.get(i));
+                And<E> nested = addConstraint(type, (AndJanusPredicate) janusGraphPredicate, childValues, new And<>(childValues.size()), tx);
                 if (nested == null) {
                     return null;
                 }
@@ -262,35 +263,34 @@ public class QueryUtil {
     }
 
     private static <E extends JanusGraphElement> void addConstraint(RelationType type, JanusGraphPredicate predicate,
-                                                               Object value, MultiCondition<E> conditions, StandardJanusGraphTx tx) {
+                                                                    Object value, MultiCondition<E> conditions, StandardJanusGraphTx tx) {
         if (type.isPropertyKey()) {
             if (value != null)
                 value = tx.verifyAttribute((PropertyKey) type, value);
         } else { //t.isEdgeLabel()
             Preconditions.checkArgument(value instanceof JanusGraphVertex);
         }
-        final PredicateCondition<RelationType, E> pc = new PredicateCondition<>(type, predicate, value);
+        PredicateCondition<RelationType, E> pc = new PredicateCondition<>(type, predicate, value);
         if (!conditions.contains(pc)) conditions.add(pc);
     }
 
 
-    public static Map.Entry<RelationType,Collection> extractOrCondition(Or<JanusGraphRelation> condition) {
+    public static Map.Entry<RelationType, Collection> extractOrCondition(Or<JanusGraphRelation> condition) {
         RelationType masterType = null;
-        final List<Object> values = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
         for (Condition c : condition.getChildren()) {
             if (!(c instanceof PredicateCondition)) return null;
-            final PredicateCondition<RelationType, JanusGraphRelation> atom = (PredicateCondition)c;
-            if (atom.getPredicate()!=Cmp.EQUAL) return null;
-            final Object value = atom.getValue();
-            if (value==null) return null;
-            final RelationType type = atom.getKey();
-            if (masterType==null) masterType=type;
+            PredicateCondition<RelationType, JanusGraphRelation> atom = (PredicateCondition) c;
+            if (atom.getPredicate() != Cmp.EQUAL) return null;
+            Object value = atom.getValue();
+            if (value == null) return null;
+            RelationType type = atom.getKey();
+            if (masterType == null) masterType = type;
             else if (!masterType.equals(type)) return null;
             values.add(value);
         }
-        if (masterType==null) return null;
-        assert !values.isEmpty();
-        return new AbstractMap.SimpleImmutableEntry(masterType,values);
+        if (masterType == null) return null;
+        return new AbstractMap.SimpleImmutableEntry(masterType, values);
     }
 
 
@@ -304,7 +304,7 @@ public class QueryUtil {
          * of current results with cumulative results on each iteration.
          */
         //TODO: smarter limit estimation
-        final int multiplier = Math.min(16, (int) Math.pow(2, retrievals.size() - 1));
+        int multiplier = Math.min(16, (int) Math.pow(2, retrievals.size() - 1));
         int subLimit = Integer.MAX_VALUE;
         if (Integer.MAX_VALUE / multiplier >= limit) subLimit = limit * multiplier;
         boolean exhaustedResults;
@@ -323,11 +323,11 @@ public class QueryUtil {
                 if (results == null) {
                     results = Lists.newArrayList(subResult);
                 } else {
-                    final Set<R> subResultSet = ImmutableSet.copyOf(subResult);
+                    Set<R> subResultSet = ImmutableSet.copyOf(subResult);
                     results.removeIf(o -> !subResultSet.contains(o));
                 }
             }
-            subLimit = (int) Math.min(Integer.MAX_VALUE - 1, Math.max(Math.pow(subLimit, 1.5),(subLimit+1)*2));
+            subLimit = (int) Math.min(Integer.MAX_VALUE - 1, Math.max(Math.pow(subLimit, 1.5), (subLimit + 1) * 2));
         } while (results != null && results.size() < limit && !exhaustedResults);
         return results;
     }
@@ -336,7 +336,6 @@ public class QueryUtil {
     public interface IndexCall<R> {
 
         Collection<R> call(int limit);
-
     }
 
 }

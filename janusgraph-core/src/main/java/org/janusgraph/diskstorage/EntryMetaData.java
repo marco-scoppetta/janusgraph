@@ -22,7 +22,7 @@ import java.util.EnumMap;
 import java.util.function.Function;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+
  * @author Alexander Patrikalakis (amcp@mit.edu)
  */
 public enum EntryMetaData {

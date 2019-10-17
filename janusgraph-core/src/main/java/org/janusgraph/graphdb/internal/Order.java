@@ -17,7 +17,7 @@ package org.janusgraph.graphdb.internal;
 /**
  * Constants to specify the ordering of a result set in queries.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public enum Order {

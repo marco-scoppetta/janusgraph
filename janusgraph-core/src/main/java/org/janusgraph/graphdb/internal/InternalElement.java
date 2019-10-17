@@ -21,7 +21,7 @@ import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 /**
  * Internal Element interface adding methods that should only be used by JanusGraph
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface InternalElement extends JanusGraphElement {
 

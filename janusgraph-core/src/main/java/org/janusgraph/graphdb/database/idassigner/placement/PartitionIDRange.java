@@ -33,7 +33,7 @@ import java.util.Random;
  *
  * It is always true that lowerID and upperID are smaller or equal than idUpperBound.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class PartitionIDRange {
 

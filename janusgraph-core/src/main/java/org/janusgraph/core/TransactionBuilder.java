@@ -22,7 +22,7 @@ import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
  * Constructor returned by {@link org.janusgraph.core.JanusGraph#buildTransaction()} to build a new transaction.
  * The TransactionBuilder allows certain aspects of the resulting transaction to be configured up-front.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface TransactionBuilder {
 

@@ -20,7 +20,7 @@ import java.time.Instant;
  * Builder for assembling a processor that processes a particular transaction LOG. A processor can be composed of one or multiple
  * {@link ChangeProcessor}s which are executed independently.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface LogProcessorBuilder {
 

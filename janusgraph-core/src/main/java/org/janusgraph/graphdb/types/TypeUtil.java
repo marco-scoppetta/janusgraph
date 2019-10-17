@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author Matthias Broecheler (me@matthiasb.com)
+
  * @author Joshua Shinavier (http://fortytwo.net)
  */
 public class TypeUtil {

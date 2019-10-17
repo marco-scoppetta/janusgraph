@@ -23,7 +23,7 @@ import java.util.*;
  *
  * @param <T>
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public class RandomRemovalList<T> implements Collection<T>, Iterator<T> {
 
@@ -94,13 +94,11 @@ public class RandomRemovalList<T> implements Collection<T>, Iterator<T> {
 
     @Override
     public int size() {
-        assert size >= 0;
         return size;
     }
 
     @Override
     public boolean isEmpty() {
-        assert size >= 0;
         return size == 0;
     }
 

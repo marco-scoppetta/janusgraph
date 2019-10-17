@@ -35,7 +35,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ST
  * Implements a row in the in-memory implementation {@link InMemoryKeyColumnValueStore} which is comprised of
  * column-value pairs. This data is held in a sorted array for space and retrieval efficiency.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 class ColumnValueStore {

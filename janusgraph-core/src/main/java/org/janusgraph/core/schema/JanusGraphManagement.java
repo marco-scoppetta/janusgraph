@@ -46,7 +46,7 @@ import java.util.concurrent.Future;
  * <li>Consistency Management: Set the consistency level of individual schema elements</li>
  * </ul>
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface JanusGraphManagement extends JanusGraphConfiguration, SchemaManager {
 

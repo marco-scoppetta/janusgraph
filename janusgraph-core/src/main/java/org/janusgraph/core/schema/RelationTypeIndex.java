@@ -29,7 +29,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
  * This interface allows the inspection of already defined RelationTypeIndex'es. An existing index on a RelationType
  * can be retrieved via {@link JanusGraphManagement#getRelationIndex(org.janusgraph.core.RelationType, String)}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public interface RelationTypeIndex extends Index {
 
