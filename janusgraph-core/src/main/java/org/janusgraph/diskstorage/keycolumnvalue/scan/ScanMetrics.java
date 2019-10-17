@@ -24,7 +24,6 @@ package org.janusgraph.diskstorage.keycolumnvalue.scan;
  * </ul>
  * All counters values automatically start at zero.
  *
-
  */
 public interface ScanMetrics {
 

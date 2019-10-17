@@ -19,7 +19,6 @@ package org.janusgraph.diskstorage;
  * An extension to the {@link BaseTransaction} interface that exposes a
  * configuration object of type {@link BaseTransactionConfig} for this particular transaction.
  *
-
  */
 public interface BaseTransactionConfigurable extends BaseTransaction {
 

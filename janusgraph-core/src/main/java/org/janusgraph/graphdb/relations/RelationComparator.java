@@ -34,7 +34,6 @@ import java.util.Comparator;
  * A {@link Comparator} for {@link JanusGraphRelation} that uses a defined order to compare the relations with
  * or otherwise uses the natural order of relations.
  *
-
  */
 public class RelationComparator implements Comparator<InternalRelation> {
 

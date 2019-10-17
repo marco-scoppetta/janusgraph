@@ -27,7 +27,6 @@ import java.util.Objects;
  * of a message.
  * Particular {@link org.janusgraph.diskstorage.log.Log} implementations can extend this class.
  *
-
  */
 public abstract class AbstractMessage implements Message {
 

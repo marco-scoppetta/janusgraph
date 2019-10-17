@@ -28,7 +28,6 @@ import java.util.Map;
  *
  * The id placement strategy is configurable.
  *
-
  */
 public interface IDPlacementStrategy {
 

@@ -376,8 +376,7 @@ public class Geoshape {
     /**
      * Geoshape attribute serializer for JanusGraph.
      *
-
-     */
+ */
     public static class GeoshapeSerializer implements AttributeSerializer<Geoshape> {
 
         @Override

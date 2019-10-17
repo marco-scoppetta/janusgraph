@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.IntDoubleHashMap;
 /**
  * Count relative integer frequencies
  *
-
  */
 public class IntegerDoubleFrequency {
 

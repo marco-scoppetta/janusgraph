@@ -23,7 +23,6 @@ import java.util.Objects;
  * Simple class to represent arbitrary parameters as key-value pairs.
  * Parameters are used in configuration and definitions.
  *
-
  */
 public class Parameter<V> {
 

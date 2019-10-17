@@ -44,8 +44,8 @@ public class StandardSchemaCache implements SchemaCache {
     private static final int SCHEMAID_BACK_SHIFT = 2; //Number of bits to remove from end of schema id since its just the padding
 
     //The following two conditions should always be true if we ever decide to change any of the above fields
-//        assert IDManager.VertexIDType.Schema.removePadding(1L << SCHEMAID_BACK_SHIFT) == 1;
-//        assert SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT >= 0;
+//        IDManager.VertexIDType.Schema.removePadding(1L << SCHEMAID_BACK_SHIFT) == 1;
+//        SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT >= 0;
 
     private final int maxCachedTypes;
     private final int maxCachedRelations;

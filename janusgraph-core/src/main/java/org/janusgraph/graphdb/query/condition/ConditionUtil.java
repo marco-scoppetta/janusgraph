@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 /**
  * Utility methods for transforming and inspecting {@link Condition}s.
  *
-
  */
 public class ConditionUtil {
 

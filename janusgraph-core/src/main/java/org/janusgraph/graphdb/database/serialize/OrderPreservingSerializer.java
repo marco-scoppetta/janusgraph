@@ -24,7 +24,6 @@ import org.janusgraph.diskstorage.WriteBuffer;
  * serialized byte representation representation.
  *
  *
-
  */
 public interface OrderPreservingSerializer<V> extends AttributeSerializer<V> {
 

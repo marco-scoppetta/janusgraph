@@ -22,7 +22,6 @@ import java.util.List;
 /**
  * Generic interface to a backend storage engine.
  *
-
  */
 
 public interface StoreManager {

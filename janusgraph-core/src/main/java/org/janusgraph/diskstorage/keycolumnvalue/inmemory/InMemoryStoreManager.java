@@ -31,7 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * In-memory backend storage engine.
  *
-
  */
 
 public class InMemoryStoreManager implements KeyColumnValueStoreManager {

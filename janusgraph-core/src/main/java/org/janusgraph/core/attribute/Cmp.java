@@ -22,7 +22,6 @@ import org.apache.commons.lang.ArrayUtils;
 /**
  * Basic comparison relations for comparable (i.e. linearly ordered) objects.
  *
-
  */
 
 public enum Cmp implements JanusGraphPredicate {

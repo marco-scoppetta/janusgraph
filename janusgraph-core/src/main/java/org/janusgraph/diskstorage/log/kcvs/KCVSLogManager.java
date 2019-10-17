@@ -28,13 +28,13 @@ import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
 import org.janusgraph.graphdb.database.idassigner.placement.PartitionIDRange;
 import org.janusgraph.graphdb.database.serialize.StandardSerializer;
-import org.janusgraph.util.encoding.ConversionHelper;
 import org.janusgraph.util.stats.NumberUtil;
 import org.janusgraph.util.system.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.*;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
@@ -43,12 +43,11 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
  * Implementation of {@link LogManager} against an arbitrary {@link KeyColumnValueStoreManager}. Issues {@link Log} instances
  * which wrap around a {@link KeyColumnValueStore}.
  *
-
  */
 @PreInitializeConfigOptions
 public class KCVSLogManager implements LogManager {
 
-    private static final Logger log = LoggerFactory.getLogger(KCVSLogManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KCVSLogManager.class);
 
     public static final ConfigOption<Boolean> LOG_FIXED_PARTITION = new ConfigOption<>(LOG_NS, "fixed-partition",
             "Whether all LOG entries are written to one fixed partition even if the backend store is partitioned." +
@@ -65,7 +64,7 @@ public class KCVSLogManager implements LogManager {
      * {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#CLUSTER_MAX_PARTITIONS} and dividing
      * the number by this constant.
      */
-    public static final int CLUSTER_SIZE_DIVIDER = 8;
+    private static final int CLUSTER_SIZE_DIVIDER = 8;
 
 
     /**
@@ -111,9 +110,6 @@ public class KCVSLogManager implements LogManager {
 
     /**
      * Opens a LOG manager against the provided KCVS store with the given configuration.
-     *
-     * @param storeManager
-     * @param config
      */
     public KCVSLogManager(KeyColumnValueStoreManager storeManager, Configuration config) {
         this(storeManager, config, null);
@@ -123,21 +119,17 @@ public class KCVSLogManager implements LogManager {
      * Opens a LOG manager against the provided KCVS store with the given configuration. Also provided is a list
      * of read-partition-ids. These only apply when readers are registered against an opened LOG. In that case,
      * the readers only read from the provided list of partition ids.
-     *
-     * @param storeManager
-     * @param config
-     * @param readPartitionIds
      */
-    public KCVSLogManager(KeyColumnValueStoreManager storeManager, Configuration config, int[] readPartitionIds) {
+    private KCVSLogManager(KeyColumnValueStoreManager storeManager, Configuration config, int[] readPartitionIds) {
         Preconditions.checkArgument(storeManager != null && config != null);
         if (config.has(LOG_STORE_TTL)) {
-            indexStoreTTL = ConversionHelper.getTTLSeconds(config.get(LOG_STORE_TTL));
+            indexStoreTTL = getTTLSeconds(config.get(LOG_STORE_TTL));
             StoreFeatures storeFeatures = storeManager.getFeatures();
             if (storeFeatures.hasCellTTL() && !storeFeatures.hasStoreTTL()) {
                 // Reduce cell-level TTL (fine-grained) to store-level TTL (coarse-grained)
                 storeManager = new TTLKCVSManager(storeManager);
             } else if (!storeFeatures.hasStoreTTL()) {
-                log.warn("Log is configured with TTL but underlying storage backend does not support TTL, hence this" +
+                LOG.warn("Log is configured with TTL but underlying storage backend does not support TTL, hence this" +
                         "configuration option is ignored and entries must be manually removed from the backend.");
             }
         } else {
@@ -159,7 +151,7 @@ public class KCVSLogManager implements LogManager {
         this.partitionBitWidth = NumberUtil.getPowerOf2(maxPartitions);
 
         Preconditions.checkArgument(partitionBitWidth >= 0 && partitionBitWidth < 32);
-        final int numPartitions = (1 << partitionBitWidth);
+        int numPartitions = (1 << partitionBitWidth);
 
         //Partitioning
         if (partitionBitWidth > 0 && !config.get(LOG_FIXED_PARTITION)) {
@@ -176,7 +168,7 @@ public class KCVSLogManager implements LogManager {
                         for (int p : idRange.getAllContainedIDs()) localPartitions.add(p);
                     }
                 } catch (Throwable e) {
-                    log.error("Could not process local id partitions", e);
+                    LOG.error("Could not process local id partitions", e);
                 }
 
                 if (!localPartitions.isEmpty()) {
@@ -208,6 +200,13 @@ public class KCVSLogManager implements LogManager {
         Preconditions.checkArgument(partitionId >= 0 && partitionId < (1 << partitionBitWidth));
     }
 
+    private static int getTTLSeconds(Duration duration) {
+        Preconditions.checkArgument(duration!=null && !duration.isZero(),"Must provide non-zero TTL");
+        long ttlSeconds = Math.max(1,duration.getSeconds());
+        Preconditions.checkArgument(ttlSeconds<=Integer.MAX_VALUE, "tll value is too large [%s] - value overflow",duration);
+        return (int)ttlSeconds;
+    }
+
     @Override
     public synchronized KCVSLog openLog(String name) throws BackendException {
         if (openLogs.containsKey(name)) return openLogs.get(name);
@@ -224,11 +223,9 @@ public class KCVSLogManager implements LogManager {
      * Must be triggered by a particular {@link KCVSLog} when it is closed so that this LOG can be removed from the list
      * of open logs.
      *
-     * @param log
      */
     synchronized void closedLog(KCVSLog log) {
         KCVSLog l = openLogs.remove(log.getName());
-        assert l == log;
     }
 
     @Override

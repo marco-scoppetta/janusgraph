@@ -14,16 +14,14 @@
 
 package org.janusgraph.graphdb.query.condition;
 
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.core.JanusGraphEdge;
 import org.janusgraph.core.JanusGraphRelation;
 import org.janusgraph.core.JanusGraphVertex;
 import org.janusgraph.core.JanusGraphVertexProperty;
 import org.janusgraph.graphdb.relations.CacheEdge;
 
-import org.apache.tinkerpop.gremlin.structure.Direction;
-
 import java.util.Objects;
-
 
 
 public class DirectionCondition<E extends JanusGraphRelation> extends Literal<E> {
@@ -32,20 +30,19 @@ public class DirectionCondition<E extends JanusGraphRelation> extends Literal<E>
     private final Direction direction;
 
     public DirectionCondition(JanusGraphVertex vertex, Direction dir) {
-        assert vertex != null && dir != null;
         this.baseVertex = vertex;
         this.direction = dir;
     }
 
     @Override
     public boolean evaluate(E element) {
-        if (direction==Direction.BOTH) return true;
+        if (direction == Direction.BOTH) return true;
         if (element instanceof CacheEdge) {
-            return direction==((CacheEdge)element).getVertexCentricDirection();
+            return direction == ((CacheEdge) element).getVertexCentricDirection();
         } else if (element instanceof JanusGraphEdge) {
-            return ((JanusGraphEdge)element).vertex(direction).equals(baseVertex);
+            return ((JanusGraphEdge) element).vertex(direction).equals(baseVertex);
         } else if (element instanceof JanusGraphVertexProperty) {
-            return direction==Direction.OUT;
+            return direction == Direction.OUT;
         }
         return false;
     }
@@ -64,15 +61,15 @@ public class DirectionCondition<E extends JanusGraphRelation> extends Literal<E>
         if (this == other)
             return true;
 
-        if (other == null || !getClass().isInstance(other))
+        if (!getClass().isInstance(other))
             return false;
 
-        DirectionCondition oth = (DirectionCondition)other;
+        DirectionCondition oth = (DirectionCondition) other;
         return direction == oth.direction && baseVertex.equals(oth.baseVertex);
     }
 
     @Override
     public String toString() {
-        return "dir["+getDirection()+"]";
+        return "dir[" + getDirection() + "]";
     }
 }

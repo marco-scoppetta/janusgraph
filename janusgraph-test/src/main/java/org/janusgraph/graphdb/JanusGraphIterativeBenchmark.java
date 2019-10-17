@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * or at least the primitive backend operations used therein.
  * <p>
  *
-
  */
 public abstract class JanusGraphIterativeBenchmark extends JanusGraphBaseTest {
 

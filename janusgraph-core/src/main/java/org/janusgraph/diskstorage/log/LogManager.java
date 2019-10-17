@@ -19,7 +19,6 @@ import org.janusgraph.diskstorage.BackendException;
 /**
  * Manager interface for opening {@link Log}s against a particular Log implementation.
  *
-
  */
 public interface LogManager {
 

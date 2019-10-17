@@ -17,7 +17,6 @@ package org.janusgraph.diskstorage.keycolumnvalue;
 /**
  * Consistency Levels for transactions.
  *
-
  */
 public enum ConsistencyLevel {
 

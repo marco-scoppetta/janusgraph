@@ -21,7 +21,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.P;
 /**
  * Comparison relations for geographic shapes.
  *
-
  */
 
 public enum Geo implements JanusGraphPredicate {

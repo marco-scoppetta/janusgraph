@@ -38,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * The number of partition ids to choose from is configurable.
  *
-
  */
 @PreInitializeConfigOptions
 public class SimpleBulkPlacementStrategy implements IDPlacementStrategy {

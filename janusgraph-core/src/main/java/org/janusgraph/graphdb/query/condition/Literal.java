@@ -21,7 +21,6 @@ import org.janusgraph.core.JanusGraphElement;
 /**
  * Abstract literal condition.
  *
-
  */
 public abstract class Literal<E extends JanusGraphElement> implements Condition<E> {
 

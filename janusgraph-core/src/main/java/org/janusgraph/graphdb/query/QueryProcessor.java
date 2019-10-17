@@ -41,7 +41,6 @@ import java.util.*;
  * filters out immediate duplicates.
  *
  *
-
  */
 public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphElement, B extends BackendQuery<B>> implements Iterable<R> {
 

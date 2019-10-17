@@ -51,7 +51,6 @@ public class HashingUtil {
 
         HashCode hashcode = key.as(hashFactory);
         WriteByteBuffer newKey = new WriteByteBuffer(prefixLen+key.length());
-        assert prefixLen==4 || prefixLen==8;
         if (prefixLen==4) newKey.putInt(hashcode.asInt());
         else newKey.putLong(hashcode.asLong());
         newKey.putBytes(key);
@@ -61,7 +60,5 @@ public class HashingUtil {
     public static StaticBuffer getKey(HashLength hashPrefixLen, StaticBuffer hasPrefixedKey) {
         return hasPrefixedKey.subrange(hashPrefixLen.length(), hasPrefixedKey.length() - hashPrefixLen.length());
     }
-
-
 
 }

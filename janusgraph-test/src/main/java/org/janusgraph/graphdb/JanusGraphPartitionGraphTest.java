@@ -62,7 +62,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests graph and vertex partitioning
  *
-
  */
 public abstract class JanusGraphPartitionGraphTest extends JanusGraphBaseTest {
 

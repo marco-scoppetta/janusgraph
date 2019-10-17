@@ -29,7 +29,6 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
  *     <li>Retrieving the relations of a schema vertex for predefined {@link org.janusgraph.graphdb.types.system.SystemRelationType}s</li>
  * </ul>
  *
-
  */
 public interface SchemaCache {
 

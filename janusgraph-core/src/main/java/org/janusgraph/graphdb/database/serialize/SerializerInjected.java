@@ -20,7 +20,6 @@ package org.janusgraph.graphdb.database.serialize;
  * Furthermore, such serializers will convert the {@link org.janusgraph.diskstorage.WriteBuffer} passed into the
  * {@link org.janusgraph.core.attribute.AttributeSerializer}'s write methods to be cast to {@link org.janusgraph.graphdb.database.serialize.DataOutput}.
  *
-
  */
 public interface SerializerInjected {
 

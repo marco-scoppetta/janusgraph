@@ -19,7 +19,6 @@ import java.io.Serializable;
 /**
  * A counter with a long value
  *
-
  */
 public class LongCounter implements Serializable {
 

@@ -25,7 +25,6 @@ import java.time.Duration;
  * Helper class for inspecting and modifying a configuration for JanusGraph.
  * It is important to {@link #close()} the configuration when all changes have been made.
  *
-
  */
 public class UserModifiableConfiguration implements JanusGraphConfiguration {
 

@@ -44,7 +44,6 @@ import java.util.Iterator;
  * <p>
  * IMPORTANT: This Iterable is not thread-safe.
  *
-
  */
 public class SimpleVertexQueryProcessor implements Iterable<Entry> {
 

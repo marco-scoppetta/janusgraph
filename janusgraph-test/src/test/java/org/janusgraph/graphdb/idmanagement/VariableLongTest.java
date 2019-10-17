@@ -307,7 +307,6 @@ public class VariableLongTest {
     public static long randomPosLong(long scaling) {
         long l = Math.round(random.nextGaussian()/3*scaling);
         if (l<0) l=Math.abs(l+1);
-        assert l>=0;
         return l;
     }
 

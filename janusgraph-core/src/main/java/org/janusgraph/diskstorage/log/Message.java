@@ -21,7 +21,6 @@ import java.time.Instant;
 /**
  * Messages which are added to and received from the {@link Log}.
  *
-
  */
 public interface Message {
 

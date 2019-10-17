@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
  * environments, i.e. these methods only use static access to the buffer.
  *
  *
-
  */
 public class ByteBufferUtil {
 

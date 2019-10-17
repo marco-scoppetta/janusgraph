@@ -25,7 +25,6 @@ import org.janusgraph.graphdb.database.idhandling.VariableLong;
  * Handles the allocation of ids based on the type of element
  * Responsible for the bit-wise pattern of JanusGraph's internal id scheme.
  *
-
  */
 public class IDManager {
 

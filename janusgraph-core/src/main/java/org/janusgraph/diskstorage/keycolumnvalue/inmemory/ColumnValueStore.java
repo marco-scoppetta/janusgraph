@@ -18,7 +18,8 @@ import com.google.common.base.Preconditions;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.NoLock;
 import org.janusgraph.diskstorage.util.StaticArrayEntry;
 
@@ -34,8 +35,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ST
 /**
  * Implements a row in the in-memory implementation {@link InMemoryKeyColumnValueStore} which is comprised of
  * column-value pairs. This data is held in a sorted array for space and retrieval efficiency.
- *
-
  */
 
 class ColumnValueStore {
@@ -44,7 +43,7 @@ class ColumnValueStore {
 
     private Data data;
 
-    public ColumnValueStore() {
+    ColumnValueStore() {
         data = new Data(new Entry[0], 0);
     }
 
@@ -84,7 +83,7 @@ class ColumnValueStore {
 
     private static class MemoryEntryList extends ArrayList<Entry> implements EntryList {
 
-        public MemoryEntryList(int size) {
+        MemoryEntryList(int size) {
             super(size);
         }
 
@@ -121,13 +120,13 @@ class ColumnValueStore {
         Entry[] del;
         if (!deletions.isEmpty()) {
             del = new Entry[deletions.size()];
-            int pos=0;
+            int pos = 0;
             for (StaticBuffer deletion : deletions) {
                 Entry delEntry = StaticArrayEntry.of(deletion);
-                if (Arrays.binarySearch(add,delEntry) >= 0) continue;
-                del[pos++]=delEntry;
+                if (Arrays.binarySearch(add, delEntry) >= 0) continue;
+                del[pos++] = delEntry;
             }
-            if (pos<deletions.size()) del = Arrays.copyOf(del,pos);
+            if (pos < deletions.size()) del = Arrays.copyOf(del, pos);
             Arrays.sort(del);
         } else del = new Entry[0];
 
@@ -202,13 +201,11 @@ class ColumnValueStore {
     }
 
     private static class Data {
-
         final Entry[] array;
         final int size;
 
         Data(Entry[] array, int size) {
             Preconditions.checkArgument(size >= 0 && size <= array.length);
-            assert isSorted();
             this.array = array;
             this.size = size;
         }

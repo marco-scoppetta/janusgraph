@@ -26,7 +26,6 @@ import org.janusgraph.core.VertexLabel;
  *     vertices with very large degrees but is inefficient for vertices with small degree</li>
  * </ul>
  *
-
  */
 public interface VertexLabelMaker {
 

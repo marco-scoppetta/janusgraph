@@ -48,7 +48,6 @@ import java.util.Set;
 /**
  * Utility methods used in query optimization and processing.
  *
-
  */
 public class QueryUtil {
 

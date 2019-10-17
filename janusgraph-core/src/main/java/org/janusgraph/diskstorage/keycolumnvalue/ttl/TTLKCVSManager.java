@@ -42,7 +42,6 @@ import java.util.Map;
  * during construction and applies it to every entry written through
  * subsequent mutate/mutateMany calls.
  *
-
  */
 public class TTLKCVSManager extends KCVSManagerProxy {
 
@@ -86,7 +85,7 @@ public class TTLKCVSManager extends KCVSManagerProxy {
     @Override
     public KeyColumnValueStore openDatabase(String name, StoreMetaData.Container metaData) throws BackendException {
         KeyColumnValueStore store = manager.openDatabase(name);
-        final int storeTTL = metaData.contains(StoreMetaData.TTL) ? metaData.get(StoreMetaData.TTL) : -1;
+        int storeTTL = metaData.contains(StoreMetaData.TTL) ? metaData.get(StoreMetaData.TTL) : -1;
         Preconditions.checkArgument(storeTTL>0,"TTL must be positive: %s", storeTTL);
         ttlEnabledStores.put(name, storeTTL);
         return new TTLKCVS(store, storeTTL);
@@ -95,7 +94,6 @@ public class TTLKCVSManager extends KCVSManagerProxy {
     @Override
     public void mutateMany(Map<String, Map<StaticBuffer, KCVMutation>> mutations, StoreTransaction txh) throws BackendException {
         if (!manager.getFeatures().hasStoreTTL()) {
-            assert manager.getFeatures().hasCellTTL();
             for (Map.Entry<String,Map<StaticBuffer, KCVMutation>> sentry : mutations.entrySet()) {
                 Integer ttl = ttlEnabledStores.get(sentry.getKey());
                 if (null != ttl && 0 < ttl) {
@@ -110,7 +108,6 @@ public class TTLKCVSManager extends KCVSManagerProxy {
 
     public static void applyTTL(Collection<Entry> additions, int ttl) {
         for (Entry entry : additions) {
-            assert entry instanceof MetaAnnotatable;
             ((MetaAnnotatable)entry).setMetaData(EntryMetaData.TTL, ttl);
         }
     }

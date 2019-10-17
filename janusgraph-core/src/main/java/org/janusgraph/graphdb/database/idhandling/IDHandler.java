@@ -14,6 +14,7 @@
 
 package org.janusgraph.graphdb.database.idhandling;
 
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.diskstorage.ReadBuffer;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.WriteBuffer;
@@ -22,10 +23,11 @@ import org.janusgraph.diskstorage.util.StaticArrayBuffer;
 import org.janusgraph.diskstorage.util.WriteByteBuffer;
 import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.RelationCategory;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 
-import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.*;
-
+import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.SystemEdgeLabel;
+import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.SystemPropertyKey;
+import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.UserEdgeLabel;
+import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.UserPropertyKey;
 
 
 public class IDHandler {
@@ -54,43 +56,47 @@ public class IDHandler {
         }
 
         public RelationCategory getRelationCategory() {
-            switch(this) {
+            switch (this) {
                 case PROPERTY_DIR:
                     return RelationCategory.PROPERTY;
                 case EDGE_IN_DIR:
                 case EDGE_OUT_DIR:
                     return RelationCategory.EDGE;
-                default: throw new AssertionError();
+                default:
+                    throw new AssertionError();
             }
         }
 
         public Direction getDirection() {
-            switch(this) {
+            switch (this) {
                 case PROPERTY_DIR:
                 case EDGE_OUT_DIR:
                     return Direction.OUT;
                 case EDGE_IN_DIR:
                     return Direction.IN;
-                default: throw new AssertionError();
+                default:
+                    throw new AssertionError();
             }
         }
 
         private int getPrefix(boolean invisible, boolean systemType) {
-            assert !systemType || invisible; // systemType implies invisible
-            return ((systemType?0:invisible?2:1)<<1) + getRelationType();
+            return ((systemType ? 0 : invisible ? 2 : 1) << 1) + getRelationType();
         }
 
         private static DirectionID getDirectionID(int relationType, int direction) {
-            assert relationType >= 0 && relationType <= 1 && direction >= 0 && direction <= 1;
             return forId((relationType << 1) + direction);
         }
 
         private static DirectionID forId(int id) {
-            switch(id) {
-                case 0: return PROPERTY_DIR;
-                case 2: return EDGE_OUT_DIR;
-                case 3: return EDGE_IN_DIR;
-                default: throw new AssertionError("Invalid id: " + id);
+            switch (id) {
+                case 0:
+                    return PROPERTY_DIR;
+                case 2:
+                    return EDGE_OUT_DIR;
+                case 3:
+                    return EDGE_IN_DIR;
+                default:
+                    throw new AssertionError("Invalid id: " + id);
             }
         }
     }
@@ -98,23 +104,15 @@ public class IDHandler {
 
     private static final int PREFIX_BIT_LEN = 3;
 
-    public static int relationTypeLength(long relationTypeId) {
-        assert relationTypeId > 0 && (relationTypeId << 1) > 0;  //Check positive and no-overflow
+    private static int relationTypeLength(long relationTypeId) {
         return VariableLong.positiveWithPrefixLength(IDManager.stripEntireRelationTypePadding(relationTypeId) << 1, PREFIX_BIT_LEN);
     }
 
     /**
      * The edge type is written as follows: [ Invisible &amp; System (2 bit) | Relation-Type-ID (1 bit) | Relation-Type-Count (variable) | Direction-ID (1 bit)]
      * Would only need 1 bit to store relation-type-id, but using two so we can upper bound.
-     *
-     *
-     * @param out
-     * @param relationTypeId
-     * @param dirID
      */
     public static void writeRelationType(WriteBuffer out, long relationTypeId, DirectionID dirID, boolean invisible) {
-        assert relationTypeId > 0 && (relationTypeId << 1) > 0; //Check positive and no-overflow
-
         long strippedId = (IDManager.stripEntireRelationTypePadding(relationTypeId) << 1) + dirID.getDirectionInt();
         VariableLong.writePositiveWithPrefix(out, strippedId, dirID.getPrefix(invisible, IDManager.isSystemRelationTypeId(relationTypeId)), PREFIX_BIT_LEN);
     }
@@ -129,13 +127,13 @@ public class IDHandler {
         long[] countPrefix = VariableLong.readPositiveWithPrefix(in, PREFIX_BIT_LEN);
         DirectionID dirID = DirectionID.getDirectionID((int) countPrefix[1] & 1, (int) (countPrefix[0] & 1));
         long typeId = countPrefix[0] >>> 1;
-        boolean isSystemType = (countPrefix[1]>>1)==0;
+        boolean isSystemType = (countPrefix[1] >> 1) == 0;
 
         if (dirID == DirectionID.PROPERTY_DIR)
-            typeId = IDManager.getSchemaId(isSystemType?SystemPropertyKey:UserPropertyKey, typeId);
+            typeId = IDManager.getSchemaId(isSystemType ? SystemPropertyKey : UserPropertyKey, typeId);
         else
-            typeId = IDManager.getSchemaId(isSystemType?SystemEdgeLabel:UserEdgeLabel, typeId);
-        return new RelationTypeParse(typeId,dirID);
+            typeId = IDManager.getSchemaId(isSystemType ? SystemEdgeLabel : UserEdgeLabel, typeId);
+        return new RelationTypeParse(typeId, dirID);
     }
 
     public static class RelationTypeParse {
@@ -143,7 +141,7 @@ public class IDHandler {
         public final long typeId;
         public final DirectionID dirID;
 
-        public RelationTypeParse(long typeId, DirectionID dirID) {
+        RelationTypeParse(long typeId, DirectionID dirID) {
             this.typeId = typeId;
             this.dirID = dirID;
         }
@@ -161,7 +159,6 @@ public class IDHandler {
     }
 
     private static StaticBuffer getPrefixed(int prefix) {
-        assert prefix < (1 << PREFIX_BIT_LEN) && prefix >= 0;
         byte[] arr = new byte[1];
         arr[0] = (byte) (prefix << (Byte.SIZE - PREFIX_BIT_LEN));
         return new StaticArrayBuffer(arr);
@@ -171,22 +168,21 @@ public class IDHandler {
         int start, end;
         switch (type) {
             case PROPERTY:
-                start = DirectionID.PROPERTY_DIR.getPrefix(systemTypes,systemTypes);
+                start = DirectionID.PROPERTY_DIR.getPrefix(systemTypes, systemTypes);
                 end = start;
                 break;
             case EDGE:
-                start = DirectionID.EDGE_OUT_DIR.getPrefix(systemTypes,systemTypes);
+                start = DirectionID.EDGE_OUT_DIR.getPrefix(systemTypes, systemTypes);
                 end = start;
                 break;
             case RELATION:
-                start = DirectionID.PROPERTY_DIR.getPrefix(systemTypes,systemTypes);
-                end = DirectionID.EDGE_OUT_DIR.getPrefix(systemTypes,systemTypes);
+                start = DirectionID.PROPERTY_DIR.getPrefix(systemTypes, systemTypes);
+                end = DirectionID.EDGE_OUT_DIR.getPrefix(systemTypes, systemTypes);
                 break;
             default:
                 throw new AssertionError("Unrecognized type:" + type);
         }
         end++;
-        assert end > start;
         return new StaticBuffer[]{getPrefixed(start), getPrefixed(end)};
     }
 

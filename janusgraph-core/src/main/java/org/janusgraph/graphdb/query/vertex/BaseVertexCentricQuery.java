@@ -38,7 +38,6 @@ import java.util.List;
  * This class override many methods in {@link org.janusgraph.graphdb.query.ElementQuery} - check there
  * for a description.
  *
-
  */
 public class BaseVertexCentricQuery extends BaseQuery implements ProfileObservable {
 

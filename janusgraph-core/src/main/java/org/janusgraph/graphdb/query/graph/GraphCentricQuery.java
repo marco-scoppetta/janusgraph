@@ -37,7 +37,6 @@ import java.util.Objects;
  * It also maintains the ordering for the query result which is needed by the {@link org.janusgraph.graphdb.query.QueryProcessor}
  * to correctly order the result.
  *
-
  */
 public class GraphCentricQuery extends BaseQuery implements ElementQuery<JanusGraphElement, JointIndexQuery>, ProfileObservable {
 

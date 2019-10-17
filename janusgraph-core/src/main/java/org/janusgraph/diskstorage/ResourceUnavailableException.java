@@ -23,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
  * The resource can be an external storage system, indexing system or other component.
  * <p>
  *
-
  */
 public class ResourceUnavailableException extends JanusGraphException {
 

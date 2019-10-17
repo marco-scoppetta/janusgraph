@@ -26,7 +26,6 @@ import java.util.Set;
  * Container for collection mutations against a data store.
  * Mutations are either additions or deletions.
  *
-
  */
 
 public abstract class Mutation<E,K> {

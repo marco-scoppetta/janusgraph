@@ -26,7 +26,6 @@ import java.util.Objects;
 /**
  * Evaluates elements based on their visibility
  *
-
  */
 public class VisibilityFilterCondition<E extends JanusGraphElement> extends Literal<E> {
 

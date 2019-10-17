@@ -111,7 +111,6 @@ public class ManagementLogger implements MessageReader {
                 break;
             }
             default:
-                assert logType == MgmtLogType.CONFIG_MUTATION;
                 break;
         }
 
@@ -126,7 +125,6 @@ public class ManagementLogger implements MessageReader {
         VariableLong.writePositive(out, evictionId);
         VariableLong.writePositive(out, updatedTypes.size());
         for (JanusGraphSchemaVertex type : updatedTypes) {
-            assert type.hasId();
             VariableLong.writePositive(out, type.longId());
         }
         if (evictGraphFromCache) {

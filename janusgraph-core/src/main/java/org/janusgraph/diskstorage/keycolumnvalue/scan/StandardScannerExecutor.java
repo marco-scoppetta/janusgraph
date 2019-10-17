@@ -17,9 +17,18 @@ package org.janusgraph.diskstorage.keycolumnvalue.scan;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractFuture;
 import org.janusgraph.core.schema.JanusGraphManagement;
-import org.janusgraph.diskstorage.*;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.Entry;
+import org.janusgraph.diskstorage.EntryList;
+import org.janusgraph.diskstorage.StaticBuffer;
+import org.janusgraph.diskstorage.TemporaryBackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
+import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.RecordIterator;
 import org.janusgraph.diskstorage.util.StaticArrayEntry;
@@ -29,16 +38,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 
 class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements JanusGraphManagement.IndexJobFuture, Runnable {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(StandardScannerExecutor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StandardScannerExecutor.class);
 
     private static final int QUEUE_SIZE = 1000;
     private static final int TIMEOUT_MS = 180000; // 60 seconds
@@ -67,7 +80,7 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
                             final StoreFeatures storeFeatures,
                             final int numProcessors, int workBlockSize,
                             final Configuration jobConfiguration,
-                            final Configuration graphConfiguration) throws BackendException {
+                            final Configuration graphConfiguration) {
         this.job = job;
         this.finishJob = finishJob;
         this.store = store;
@@ -87,39 +100,39 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
         dataQueues.add(queue);
 
         DataPuller dp = new DataPuller(sq, queue,
-                KCVSUtil.getKeys(store,sq,storeFeatures,MAX_KEY_LENGTH,stx),job.getKeyFilter());
+                KCVSUtil.getKeys(store, sq, storeFeatures, MAX_KEY_LENGTH, stx), job.getKeyFilter());
         dp.start();
         return dp;
     }
 
     @Override
     public void run() {
-        final List<SliceQuery> queries;
-        final int numQueries;
+        List<SliceQuery> queries;
+        int numQueries;
         try {
             job.workerIterationStart(jobConfiguration, graphConfiguration, metrics);
 
             queries = job.getQueries();
             numQueries = queries.size();
-            Preconditions.checkArgument(numQueries > 0,"Must at least specify one query for job: %s",job);
+            Preconditions.checkArgument(numQueries > 0, "Must at least specify one query for job: %s", job);
             if (numQueries > 1) {
                 //It is assumed that the first query is the grounding query if multiple queries exist
                 SliceQuery ground = queries.get(0);
                 StaticBuffer start = ground.getSliceStart();
                 Preconditions.checkArgument(start.equals(BufferUtil.zeroBuffer(1)),
-                        "Expected start of first query to be a single 0s: %s",start);
+                        "Expected start of first query to be a single 0s: %s", start);
                 StaticBuffer end = ground.getSliceEnd();
                 Preconditions.checkArgument(end.equals(BufferUtil.oneBuffer(end.length())),
-                        "Expected end of first query to be all 1s: %s",end);
+                        "Expected end of first query to be all 1s: %s", end);
             }
             dataQueues = new ArrayList<>(numQueries);
             pullThreads = new DataPuller[numQueries];
 
-            for (int pos = 0; pos< numQueries; pos++) {
-                pullThreads[pos]=addDataPuller(queries.get(pos),storeTx);
+            for (int pos = 0; pos < numQueries; pos++) {
+                pullThreads[pos] = addDataPuller(queries.get(pos), storeTx);
             }
-        }  catch (Throwable e) {
-            log.error("Exception trying to setup the job:", e);
+        } catch (Throwable e) {
+            LOG.error("Exception trying to setup the job:", e);
             cleanupSilent();
             job.workerIterationEnd(metrics);
             setException(e);
@@ -129,8 +142,8 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
         BlockingQueue<Row> processorQueue = new LinkedBlockingQueue<>(QUEUE_SIZE);
 
         Processor[] processors = new Processor[numProcessors];
-        for (int i=0;i<processors.length;i++) {
-            processors[i]= new Processor(job.clone(),processorQueue);
+        for (int i = 0; i < processors.length; i++) {
+            processors[i] = new Processor(job.clone(), processorQueue);
             processors[i].start();
         }
 
@@ -138,36 +151,35 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
             SliceResult[] currentResults = new SliceResult[numQueries];
             while (!interrupted) {
                 for (int i = 0; i < numQueries; i++) {
-                    if (currentResults[i]!=null) continue;
+                    if (currentResults[i] != null) continue;
                     BlockingQueue<SliceResult> queue = dataQueues.get(i);
 
-                    SliceResult qr = queue.poll(TIME_PER_TRY,TimeUnit.MILLISECONDS); //Try very short time to see if we are done
-                    if (qr==null) {
+                    SliceResult qr = queue.poll(TIME_PER_TRY, TimeUnit.MILLISECONDS); //Try very short time to see if we are done
+                    if (qr == null) {
                         if (pullThreads[i].isFinished()) continue; //No more data to be expected
                         int retryCount = 0;
                         while (!pullThreads[i].isFinished() && retryCount < TIMEOUT_MS / TIME_PER_TRY && qr == null) {
-                            retryCount ++;
+                            retryCount++;
                             qr = queue.poll(TIME_PER_TRY, TimeUnit.MILLISECONDS);
                         }
-                        if (qr==null && !pullThreads[i].isFinished())
+                        if (qr == null && !pullThreads[i].isFinished())
                             throw new TemporaryBackendException("Timed out waiting for next row data - storage error likely");
                     }
-                    currentResults[i]=qr;
+                    currentResults[i] = qr;
                 }
                 SliceResult conditionQuery = currentResults[0];
-                if (conditionQuery==null) break; //Termination condition - primary query has no more data
-                final StaticBuffer key = conditionQuery.key;
+                if (conditionQuery == null) break; //Termination condition - primary query has no more data
+                StaticBuffer key = conditionQuery.key;
 
-                Map<SliceQuery,EntryList> queryResults = new HashMap<>(numQueries);
-                for (int i=0;i<currentResults.length;i++) {
+                Map<SliceQuery, EntryList> queryResults = new HashMap<>(numQueries);
+                for (int i = 0; i < currentResults.length; i++) {
                     SliceQuery query = queries.get(i);
                     EntryList entries = EntryList.EMPTY_LIST;
-                    if (currentResults[i]!=null && currentResults[i].key.equals(key)) {
-                        assert query.equals(currentResults[i].query);
+                    if (currentResults[i] != null && currentResults[i].key.equals(key)) {
                         entries = currentResults[i].entries;
-                        currentResults[i]=null;
+                        currentResults[i] = null;
                     }
-                    queryResults.put(query,entries);
+                    queryResults.put(query, entries);
                 }
                 processorQueue.put(new Row(key, queryResults));
             }
@@ -175,7 +187,7 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
             for (int i = 0; i < pullThreads.length; i++) {
                 pullThreads[i].join(10);
                 if (pullThreads[i].isAlive()) {
-                    log.warn("Data pulling thread [{}] did not terminate. Forcing termination",i);
+                    LOG.warn("Data pulling thread [{}] did not terminate. Forcing termination", i);
                     pullThreads[i].interrupt();
                 }
             }
@@ -183,14 +195,14 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
             for (Processor processor : processors) {
                 processor.finish();
             }
-            if (!Threads.waitForCompletion(processors,TIMEOUT_MS)) log.error("Processor did not terminate in time");
+            if (!Threads.waitForCompletion(processors, TIMEOUT_MS)) LOG.error("Processor did not terminate in time");
 
             cleanup();
             try {
                 job.workerIterationEnd(metrics);
             } catch (IllegalArgumentException e) {
                 // https://github.com/JanusGraph/janusgraph/pull/891
-                log.warn("Exception occurred processing worker iteration end. See PR 891.", e);
+                LOG.warn("Exception occurred processing worker iteration end. See PR 891.", e);
             }
 
             if (interrupted) {
@@ -200,7 +212,7 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
                 set(metrics);
             }
         } catch (Throwable e) {
-            log.error("Exception occurred during job execution: {}",e);
+            LOG.error("Exception occurred during job execution:", e);
             job.workerIterationEnd(metrics);
             setException(e);
         } finally {
@@ -217,7 +229,7 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
     private void cleanup() throws BackendException {
         if (!hasCompleted) {
             hasCompleted = true;
-            if (pullThreads!=null) {
+            if (pullThreads != null) {
                 for (DataPuller pullThread : pullThreads) {
                     if (pullThread.isAlive()) {
                         pullThread.interrupt();
@@ -232,7 +244,7 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
         try {
             cleanup();
         } catch (BackendException ex) {
-            log.error("Encountered exception when trying to clean up after failure",ex);
+            LOG.error("Encountered exception when trying to clean up after failure", ex);
         }
     }
 
@@ -244,14 +256,13 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
     private static class Row {
 
         final StaticBuffer key;
-        final Map<SliceQuery,EntryList> entries;
+        final Map<SliceQuery, EntryList> entries;
 
         private Row(StaticBuffer key, Map<SliceQuery, EntryList> entries) {
             this.key = key;
             this.entries = entries;
         }
     }
-
 
 
     private class Processor extends Thread {
@@ -277,35 +288,35 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
                 job.workerIterationStart(jobConfiguration, graphConfiguration, metrics);
                 while (!finished || !processorQueue.isEmpty()) {
                     Row row;
-                    while ((row=processorQueue.poll(100,TimeUnit.MILLISECONDS))!=null) {
-                        if (numProcessed>=workBlockSize) {
+                    while ((row = processorQueue.poll(100, TimeUnit.MILLISECONDS)) != null) {
+                        if (numProcessed >= workBlockSize) {
                             //Setup new chunk of work
                             job.workerIterationEnd(metrics);
                             job = job.clone();
                             job.workerIterationStart(jobConfiguration, graphConfiguration, metrics);
-                            numProcessed=0;
+                            numProcessed = 0;
                         }
                         try {
-                            job.process(row.key,row.entries,metrics);
+                            job.process(row.key, row.entries, metrics);
                             metrics.increment(ScanMetrics.Metric.SUCCESS);
                         } catch (Throwable ex) {
-                            log.error("Exception processing row ["+row.key+"]: ",ex);
+                            LOG.error("Exception processing row [" + row.key + "]: ", ex);
                             metrics.increment(ScanMetrics.Metric.FAILURE);
                         }
                         numProcessed++;
                     }
                 }
             } catch (InterruptedException e) {
-                log.error("Processing thread interrupted while waiting on queue or processing data", e);
+                LOG.error("Processing thread interrupted while waiting on queue or processing data", e);
             } catch (Throwable e) {
-                log.error("Unexpected error processing data: {}",e);
+                LOG.error("Unexpected error processing data: {}", e);
             } finally {
                 job.workerIterationEnd(metrics);
             }
         }
 
         public void finish() {
-            this.finished=true;
+            this.finished = true;
         }
     }
 
@@ -339,25 +350,24 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
                 }
                 finished = true;
             } catch (InterruptedException e) {
-                log.error("Data-pulling thread interrupted while waiting on queue or data", e);
+                LOG.error("Data-pulling thread interrupted while waiting on queue or data", e);
             } catch (Throwable e) {
-                log.error("Could not load data from storage: {}",e);
+                LOG.error("Could not load data from storage: {}", e);
             } finally {
                 try {
                     keyIterator.close();
                 } catch (IOException e) {
-                    log.warn("Could not close storage iterator ", e);
+                    LOG.warn("Could not close storage iterator ", e);
                 }
             }
         }
 
-        public boolean isFinished() {
+        boolean isFinished() {
             return finished;
         }
     }
 
     private static class SliceResult {
-
         final SliceQuery query;
         final StaticBuffer key;
         final EntryList entries;
@@ -368,9 +378,6 @@ class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements Jan
             this.entries = entries;
         }
     }
-
-
-
 }
 
 

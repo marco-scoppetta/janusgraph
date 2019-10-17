@@ -45,7 +45,6 @@ public class StringEncoding {
         } else {
             for (int i = 0; i < attribute.length(); i++) {
                 int c = attribute.charAt(i);
-                assert c <= 127;
                 byte b = (byte)c;
                 if (i+1==attribute.length()) b |= 0x80; //End marker
                 array[startPos++]=b;

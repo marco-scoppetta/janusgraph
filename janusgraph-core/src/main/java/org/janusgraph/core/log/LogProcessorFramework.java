@@ -20,7 +20,6 @@ import org.janusgraph.core.JanusGraphException;
  * Framework for processing transaction logs. Using the {@link LogProcessorBuilder} returned by
  * {@link #addLogProcessor(String)} one can process the change events for a particular transaction LOG identified by name.
  *
-
  */
 public interface LogProcessorFramework {
 

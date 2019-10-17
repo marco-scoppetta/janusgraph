@@ -21,7 +21,6 @@ package org.janusgraph.core.schema;
  * Consistency modifiers are installed on schema elements via {@link JanusGraphManagement#setConsistency(JanusGraphSchemaElement, ConsistencyModifier)}
  * and can be read using {@link JanusGraphManagement#getConsistency(JanusGraphSchemaElement)}.
  *
-
  */
 public enum ConsistencyModifier {
 

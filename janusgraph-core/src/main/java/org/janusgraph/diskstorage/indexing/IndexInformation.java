@@ -19,7 +19,6 @@ import org.janusgraph.graphdb.query.JanusGraphPredicate;
 /**
  * An IndexInformation gives basic information on what a particular {@link IndexProvider} supports.
  *
-
  */
 
 public interface IndexInformation {

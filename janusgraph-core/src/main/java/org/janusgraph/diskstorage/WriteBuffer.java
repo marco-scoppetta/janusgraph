@@ -17,7 +17,6 @@ package org.janusgraph.diskstorage;
 /**
  * A Buffer that allows simple writes and returns the result as a {@link StaticBuffer}.
  *
-
  */
 
 public interface WriteBuffer {

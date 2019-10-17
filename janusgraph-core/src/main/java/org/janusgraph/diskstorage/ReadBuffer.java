@@ -18,7 +18,6 @@ package org.janusgraph.diskstorage;
  * A Buffer that allows sequential reads and static reads.
  * Should not be used by multiple threads.
  *
-
  */
 public interface ReadBuffer extends ScanBuffer, StaticBuffer {
 

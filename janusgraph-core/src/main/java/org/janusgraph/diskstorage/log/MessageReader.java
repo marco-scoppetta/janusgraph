@@ -17,7 +17,6 @@ package org.janusgraph.diskstorage.log;
 /**
  * Implementations of this interface are used to process messages read from the LOG.
  *
-
  */
 public interface MessageReader {
 

@@ -15,52 +15,85 @@
 package org.janusgraph.diskstorage.log.kcvs;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ListMultimap;
 import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.diskstorage.*;
-import org.janusgraph.diskstorage.util.time.*;
-
-import org.janusgraph.graphdb.database.management.ManagementLogger;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.Entry;
+import org.janusgraph.diskstorage.ReadBuffer;
+import org.janusgraph.diskstorage.ResourceUnavailableException;
+import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.diskstorage.configuration.Configuration;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
-import org.janusgraph.diskstorage.log.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
+import org.janusgraph.diskstorage.log.Log;
+import org.janusgraph.diskstorage.log.LogManager;
+import org.janusgraph.diskstorage.log.Message;
+import org.janusgraph.diskstorage.log.MessageReader;
+import org.janusgraph.diskstorage.log.ReadMarker;
 import org.janusgraph.diskstorage.log.util.FutureMessage;
 import org.janusgraph.diskstorage.log.util.ProcessMessageJob;
-import org.janusgraph.diskstorage.util.*;
-
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-
+import org.janusgraph.diskstorage.util.BackendOperation;
+import org.janusgraph.diskstorage.util.BufferUtil;
+import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
+import org.janusgraph.diskstorage.util.StaticArrayEntry;
+import org.janusgraph.diskstorage.util.WriteByteBuffer;
+import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
 import org.janusgraph.graphdb.database.serialize.DataOutput;
 import org.janusgraph.util.system.BackgroundThread;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_NS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_NUM_BUCKETS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_READ_BATCH_SIZE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_READ_INTERVAL;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_READ_THREADS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_SEND_BATCH_SIZE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_SEND_DELAY;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TIMESTAMP_PROVIDER;
 
 /**
  * Implementation of {@link Log} wrapped around a {@link KeyColumnValueStore}. Each message is written as a column-value pair ({@link Entry})
  * into a timeslice slot. A timeslice slot is uniquely identified by:
  * <ul>
- *     <li>The partition id: On storage backends that are key-ordered, a partition bit width can be configured which configures the number of
- *     first bits that comprise the partition id. On unordered storage backends, this is always 0</li>
- *     <li>A bucket id: The number of parallel buckets that should be maintained is configured by
- *     {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#LOG_NUM_BUCKETS}. Messages are written to the buckets
- *     in round-robin fashion and each bucket is identified by a bucket id.
- *     Having multiple buckets per timeslice allows for load balancing across multiple keys in the storage backend.</li>
- *     <li>The start time of the timeslice: Each time slice is {@link #TIMESLICE_INTERVAL} microseconds long. And all messages that are added between
- *     start-time and start-time+{@link #TIMESLICE_INTERVAL} end up in the same timeslice. For high throughput logs that might be more messages
- *     than the underlying storage backend can handle per key. In that case, ensure that (2^(partition-bit-width) x (num-buckets) is large enough
- *     to distribute the load.</li>
+ * <li>The partition id: On storage backends that are key-ordered, a partition bit width can be configured which configures the number of
+ * first bits that comprise the partition id. On unordered storage backends, this is always 0</li>
+ * <li>A bucket id: The number of parallel buckets that should be maintained is configured by
+ * {@link org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration#LOG_NUM_BUCKETS}. Messages are written to the buckets
+ * in round-robin fashion and each bucket is identified by a bucket id.
+ * Having multiple buckets per timeslice allows for load balancing across multiple keys in the storage backend.</li>
+ * <li>The start time of the timeslice: Each time slice is {@link #TIMESLICE_INTERVAL} microseconds long. And all messages that are added between
+ * start-time and start-time+{@link #TIMESLICE_INTERVAL} end up in the same timeslice. For high throughput logs that might be more messages
+ * than the underlying storage backend can handle per key. In that case, ensure that (2^(partition-bit-width) x (num-buckets) is large enough
+ * to distribute the load.</li>
  * </ul>
- *
+ * <p>
  * Each message is uniquely identified by its timestamp, sender id (which uniquely identifies a particular instance of {@link KCVSLogManager}), and the
  * message id (which is auto-incrementing). These three data points comprise the column of a LOG message. The actual content of the message
  * is written into the value.
@@ -71,9 +104,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * LOG messages. The read markers are updated to the current position before each new iteration of reading messages from the LOG. If the system fails
  * while reading a batch of messages, a subsequently restarted LOG reader may therefore read messages twice. Hence, {@link MessageReader} implementations
  * should exhibit correct behavior for the (rare) circumstance that messages are read twice.
- *
+ * <p>
  * Note: All time values in this class are in microseconds. Hence, there are many cases where milliseconds are converted to microseconds.
- *
  */
 @PreInitializeConfigOptions
 public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
@@ -82,15 +114,15 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     //########## Configuration Options #############
 
-    public static final ConfigOption<Duration> LOG_MAX_WRITE_TIME = new ConfigOption<>(LOG_NS,"max-write-time",
+    public static final ConfigOption<Duration> LOG_MAX_WRITE_TIME = new ConfigOption<>(LOG_NS, "max-write-time",
             "Maximum time in ms to try persisting LOG messages against the backend before failing.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(10000L));
 
-    public static final ConfigOption<Duration> LOG_MAX_READ_TIME = new ConfigOption<>(LOG_NS,"max-read-time",
+    public static final ConfigOption<Duration> LOG_MAX_READ_TIME = new ConfigOption<>(LOG_NS, "max-read-time",
             "Maximum time in ms to try reading LOG messages from the backend before failing.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(4000L));
 
-    public static final ConfigOption<Duration> LOG_READ_LAG_TIME = new ConfigOption<>(LOG_NS,"read-lag-time",
+    public static final ConfigOption<Duration> LOG_READ_LAG_TIME = new ConfigOption<>(LOG_NS, "read-lag-time",
             "Maximum time in ms that it may take for reads to appear in the backend. If a write does not become" +
                     "visible in the storage backend in this amount of time, a LOG reader might miss the message.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(500L));
@@ -107,7 +139,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
      * This setting is not configurable. If too many messages end up under one key, please
      * configure either 1) the number of buckets or 2) introduce partitioning.
      */
-    public static final long TIMESLICE_INTERVAL = 100L * 1000 * 1000 ; //100 seconds
+    public static final long TIMESLICE_INTERVAL = 100L * 1000 * 1000; //100 seconds
 
     /**
      * For batch sending to make sense against a KCVS, the maximum send/delivery delay must be at least
@@ -233,15 +265,15 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     private final TimestampProvider times;
 
     public KCVSLog(String name, KCVSLogManager manager, KeyColumnValueStore store, Configuration config) {
-        Preconditions.checkArgument(manager != null && name != null && store != null && config!=null);
-        this.name=name;
-        this.manager=manager;
-        this.store=store;
+        Preconditions.checkArgument(manager != null && name != null && store != null && config != null);
+        this.name = name;
+        this.manager = manager;
+        this.store = store;
 
         this.times = config.get(TIMESTAMP_PROVIDER);
         this.keyConsistentOperations = config.get(LOG_KEY_CONSISTENT);
         this.numBuckets = config.get(LOG_NUM_BUCKETS);
-        Preconditions.checkArgument(numBuckets>=1 && numBuckets<=Integer.MAX_VALUE);
+        Preconditions.checkArgument(numBuckets >= 1 && numBuckets <= Integer.MAX_VALUE);
 
         sendBatchSize = config.get(LOG_SEND_BATCH_SIZE);
         maxSendDelay = config.get(LOG_SEND_DELAY);
@@ -286,17 +318,17 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     public synchronized void close() throws BackendException {
         if (!isOpen) return;
         this.isOpen = false;
-        if (readExecutor!=null) readExecutor.shutdown();
-        if (sendThread!=null) sendThread.close(CLOSE_DOWN_WAIT);
-        if (readExecutor!=null) {
+        if (readExecutor != null) readExecutor.shutdown();
+        if (sendThread != null) sendThread.close(CLOSE_DOWN_WAIT);
+        if (readExecutor != null) {
             try {
-                readExecutor.awaitTermination(1,TimeUnit.SECONDS);
+                readExecutor.awaitTermination(1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                log.error("Could not terminate reader thread pool for KCVSLog "+name+" due to interruption");
+                log.error("Could not terminate reader thread pool for KCVSLog " + name + " due to interruption");
             }
             if (!readExecutor.isTerminated()) {
                 readExecutor.shutdownNow();
-                log.error("Reader thread pool for KCVSLog "+name+" did not shut down in time - could not clean up or set read markers");
+                log.error("Reader thread pool for KCVSLog " + name + " did not shut down in time - could not clean up or set read markers");
             } else {
                 for (MessagePuller puller : msgPullers) {
                     puller.close();
@@ -312,7 +344,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     public StoreTransaction openTx() throws BackendException {
         StandardBaseTransactionConfig config;
         if (keyConsistentOperations) {
-            config = StandardBaseTransactionConfig.of(times,manager.storeManager.getFeatures().getKeyConsistentTxConfig());
+            config = StandardBaseTransactionConfig.of(times, manager.storeManager.getFeatures().getKeyConsistentTxConfig());
         } else {
             config = StandardBaseTransactionConfig.of(times);
         }
@@ -321,21 +353,22 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     /**
      * ###################################
-     *  Message Serialization & Utility
+     * Message Serialization & Utility
      * ###################################
      */
 
     private int getTimeSlice(Instant timestamp) {
         long value = times.getTime(timestamp) / TIMESLICE_INTERVAL;
-        if (value>Integer.MAX_VALUE || value<0) throw new IllegalArgumentException("Timestamp overflow detected: " + timestamp);
-        return (int)value;
+        if (value > Integer.MAX_VALUE || value < 0)
+            throw new IllegalArgumentException("Timestamp overflow detected: " + timestamp);
+        return (int) value;
     }
 
     private StaticBuffer getLogKey(int partitionId, int bucketId, int timeslice) {
-        Preconditions.checkArgument(partitionId>=0 && partitionId<(1<<manager.partitionBitWidth));
-        Preconditions.checkArgument(bucketId>=0 && bucketId<numBuckets);
+        Preconditions.checkArgument(partitionId >= 0 && partitionId < (1 << manager.partitionBitWidth));
+        Preconditions.checkArgument(bucketId >= 0 && bucketId < numBuckets);
         DataOutput o = manager.serializer.getDataOutput(3 * 4);
-        o.putInt((partitionId<<(32-manager.partitionBitWidth))); //Offset to put significant bits in front
+        o.putInt((partitionId << (32 - manager.partitionBitWidth))); //Offset to put significant bits in front
         o.putInt(bucketId);
         o.putInt(timeslice);
         return o.getStaticBuffer();
@@ -351,89 +384,83 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         out.putLong(numMsgCounter.incrementAndGet());
         final int valuePos = out.getPosition();
         out.putBytes(content);
-        return new StaticArrayEntry(out.getStaticBuffer(),valuePos);
+        return new StaticArrayEntry(out.getStaticBuffer(), valuePos);
     }
 
     private KCVSMessage parseMessage(Entry msg) {
         ReadBuffer r = msg.asReadBuffer();
         Instant timestamp = times.getTime(r.getLong());
-        String senderId = manager.serializer.readObjectNotNull(r,String.class);
-        return new KCVSMessage(msg.getValue(),timestamp,senderId);
+        String senderId = manager.serializer.readObjectNotNull(r, String.class);
+        return new KCVSMessage(msg.getValue(), timestamp, senderId);
     }
 
     /**
      * ###################################
-     *  Message Sending
+     * Message Sending
      * ###################################
      */
 
     @Override
     public Future<Message> add(StaticBuffer content) {
-        return add(content,manager.defaultWritePartitionIds[random.nextInt(manager.defaultWritePartitionIds.length)]);
+        return add(content, manager.defaultWritePartitionIds[random.nextInt(manager.defaultWritePartitionIds.length)]);
     }
 
     @Override
     public Future<Message> add(StaticBuffer content, StaticBuffer key) {
-        return add(content,key,null);
+        return add(content, key, null);
     }
 
     public Future<Message> add(StaticBuffer content, StaticBuffer key, ExternalPersistor persistor) {
-        Preconditions.checkArgument(key!=null && key.length()>0,"Invalid key provided: %s",key);
+        Preconditions.checkArgument(key != null && key.length() > 0, "Invalid key provided: %s", key);
         int partitionId = 0;
         //Get first 4 byte if exist in key...
-        for (int i=0;i<4;i++) {
+        for (int i = 0; i < 4; i++) {
             int b;
-            if (key.length()>i) b = key.getByte(i) & 0xFF;
+            if (key.length() > i) b = key.getByte(i) & 0xFF;
             else b = 0;
-            partitionId = (partitionId<<8) + b;
+            partitionId = (partitionId << 8) + b;
         }
-        assert manager.partitionBitWidth>=0 && manager.partitionBitWidth<=32;
         //and then extract the number of partitions bits
-        if (manager.partitionBitWidth==0) partitionId=0;
-        else partitionId = partitionId>>>(32-manager.partitionBitWidth);
+        if (manager.partitionBitWidth == 0) partitionId = 0;
+        else partitionId = partitionId >>> (32 - manager.partitionBitWidth);
         return add(content, partitionId, persistor);
     }
 
     private Future<Message> add(StaticBuffer content, int partitionId) {
-        return add(content,partitionId,null);
+        return add(content, partitionId, null);
     }
 
     /**
      * Adds the given message (content) to the timeslice for the partition identified by the provided partitionId.
      * If a persistor is specified, this persistor is used to add the message otherwise the internal delivery systems are used.
-     *
-     * @param content
-     * @param partitionId
-     * @param persistor
-     * @return
      */
     private Future<Message> add(StaticBuffer content, int partitionId, ExternalPersistor persistor) {
-        ResourceUnavailableException.verifyOpen(isOpen,"Log",name);
-        Preconditions.checkArgument(content!=null && content.length()>0,"Content is empty");
-        Preconditions.checkArgument(partitionId>=0 && partitionId<(1<<manager.partitionBitWidth),"Invalid partition id: %s",partitionId);
+        ResourceUnavailableException.verifyOpen(isOpen, "Log", name);
+        Preconditions.checkArgument(content != null && content.length() > 0, "Content is empty");
+        Preconditions.checkArgument(partitionId >= 0 && partitionId < (1 << manager.partitionBitWidth), "Invalid partition id: %s", partitionId);
         final Instant timestamp = times.getTime();
-        KCVSMessage msg = new KCVSMessage(content,timestamp,manager.senderId);
+        KCVSMessage msg = new KCVSMessage(content, timestamp, manager.senderId);
         FutureMessage futureMessage = new FutureMessage(msg);
 
-        StaticBuffer key=getLogKey(partitionId,(int)(numBucketCounter.incrementAndGet()%numBuckets),getTimeSlice(timestamp));
-        MessageEnvelope envelope = new MessageEnvelope(futureMessage,key,writeMessage(msg));
+        StaticBuffer key = getLogKey(partitionId, (int) (numBucketCounter.incrementAndGet() % numBuckets), getTimeSlice(timestamp));
+        MessageEnvelope envelope = new MessageEnvelope(futureMessage, key, writeMessage(msg));
 
-        if (persistor!=null) {
+        if (persistor != null) {
             try {
-                persistor.add(envelope.key,envelope.entry);
+                persistor.add(envelope.key, envelope.entry);
                 envelope.message.delivered();
             } catch (JanusGraphException e) {
                 envelope.message.failed(e);
                 throw e;
             }
-        } else if (outgoingMsg==null) {
+        } else if (outgoingMsg == null) {
             sendMessages(ImmutableList.of(envelope));
         } else {
             try {
                 outgoingMsg.put(envelope); //Produces back pressure when full
                 log.debug("Enqueued {} for partition {}", envelope, partitionId);
             } catch (InterruptedException e) {
-                throw new JanusGraphException("Got interrupted waiting to send message",e);
+                throw new JanusGraphException("Got interrupted waiting to send message", e);
             }
         }
         return futureMessage;
@@ -463,37 +490,36 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     /**
      * Sends a batch of messages by persisting them to the storage backend.
-     *
-     * @param msgEnvelopes
      */
     private void sendMessages(List<MessageEnvelope> msgEnvelopes) {
         try {
-            boolean success=BackendOperation.execute(new BackendOperation.Transactional<Boolean>() {
+            boolean success = BackendOperation.execute(new BackendOperation.Transactional<Boolean>() {
                 @Override
                 public Boolean call(StoreTransaction txh) throws BackendException {
-                    ListMultimap<StaticBuffer,Entry> mutations = ArrayListMultimap.create();
+                    ListMultimap<StaticBuffer, Entry> mutations = ArrayListMultimap.create();
                     for (MessageEnvelope env : msgEnvelopes) {
-                        mutations.put(env.key,env.entry);
+                        mutations.put(env.key, env.entry);
                         long ts = env.entry.getColumn().getLong(0);
                         log.debug("Preparing to write {} to storage with column/timestamp {}", env, times.getTime(ts));
                     }
 
-                    final Map<StaticBuffer,KCVMutation> muts = new HashMap<>(mutations.keySet().size());
+                    final Map<StaticBuffer, KCVMutation> muts = new HashMap<>(mutations.keySet().size());
                     for (StaticBuffer key : mutations.keySet()) {
-                        muts.put(key,new KCVMutation(mutations.get(key),KeyColumnValueStore.NO_DELETIONS));
+                        muts.put(key, new KCVMutation(mutations.get(key), KeyColumnValueStore.NO_DELETIONS));
                         log.debug("Built mutation on key {} with {} additions", key, mutations.get(key).size());
                     }
-                    manager.storeManager.mutateMany(ImmutableMap.of(store.getName(),muts),txh);
+                    manager.storeManager.mutateMany(ImmutableMap.of(store.getName(), muts), txh);
                     log.debug("Wrote {} total envelopes with operation timestamp {}", msgEnvelopes.size(), txh.getConfiguration().getCommitTime());
                     return Boolean.TRUE;
                 }
+
                 @Override
                 public String toString() {
                     return "messageSending";
                 }
-            },this, times, maxWriteTime);
+            }, this, times, maxWriteTime);
             Preconditions.checkState(success);
-            log.debug("Wrote {} messages to backend",msgEnvelopes.size());
+            log.debug("Wrote {} messages to backend", msgEnvelopes.size());
             for (MessageEnvelope msgEnvelope : msgEnvelopes)
                 msgEnvelope.message.delivered();
         } catch (JanusGraphException e) {
@@ -512,18 +538,18 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
         private final List<MessageEnvelope> toSend;
 
-        public SendThread() {
-            super("KCVSLogSend"+name, false);
+        SendThread() {
+            super("KCVSLogSend" + name, false);
             toSend = new ArrayList<>(sendBatchSize * 3 / 2);
         }
 
         private Duration timeSinceFirstMsg() {
 
-            Duration sinceFirst =  Duration.ZERO;
+            Duration sinceFirst = Duration.ZERO;
 
             if (!toSend.isEmpty()) {
                 Instant firstTimestamp = toSend.get(0).message.getMessage().getTimestamp();
-                Instant nowTimestamp   = times.getTime();
+                Instant nowTimestamp = times.getTime();
 
                 if (firstTimestamp.compareTo(nowTimestamp) < 0) {
                     sinceFirst = Duration.between(firstTimestamp, nowTimestamp);
@@ -543,16 +569,15 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
         @Override
         protected void waitCondition() throws InterruptedException {
-
             MessageEnvelope msg = outgoingMsg.poll(maxWaitTime().toNanos(), TimeUnit.NANOSECONDS);
-            if (msg!=null) toSend.add(msg);
+            if (msg != null) toSend.add(msg);
         }
 
         @Override
         protected void action() {
             MessageEnvelope msg;
             //Opportunistically drain the queue for up to the batch-send-size number of messages before evaluating condition
-            while (toSend.size()<sendBatchSize && (msg=outgoingMsg.poll())!=null) {
+            while (toSend.size() < sendBatchSize && (msg = outgoingMsg.poll()) != null) {
                 toSend.add(msg);
             }
             //Evaluate send condition: 1) Is the oldest message waiting longer than the delay? or 2) Do we have enough messages to send?
@@ -571,13 +596,13 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
             if (!toSend.isEmpty() || !outgoingMsg.isEmpty()) {
                 //There are still messages waiting to be sent
                 toSend.addAll(outgoingMsg);
-                for (int i=0;i<toSend.size();i=i+sendBatchSize) {
-                    List<MessageEnvelope> subset = toSend.subList(i,Math.min(toSend.size(),i+sendBatchSize));
+                for (int i = 0; i < toSend.size(); i = i + sendBatchSize) {
+                    List<MessageEnvelope> subset = toSend.subList(i, Math.min(toSend.size(), i + sendBatchSize));
                     try {
                         sendMessages(subset);
                     } catch (RuntimeException e) {
                         //Fail all remaining messages
-                        for (int j=i+sendBatchSize;j<toSend.size();j++) {
+                        for (int j = i + sendBatchSize; j < toSend.size(); j++) {
                             toSend.get(j).message.failed(e);
                         }
                         throw e;
@@ -589,24 +614,24 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     /**
      * ###################################
-     *  Message Reading
+     * Message Reading
      * ###################################
      */
 
     @Override
     public synchronized void registerReader(ReadMarker readMarker, MessageReader... reader) {
-        Preconditions.checkArgument(reader!=null && reader.length>0,"Must specify at least one reader");
-        registerReaders(readMarker,Arrays.asList(reader));
+        Preconditions.checkArgument(reader != null && reader.length > 0, "Must specify at least one reader");
+        registerReaders(readMarker, Arrays.asList(reader));
     }
 
     @Override
     public synchronized void registerReaders(ReadMarker readMarker, Iterable<MessageReader> readers) {
-        ResourceUnavailableException.verifyOpen(isOpen,"Log",name);
-        Preconditions.checkArgument(!Iterables.isEmpty(readers),"Must specify at least one reader");
-        Preconditions.checkArgument(readMarker!=null,"Read marker cannot be null");
-        Preconditions.checkArgument(this.readMarker==null || this.readMarker.isCompatible(readMarker),
+        ResourceUnavailableException.verifyOpen(isOpen, "Log", name);
+        Preconditions.checkArgument(!Iterables.isEmpty(readers), "Must specify at least one reader");
+        Preconditions.checkArgument(readMarker != null, "Read marker cannot be null");
+        Preconditions.checkArgument(this.readMarker == null || this.readMarker.isCompatible(readMarker),
                 "Provided read marker is not compatible with existing read marker for previously registered readers");
-        if (this.readMarker==null) this.readMarker=readMarker;
+        if (this.readMarker == null) this.readMarker = readMarker;
         boolean firstRegistration = this.readers.isEmpty();
         for (MessageReader reader : readers) {
             Preconditions.checkNotNull(reader);
@@ -615,11 +640,11 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         if (firstRegistration && !this.readers.isEmpty()) {
             //Custom rejection handler so that messages are processed in-thread when executor has been closed
             readExecutor = new ScheduledThreadPoolExecutor(numReadThreads, (r, executor) -> r.run());
-            msgPullers = new MessagePuller[manager.readPartitionIds.length*numBuckets];
+            msgPullers = new MessagePuller[manager.readPartitionIds.length * numBuckets];
             int pos = 0;
             for (int partitionId : manager.readPartitionIds) {
                 for (int bucketId = 0; bucketId < numBuckets; bucketId++) {
-                    msgPullers[pos]=new MessagePuller(partitionId,bucketId);
+                    msgPullers[pos] = new MessagePuller(partitionId, bucketId);
 
                     log.debug("Creating LOG read executor: initialDelay={} delay={} unit={}", INITIAL_READER_DELAY.toNanos(), readPollingInterval.toNanos(), TimeUnit.NANOSECONDS);
                     readExecutor.scheduleWithFixedDelay(
@@ -640,7 +665,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     @Override
     public synchronized boolean unregisterReader(MessageReader reader) {
-        ResourceUnavailableException.verifyOpen(isOpen,"Log",name);
+        ResourceUnavailableException.verifyOpen(isOpen, "Log", name);
         return this.readers.remove(reader);
     }
 
@@ -677,20 +702,20 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
             try {
                 setReadMarker();
 
-                final int timeslice = getTimeSlice(messageTimeStart);
+                int timeslice = getTimeSlice(messageTimeStart);
 
                 // Setup time range we're about to query
-                final Instant currentTime = times.getTime();
+                Instant currentTime = times.getTime();
                 // Can only read messages stamped up to the following time without violating design constraints
-                final Instant maxSafeMessageTime = currentTime.minus(readLagTime);
+                Instant maxSafeMessageTime = currentTime.minus(readLagTime);
                 // We also have to stay inside the current timeslice or we could drop messages
-                final Instant timesliceEnd = times.getTime((timeslice + 1) * TIMESLICE_INTERVAL);
+                Instant timesliceEnd = times.getTime((timeslice + 1) * TIMESLICE_INTERVAL);
 
                 Instant messageTimeEnd =
                         0 > maxSafeMessageTime.compareTo(timesliceEnd) /* maxSafeMessageTime < timesliceEnd */ ?
-                        maxSafeMessageTime : timesliceEnd;
+                                maxSafeMessageTime : timesliceEnd;
 
-                if (0 >  messageTimeStart.compareTo(messageTimeEnd)) {
+                if (0 > messageTimeStart.compareTo(messageTimeEnd)) {
                     // nextTimepoint is strictly earlier than timeWindowEnd
                     log.trace("MessagePuller time window: [{}, {})", messageTimeStart, messageTimeEnd);
                 } else {
@@ -704,7 +729,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                      * nextTimestamp is much later than timeWindowEnd, then
                      * something is probably misconfigured.
                      */
-                    final Duration delta = Duration.between(messageTimeEnd, messageTimeStart);
+                    Duration delta = Duration.between(messageTimeEnd, messageTimeStart);
 
                     if (delta.toNanos() / 3 > readLagTime.toNanos()) {
                         log.warn("MessagePuller configured with ReadMarker timestamp in the improbably distant future: {} (current time is {})", messageTimeStart, currentTime);
@@ -717,30 +742,30 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 Preconditions.checkState(messageTimeStart.compareTo(messageTimeEnd) < 0);
                 Preconditions.checkState(messageTimeEnd.compareTo(currentTime) <= 0, "Attempting to read messages from the future: messageTimeEnd=% vs currentTime=%s", messageTimeEnd, currentTime);
 
-                StaticBuffer logKey = getLogKey(partitionId,bucketId,timeslice);
+                StaticBuffer logKey = getLogKey(partitionId, bucketId, timeslice);
                 KeySliceQuery query = new KeySliceQuery(logKey, BufferUtil.getLongBuffer(times.getTime(messageTimeStart)), BufferUtil.getLongBuffer(times.getTime(messageTimeEnd)));
                 query.setLimit(maxReadMsg);
                 log.trace("Converted MessagePuller time window to {}", query);
 
-                List<Entry> entries= BackendOperation.execute(getOperation(query),KCVSLog.this,times,maxReadTime);
+                List<Entry> entries = BackendOperation.execute(getOperation(query), KCVSLog.this, times, maxReadTime);
                 prepareMessageProcessing(entries);
-                if (entries.size()>=maxReadMsg) {
+                if (entries.size() >= maxReadMsg) {
                     /*Read another set of messages to ensure that we have exhausted all messages to the next timestamp.
                     Since we have reached the request limit, it may be possible that there are additional messages
                     with the same timestamp which we would miss on subsequent iterations */
-                    Entry lastEntry = entries.get(entries.size()-1);
+                    Entry lastEntry = entries.get(entries.size() - 1);
                     //Adding 2 microseconds (=> very few extra messages), not adding one to avoid that the slice is possibly empty
                     messageTimeEnd = messageTimeEnd.plus(TWO_MICROSECONDS);
                     log.debug("Extended time window to {}", messageTimeEnd);
                     //Retrieve all messages up to this adjusted timepoint (no limit this time => get all entries to that point)
                     query = new KeySliceQuery(logKey, BufferUtil.nextBiggerBuffer(lastEntry.getColumn()), BufferUtil.getLongBuffer(times.getTime(messageTimeEnd)));
                     log.debug("Converted extended MessagePuller time window to {}", query);
-                    List<Entry> extraEntries = BackendOperation.execute(getOperation(query),KCVSLog.this,times,maxReadTime);
+                    List<Entry> extraEntries = BackendOperation.execute(getOperation(query), KCVSLog.this, times, maxReadTime);
                     prepareMessageProcessing(extraEntries);
                 }
                 messageTimeStart = messageTimeEnd;
             } catch (Throwable e) {
-                log.warn("Could not read messages for timestamp ["+messageTimeStart+"] (this read will be retried)",e);
+                log.warn("Could not read messages for timestamp [" + messageTimeStart + "] (this read will be retried)", e);
             }
         }
 
@@ -751,7 +776,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 this.messageTimeStart = readMarker.getStartTime(times);
                 log.debug("Loaded unidentified ReadMarker start time {} into {}", messageTimeStart, this);
             } else {
-                long savedTimestamp = readSetting(readMarker.getIdentifier(),getMarkerColumn(partitionId,bucketId),times.getTime(readMarker.getStartTime(times)));
+                long savedTimestamp = readSetting(readMarker.getIdentifier(), getMarkerColumn(partitionId, bucketId), times.getTime(readMarker.getStartTime(times)));
                 this.messageTimeStart = times.getTime(savedTimestamp);
                 log.debug("Loaded identified ReadMarker start time {} into {}", messageTimeStart, this);
             }
@@ -762,7 +787,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 KCVSMessage message = parseMessage(entry);
                 log.debug("Parsed message {}, about to submit this message to the reader executor", message);
                 for (MessageReader reader : readers) {
-                    readExecutor.submit(new ProcessMessageJob(message,reader));
+                    readExecutor.submit(new ProcessMessageJob(message, reader));
                 }
             }
         }
@@ -775,7 +800,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                     log.debug("Persisted read marker: identifier={} partitionId={} buckedId={} nextTimepoint={}",
                             readMarker.getIdentifier(), partitionId, bucketId, messageTimeStart);
                 } catch (Throwable e) {
-                    log.error("Could not persist read marker [" + readMarker.getIdentifier() + "] on bucket ["+bucketId+"] + partition ["+partitionId+"]",e);
+                    log.error("Could not persist read marker [" + readMarker.getIdentifier() + "] on bucket [" + bucketId + "] + partition [" + partitionId + "]", e);
                 }
             }
         }
@@ -788,11 +813,12 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
             return new BackendOperation.Transactional<List<Entry>>() {
                 @Override
                 public List<Entry> call(StoreTransaction txh) throws BackendException {
-                    return store.getSlice(query,txh);
+                    return store.getSlice(query, txh);
                 }
+
                 @Override
                 public String toString() {
-                    return "messageReading@"+partitionId+":"+bucketId;
+                    return "messageReading@" + partitionId + ":" + bucketId;
                 }
             };
         }
@@ -801,12 +827,12 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     /**
      * ###################################
-     *  Getting/setting Log Settings
+     * Getting/setting Log Settings
      * ###################################
      */
 
     private StaticBuffer getMarkerColumn(int partitionId, int bucketId) {
-        DataOutput out = manager.serializer.getDataOutput(1+ 4 + 4);
+        DataOutput out = manager.serializer.getDataOutput(1 + 4 + 4);
         out.putByte(MARKER_PREFIX);
         out.putInt(partitionId);
         out.putInt(bucketId);
@@ -822,38 +848,40 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     }
 
     private long readSetting(String identifier, StaticBuffer column, long defaultValue) {
-        final StaticBuffer key = getSettingKey(identifier);
+        StaticBuffer key = getSettingKey(identifier);
         StaticBuffer value = BackendOperation.execute(new BackendOperation.Transactional<StaticBuffer>() {
             @Override
             public StaticBuffer call(StoreTransaction txh) throws BackendException {
-                return KCVSUtil.get(store,key,column,txh);
+                return KCVSUtil.get(store, key, column, txh);
             }
+
             @Override
             public String toString() {
                 return "readingLogSetting";
             }
-        },this,times,maxReadTime);
-        if (value==null) return defaultValue;
+        }, this, times, maxReadTime);
+        if (value == null) return defaultValue;
         else {
-            Preconditions.checkArgument(value.length()==8);
+            Preconditions.checkArgument(value.length() == 8);
             return value.getLong(0);
         }
     }
 
     private void writeSetting(String identifier, StaticBuffer column, long value) {
-        final StaticBuffer key = getSettingKey(identifier);
-        final Entry add = StaticArrayEntry.of(column, BufferUtil.getLongBuffer(value));
+        StaticBuffer key = getSettingKey(identifier);
+        Entry add = StaticArrayEntry.of(column, BufferUtil.getLongBuffer(value));
         Boolean status = BackendOperation.execute(new BackendOperation.Transactional<Boolean>() {
             @Override
             public Boolean call(StoreTransaction txh) throws BackendException {
-                store.mutate(key,ImmutableList.of(add),KeyColumnValueStore.NO_DELETIONS,txh);
+                store.mutate(key, ImmutableList.of(add), KeyColumnValueStore.NO_DELETIONS, txh);
                 return Boolean.TRUE;
             }
+
             @Override
             public String toString() {
                 return "writingLogSetting";
             }
-        },this, times, maxWriteTime);
+        }, this, times, maxWriteTime);
         Preconditions.checkState(status);
     }
 

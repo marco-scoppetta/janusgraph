@@ -31,7 +31,6 @@ import org.junit.jupiter.api.TestInfo;
  * Implementation of the {@link LogTest} for {@link KCVSLogManager} based LOG implementations.
  * This test only requires getting instances of {@link KeyColumnValueStoreManager}.
  *
-
  */
 public abstract class KCVSLogTest extends LogTest {
 

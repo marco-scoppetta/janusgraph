@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 /**
  * Extends {@link SliceQuery} by a key that identifies the location of the slice in the key-ring.
  *
-
  */
 
 public class KeySliceQuery extends SliceQuery {

@@ -33,7 +33,6 @@ import java.util.List;
  * {@link org.janusgraph.graphdb.query.QueryProcessor}. Most of the query definition
  * is in the extended {@link BaseVertexCentricQuery} - this class only adds the base vertex to the mix.
  *
-
  */
 public class VertexCentricQuery extends BaseVertexCentricQuery implements ElementQuery<JanusGraphRelation, SliceQuery> {
 

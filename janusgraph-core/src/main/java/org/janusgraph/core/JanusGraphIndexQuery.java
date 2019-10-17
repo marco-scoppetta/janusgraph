@@ -26,7 +26,6 @@ import org.apache.tinkerpop.gremlin.structure.Element;
  * are no changes in a transaction, this won't matter. If there are, the results of this query may not be consistent
  * with the transactional state.
  *
-
  */
 public interface JanusGraphIndexQuery {
 

@@ -37,7 +37,6 @@ import java.util.zip.GZIPOutputStream;
  * 2) Full UTF encoding (for non-ASCII strings)
  * 3) Using compression algorithms for long strings
  *
-
  */
 public class StringSerializer implements OrderPreservingSerializer<String>, SupportsNullSerializer {
 

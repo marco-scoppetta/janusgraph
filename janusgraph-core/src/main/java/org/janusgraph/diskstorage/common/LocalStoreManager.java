@@ -29,7 +29,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.GR
  * Abstract Store Manager used as the basis for local StoreManager implementations.
  * Simplifies common configuration management.
  *
-
  */
 
 public abstract class LocalStoreManager extends AbstractStoreManager {

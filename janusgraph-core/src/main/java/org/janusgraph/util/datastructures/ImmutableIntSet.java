@@ -21,7 +21,6 @@ import java.util.Arrays;
 /**
  * Immutable set of integers
  *
-
  */
 public class ImmutableIntSet implements IntSet {
 

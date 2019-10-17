@@ -30,7 +30,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
  * Abstract Store Manager used as the basis for concrete StoreManager implementations.
  * Simplifies common configuration management.
  *
-
  */
 
 public abstract class AbstractStoreManager implements StoreManager {

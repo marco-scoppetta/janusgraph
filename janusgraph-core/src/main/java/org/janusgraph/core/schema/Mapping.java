@@ -25,7 +25,6 @@ import org.janusgraph.graphdb.types.ParameterType;
  * This applies mostly to string data types of keys, where the mapping specifies whether the string value is tokenized
  * ({@link #TEXT}) or indexed as a whole ({@link #STRING}), or both ({@link #TEXTSTRING}).
  *
-
  */
 public enum Mapping {
 

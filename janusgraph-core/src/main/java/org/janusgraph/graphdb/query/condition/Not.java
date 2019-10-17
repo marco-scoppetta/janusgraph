@@ -24,7 +24,6 @@ import java.util.Objects;
 /**
  * Negates the wrapped condition, i.e. semantic NOT
  *
-
  */
 public class Not<E extends JanusGraphElement> implements Condition<E> {
 

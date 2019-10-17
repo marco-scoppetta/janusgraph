@@ -25,12 +25,11 @@ import java.util.Map;
 
 /**
  * Utility methods for dealing with {@link ByteBuffer}.
- *
  */
 public class BufferUtil {
 
-    public static final int longSize = StaticArrayBuffer.LONG_LEN;
-    public static final int intSize = StaticArrayBuffer.INT_LEN;
+    private static final int longSize = StaticArrayBuffer.LONG_LEN;
+    private static final int intSize = StaticArrayBuffer.INT_LEN;
 
     /* ###############
      * Simple StaticBuffer construction
@@ -62,7 +61,7 @@ public class BufferUtil {
     }
 
 
-    public static StaticBuffer fillBuffer(int len, byte value) {
+    private static StaticBuffer fillBuffer(int len, byte value) {
         byte[] res = new byte[len];
         for (int i = 0; i < len; i++) res[i]=value;
         return StaticArrayBuffer.of(res);
@@ -76,10 +75,6 @@ public class BufferUtil {
         return fillBuffer(len,(byte)0);
     }
 
-    public static StaticBuffer emptyBuffer() {
-        return fillBuffer(0,(byte)0);
-    }
-
     /* ################
      * Buffer I/O
      * ################
@@ -91,8 +86,6 @@ public class BufferUtil {
         if (!entry.hasMetaData()) out.putByte((byte)0);
         else {
             Map<EntryMetaData,Object> metadata = entry.getMetaData();
-            assert metadata.size()>0 && metadata.size()<Byte.MAX_VALUE;
-            assert EntryMetaData.values().length<Byte.MAX_VALUE;
             out.putByte((byte)metadata.size());
             for (Map.Entry<EntryMetaData,Object> metas : metadata.entrySet()) {
                 EntryMetaData meta = metas.getKey();
@@ -121,11 +114,10 @@ public class BufferUtil {
         return entry;
     }
 
-    public static StaticBuffer readBuffer(ScanBuffer in) {
+    private static StaticBuffer readBuffer(ScanBuffer in) {
         long length = VariableLong.readPositive(in);
         Preconditions.checkArgument(length>=0 && length<=Integer.MAX_VALUE);
         byte[] data = in.getBytes((int)length);
-        assert data.length==length;
         return new StaticArrayBuffer(data);
     }
 
@@ -175,10 +167,6 @@ public class BufferUtil {
 
     /**
      * Thread safe equals method for StaticBuffer - ByteBuffer equality comparison
-     *
-     * @param b1
-     * @param b2
-     * @return
      */
     public static boolean equals(StaticBuffer b1, ByteBuffer b2) {
         if (b1.length()!=b2.remaining()) return false;

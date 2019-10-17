@@ -26,7 +26,6 @@ import java.util.Set;
 /**
  * Characterizes the features that a particular {@link IndexProvider} implementation supports
  *
-
  */
 public class IndexFeatures {
 

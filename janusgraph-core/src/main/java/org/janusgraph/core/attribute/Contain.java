@@ -22,7 +22,6 @@ import java.util.Collection;
 /**
  * Comparison relations for text objects.
  *
-
  */
 
 public enum Contain implements JanusGraphPredicate {

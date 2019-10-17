@@ -47,7 +47,7 @@ import java.util.concurrent.Callable;
  */
 public class ExpectedValueCheckingTransaction implements StoreTransaction {
 
-    private static final Logger log = LoggerFactory.getLogger(ExpectedValueCheckingTransaction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExpectedValueCheckingTransaction.class);
 
     /**
      * This variable starts false.  It remains false during the
@@ -128,13 +128,12 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
 
         lockedOn(store);
         Map<KeyColumn, StaticBuffer> m = expectedValuesByStore.get(store);
-        assert null != m;
         if (m.containsKey(lockID)) {
-            log.debug("Multiple expected values for {}: keeping initial value {} and discarding later value {}",
+            LOG.debug("Multiple expected values for {}: keeping initial value {} and discarding later value {}",
                 lockID, m.get(lockID), value);
         } else {
             m.put(lockID, value);
-            log.debug("Store expected value for {}: {}", lockID, value);
+            LOG.debug("Store expected value for {}: {}", lockID, value);
         }
     }
 
@@ -143,8 +142,6 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
      * values, then mark the transaction as started.
      * <p>
      * If {@link #isMutationStarted()}, this does nothing.
-     *
-     * @throws org.janusgraph.diskstorage.BackendException
      *
      * @return true if this transaction holds at least one lock, false if the
      *         transaction holds no locks
@@ -163,9 +160,8 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
      * {@link KeyColumnValueStore#acquireLock(StaticBuffer, StaticBuffer, StaticBuffer, StoreTransaction)}
      * calls using this transaction.
      *
-     * @throws org.janusgraph.diskstorage.BackendException
      */
-    void checkAllLocks() throws BackendException {
+    private void checkAllLocks() throws BackendException {
         StoreTransaction lt = getConsistentTx();
         for (ExpectedValueCheckingStore store : expectedValuesByStore.keySet()) {
             Locker locker = store.getLocker();
@@ -181,9 +177,8 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
      * {@link KeyColumnValueStore#acquireLock(StaticBuffer, StaticBuffer, StaticBuffer, StoreTransaction)}
      * calls using this transaction.
      *
-     * @throws org.janusgraph.diskstorage.BackendException
      */
-    void checkAllExpectedValues() throws BackendException {
+    private void checkAllExpectedValues() throws BackendException {
         for (ExpectedValueCheckingStore store : expectedValuesByStore.keySet()) {
             final Map<KeyColumn, StaticBuffer> m = expectedValuesByStore.get(store);
             for (KeyColumn kc : m.keySet()) {
@@ -211,8 +206,7 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
         final Map<KeyColumn, StaticBuffer> m = expectedValuesByStore.computeIfAbsent(store, k -> new HashMap<>());
     }
 
-    private void checkSingleExpectedValue(KeyColumn kc,
-                                          final StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
+    private void checkSingleExpectedValue(KeyColumn kc, StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
         BackendOperation.executeDirect(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -226,9 +220,8 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
         },maxReadTime);
     }
 
-    private void checkSingleExpectedValueUnsafe(KeyColumn kc,
-                                                final StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
-        final StaticBuffer nextBuf = BufferUtil.nextBiggerBuffer(kc.getColumn());
+    private void checkSingleExpectedValueUnsafe(KeyColumn kc, StaticBuffer ev, ExpectedValueCheckingStore store) throws BackendException {
+        StaticBuffer nextBuf = BufferUtil.nextBiggerBuffer(kc.getColumn());
         KeySliceQuery ksq = new KeySliceQuery(kc.getKey(), kc.getColumn(), nextBuf);
         // Call getSlice on the wrapped store using the quorum+ consistency tx
         Iterable<Entry> actualEntries = store.getBackingStore().getSlice(ksq, strongConsistentTx);
@@ -244,25 +237,17 @@ public class ExpectedValueCheckingTransaction implements StoreTransaction {
          */
         actualEntries = Iterables.filter(actualEntries, input -> {
             if (!input.getColumn().equals(kc.getColumn())) {
-                log.debug("Dropping entry {} (only accepting column {})", input, kc.getColumn());
+                LOG.debug("Dropping entry {} (only accepting column {})", input, kc.getColumn());
                 return false;
             }
-            log.debug("Accepting entry {}", input);
+            LOG.debug("Accepting entry {}", input);
             return true;
         });
 
         // Extract values from remaining Entry instances
 
-        final Iterable<StaticBuffer> actualValues = Iterables.transform(actualEntries, e -> {
-            final StaticBuffer actualCol = e.getColumnAs(StaticBuffer.STATIC_FACTORY);
-            assert null != actualCol;
-            assert null != kc.getColumn();
-            assert 0 >= kc.getColumn().compareTo(actualCol);
-            assert 0  > actualCol.compareTo(nextBuf);
-            return e.getValueAs(StaticBuffer.STATIC_FACTORY);
-        });
-
-        final Iterable<StaticBuffer> expectedValues;
+        Iterable<StaticBuffer> actualValues = Iterables.transform(actualEntries, e -> e.getValueAs(StaticBuffer.STATIC_FACTORY));
+        Iterable<StaticBuffer> expectedValues;
 
         if (null == ev) {
             expectedValues = ImmutableList.of();

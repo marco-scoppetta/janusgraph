@@ -19,7 +19,6 @@ import java.util.*;
 /**
  * CompactMap is compact representation of the {@link Map} interface which is immutable.
  *
-
  */
 
 public class CompactMap implements Map<String,Object> {

@@ -19,7 +19,11 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVSProxy;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
+import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.CacheMetricsAction;
 import org.janusgraph.util.stats.MetricManager;
 
@@ -43,8 +47,7 @@ public abstract class KCVSCache extends KCVSProxy {
     }
 
     protected void incActionBy(int by, CacheMetricsAction action, StoreTransaction txh) {
-        assert by>=1;
-        if (metricsName!=null && txh.getConfiguration().hasGroupName()) {
+        if (metricsName != null && txh.getConfiguration().hasGroupName()) {
             MetricManager.INSTANCE.getCounter(txh.getConfiguration().getGroupName(), metricsName, action.getName()).inc(by);
         }
     }
@@ -59,22 +62,20 @@ public abstract class KCVSCache extends KCVSProxy {
     }
 
     public void mutateEntries(StaticBuffer key, List<Entry> additions, List<Entry> deletions, StoreTransaction txh) throws BackendException {
-        assert txh instanceof CacheTransaction;
         ((CacheTransaction) txh).mutate(this, key, additions, deletions);
     }
 
     @Override
     protected final StoreTransaction unwrapTx(StoreTransaction txh) {
-        assert txh instanceof CacheTransaction;
         return ((CacheTransaction) txh).getWrappedTransaction();
     }
 
     public EntryList getSliceNoCache(KeySliceQuery query, StoreTransaction txh) throws BackendException {
-        return store.getSlice(query,unwrapTx(txh));
+        return store.getSlice(query, unwrapTx(txh));
     }
 
     public Map<StaticBuffer, EntryList> getSliceNoCache(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException {
-        return store.getSlice(keys,query,unwrapTx(txh));
+        return store.getSlice(keys, query, unwrapTx(txh));
     }
 
 }

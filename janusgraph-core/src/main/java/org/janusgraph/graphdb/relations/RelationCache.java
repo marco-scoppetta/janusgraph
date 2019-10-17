@@ -24,7 +24,6 @@ import java.util.*;
  * Immutable map from long key ids to objects.
  * Implemented for memory and time efficiency.
  *
-
  */
 public class RelationCache implements Iterable<LongObjectCursor<Object>> {
 

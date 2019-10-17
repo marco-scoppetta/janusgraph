@@ -25,7 +25,6 @@ import org.apache.tinkerpop.gremlin.structure.Element;
  * This interface allows introspecting an existing graph index. Existing graph indexes can be retrieved via
  * {@link JanusGraphManagement#getGraphIndex(String)} or {@link JanusGraphManagement#getGraphIndexes(Class)}.
  *
-
  */
 public interface JanusGraphIndex extends Index {
 

@@ -23,7 +23,6 @@ import java.util.Arrays;
  * A Buffer that only allows static access. This Buffer is immutable if
  * any returned byte array or ByteBuffer is not mutated.
  *
-
  */
 public interface StaticBuffer extends Comparable<StaticBuffer> {
 

@@ -17,7 +17,6 @@ package org.janusgraph.core.schema;
 /**
  * Schema Elements that represent an index in the graph
  *
-
  */
 public interface Index extends JanusGraphSchemaElement {
 

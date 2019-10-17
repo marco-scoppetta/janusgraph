@@ -36,7 +36,6 @@ import org.janusgraph.core.schema.Parameter;
  * {@link Retriever} returns {@link IndexRetriever} for a given index identified by its name. This is only used
  * internally to pass {@link IndexRetriever}s around.
  *
-
  */
 public interface KeyInformation {
 

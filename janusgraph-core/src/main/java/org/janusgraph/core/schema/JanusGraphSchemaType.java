@@ -22,7 +22,6 @@ package org.janusgraph.core.schema;
  * JanusGraphSchemaTypes are a special {@link JanusGraphSchemaElement} in that they are referenced from the
  * main graph when creating vertices, edges, and properties.
  *
-
  */
 public interface JanusGraphSchemaType extends JanusGraphSchemaElement {
 
