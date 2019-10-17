@@ -39,14 +39,14 @@ public class FoundationDBGraphTest extends JanusGraphTest {
         String methodName = this.testInfo.getDisplayName();
         if (methodName.equals("testConsistencyEnforcement")) {
 //            IsolationLevel iso = IsolationLevel.SERIALIZABLE;
-//            log.debug("Forcing isolation level {} for test method {}", iso, methodName);
+//            LOG.debug("Forcing isolation level {} for test method {}", iso, methodName);
 //            modifiableConfiguration.set(FoundationDBStoreManager.ISOLATION_LEVEL, iso.toString());
         } else {
 //            IsolationLevel iso = null;
 //            if (modifiableConfiguration.has(FoundationDBStoreManager.ISOLATION_LEVEL)) {
 //                iso = ConfigOption.getEnumValue(modifiableConfiguration.get(FoundationDBStoreManager.ISOLATION_LEVEL),IsolationLevel.class);
 //            }
-//            log.debug("Using isolation level {} (null means adapter default) for test method {}", iso, methodName);
+//            LOG.debug("Using isolation level {} (null means adapter default) for test method {}", iso, methodName);
         }
         return modifiableConfiguration.getConfiguration();
     }

@@ -40,7 +40,6 @@ public abstract class AbstractVertex extends AbstractElement implements Internal
 
     AbstractVertex(StandardJanusGraphTx tx, long id) {
         super(id);
-        assert tx != null;
         this.tx = tx;
     }
 

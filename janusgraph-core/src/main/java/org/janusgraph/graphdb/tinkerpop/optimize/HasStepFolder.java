@@ -46,9 +46,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface HasStepFolder<S, E> extends Step<S, E> {
 
     void addAll(Iterable<HasContainer> hasContainers);

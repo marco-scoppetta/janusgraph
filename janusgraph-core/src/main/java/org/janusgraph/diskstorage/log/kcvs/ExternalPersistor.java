@@ -17,9 +17,7 @@ package org.janusgraph.diskstorage.log.kcvs;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface ExternalPersistor {
 
     void add(StaticBuffer key, Entry cell);

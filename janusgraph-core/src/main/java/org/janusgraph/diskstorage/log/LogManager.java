@@ -24,18 +24,18 @@ import org.janusgraph.diskstorage.BackendException;
 public interface LogManager {
 
     /**
-     * Opens a log for the given name.
+     * Opens a LOG for the given name.
      * <p>
-     * If a log with the given name already exists, the existing log is returned.
+     * If a LOG with the given name already exists, the existing LOG is returned.
      *
-     * @param name Name of the log to be opened
+     * @param name Name of the LOG to be opened
      * @return
      * @throws org.janusgraph.diskstorage.BackendException
      */
     Log openLog(String name) throws BackendException;
 
     /**
-     * Closes the log manager and all open logs (if they haven't already been explicitly closed)
+     * Closes the LOG manager and all open logs (if they haven't already been explicitly closed)
      *
      * @throws org.janusgraph.diskstorage.BackendException
      */

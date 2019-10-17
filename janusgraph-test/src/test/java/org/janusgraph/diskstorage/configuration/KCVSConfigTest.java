@@ -25,9 +25,7 @@ import org.janusgraph.diskstorage.util.time.TimestampProviders;
 
 import java.time.Duration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class KCVSConfigTest extends WritableConfigurationTest {
 
     @Override

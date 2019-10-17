@@ -32,9 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.janusgraph.util.datastructures.ByteSize.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ExpirationKCVSCache extends KCVSCache {
 
     //Weight estimation

@@ -18,9 +18,7 @@ import com.google.common.base.Preconditions;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public abstract class BaseKeyColumnValueAdapter implements KeyColumnValueStore {
 

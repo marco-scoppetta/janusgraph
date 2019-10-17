@@ -26,9 +26,7 @@ import org.janusgraph.util.stats.MetricManager;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class KCVSCache extends KCVSProxy {
 
     public static final List<Entry> NO_DELETIONS = ImmutableList.of();

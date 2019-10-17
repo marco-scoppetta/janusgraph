@@ -60,7 +60,7 @@ public class TypeUtil {
         }
     }
 
-    public static boolean hasSimpleInternalVertexKeyIndex(JanusGraphVertexProperty prop) {
+    private static boolean hasSimpleInternalVertexKeyIndex(JanusGraphVertexProperty prop) {
         return hasSimpleInternalVertexKeyIndex(prop.propertyKey());
     }
 
@@ -69,11 +69,6 @@ public class TypeUtil {
         for (IndexType index : type.getKeyIndexes()) {
             if (index.getElement()== ElementCategory.VERTEX && index.isCompositeIndex()) {
                 if (index.indexesKey(key)) return true;
-//                InternalIndexType iIndex = (InternalIndexType)index;
-//                if (iIndex.getFieldKeys().length==1) {
-//                    assert iIndex.getFieldKeys()[0].getFieldKey().equals(key);
-//                    return true;
-//                }
             }
         }
         return false;
@@ -83,35 +78,6 @@ public class TypeUtil {
         InternalRelationType baseType = type.getBaseType();
         if (baseType == null) return type;
         else return baseType;
-    }
-
-    public static Set<PropertyKey> getIndexedKeys(IndexType index) {
-        Set<PropertyKey> s = Sets.newHashSet();
-        for (IndexField f : index.getFieldKeys()) {
-            s.add(f.getFieldKey());
-        }
-        return s;
-    }
-
-    public static List<CompositeIndexType> getUniqueIndexes(PropertyKey key) {
-        final List<CompositeIndexType> indexes = new ArrayList<>();
-        for (IndexType index : ((InternalRelationType)key).getKeyIndexes()) {
-            if (index.isCompositeIndex()) {
-                CompositeIndexType iIndex = (CompositeIndexType)index;
-                assert index.indexesKey(key);
-                if (iIndex.getCardinality()== Cardinality.SINGLE) {
-                    assert iIndex.getElement()==ElementCategory.VERTEX;
-                    indexes.add(iIndex);
-                }
-            }
-        }
-        return indexes;
-    }
-
-    public static boolean hasAnyIndex(PropertyKey key) {
-        InternalRelationType type = (InternalRelationType) key;
-        return !Iterables.isEmpty(type.getKeyIndexes()) ||
-                Iterables.size(type.getRelationIndexes())>1; //The type itself is also returned as an index
     }
 
     private static <T> T getTypeModifier(SchemaSource schema,

@@ -27,9 +27,7 @@ import org.janusgraph.graphdb.transaction.addedrelations.SimpleAddedRelations;
 import org.janusgraph.util.datastructures.Retriever;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class StandardVertex extends AbstractVertex {
 

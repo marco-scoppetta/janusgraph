@@ -18,9 +18,7 @@ import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public interface KeyIterator extends RecordIterator<StaticBuffer> {
 

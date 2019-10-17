@@ -31,13 +31,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StandardSchemaCache implements SchemaCache {
 
-    public static final int MAX_CACHED_TYPES_DEFAULT = 10000;
-
+    private static final int MAX_CACHED_TYPES_DEFAULT = 10000;
     private static final int INITIAL_CAPACITY = 128;
     private static final int INITIAL_CACHE_SIZE = 16;
     private static final int CACHE_RELATION_MULTIPLIER = 3; // 1) type-name, 2) type-definitions, 3) modifying edges [index, lock]
@@ -46,10 +43,9 @@ public class StandardSchemaCache implements SchemaCache {
     private static final int SCHEMAID_TOTALFORW_SHIFT = 3; //Total number of bits appended - the 1 is for the 1 bit direction
     private static final int SCHEMAID_BACK_SHIFT = 2; //Number of bits to remove from end of schema id since its just the padding
 
-    static {
-        assert IDManager.VertexIDType.Schema.removePadding(1L << SCHEMAID_BACK_SHIFT) == 1;
-        assert SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT >= 0;
-    }
+    //The following two conditions should always be true if we ever decide to change any of the above fields
+//        assert IDManager.VertexIDType.Schema.removePadding(1L << SCHEMAID_BACK_SHIFT) == 1;
+//        assert SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT >= 0;
 
     private final int maxCachedTypes;
     private final int maxCachedRelations;
@@ -65,7 +61,7 @@ public class StandardSchemaCache implements SchemaCache {
         this(MAX_CACHED_TYPES_DEFAULT, retriever);
     }
 
-    public StandardSchemaCache(int size, StoreRetrieval retriever) {
+    private StandardSchemaCache(int size, StoreRetrieval retriever) {
         Preconditions.checkArgument(size > 0, "Size must be positive");
         Preconditions.checkNotNull(retriever);
         maxCachedTypes = size;
@@ -120,7 +116,6 @@ public class StandardSchemaCache implements SchemaCache {
 
     private long getIdentifier(long schemaId, SystemRelationType type, Direction dir) {
         int edgeDir = EdgeDirection.position(dir);
-        assert edgeDir == 0 || edgeDir == 1;
 
         long typeId = (schemaId >>> SCHEMAID_BACK_SHIFT);
         int systemTypeId;
@@ -130,21 +125,15 @@ public class StandardSchemaCache implements SchemaCache {
         else if (type == BaseKey.SchemaDefinitionProperty) systemTypeId = 3;
         else throw new AssertionError("Unexpected SystemType encountered in StandardSchemaCache: " + type.name());
 
-        //Ensure that there is enough padding
-        assert (systemTypeId < (1 << 2));
         return (((typeId << 2) + systemTypeId) << 1) + edgeDir;
     }
 
     @Override
     public EntryList getSchemaRelations(long schemaId, BaseRelationType type, Direction dir) {
-        assert IDManager.isSystemRelationTypeId(type.longId()) && type.longId() > 0;
         Preconditions.checkArgument(IDManager.VertexIDType.Schema.is(schemaId));
         Preconditions.checkArgument((Long.MAX_VALUE >>> (SCHEMAID_TOTALFORW_SHIFT - SCHEMAID_BACK_SHIFT)) >= schemaId);
 
-        int edgeDir = EdgeDirection.position(dir);
-        assert edgeDir == 0 || edgeDir == 1;
-
-        final long typePlusRelation = getIdentifier(schemaId, type, dir);
+        long typePlusRelation = getIdentifier(schemaId, type, dir);
         ConcurrentMap<Long, EntryList> types = schemaRelations;
         EntryList entries;
         if (types == null) {
@@ -171,14 +160,13 @@ public class StandardSchemaCache implements SchemaCache {
                 }
             }
         }
-        assert entries != null;
         return entries;
     }
 
     @Override
     public void expireSchemaElement(long schemaId) {
         //1) expire relations
-        final long cutTypeId = (schemaId >>> SCHEMAID_BACK_SHIFT);
+        long cutTypeId = (schemaId >>> SCHEMAID_BACK_SHIFT);
         ConcurrentMap<Long, EntryList> types = schemaRelations;
         if (types != null) {
             types.keySet().removeIf(key -> (key >>> SCHEMAID_TOTALFORW_SHIFT) == cutTypeId);

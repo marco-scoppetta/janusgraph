@@ -43,7 +43,7 @@ public class WorkerPool implements AutoCloseable {
         processor.shutdown();
         processor.awaitTermination(SHUTDOWN_WAIT_MS,TimeUnit.MILLISECONDS);
         if (!processor.isTerminated()) {
-            //log.error("Processor did not terminate in time");
+            //LOG.error("Processor did not terminate in time");
             processor.shutdownNow();
         }
 

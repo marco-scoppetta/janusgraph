@@ -51,7 +51,7 @@ public class KCVSLogManager implements LogManager {
     private static final Logger log = LoggerFactory.getLogger(KCVSLogManager.class);
 
     public static final ConfigOption<Boolean> LOG_FIXED_PARTITION = new ConfigOption<>(LOG_NS, "fixed-partition",
-            "Whether all log entries are written to one fixed partition even if the backend store is partitioned." +
+            "Whether all LOG entries are written to one fixed partition even if the backend store is partitioned." +
                     "This can cause imbalanced loads and should only be used on low volume logs",
             ConfigOption.Type.GLOBAL_OFFLINE, false);
 
@@ -69,7 +69,7 @@ public class KCVSLogManager implements LogManager {
 
 
     /**
-     * Configuration of this log manager
+     * Configuration of this LOG manager
      */
     private final Configuration configuration;
     /**
@@ -95,7 +95,7 @@ public class KCVSLogManager implements LogManager {
      */
     final int[] readPartitionIds;
     /**
-     * Serializer used to (de)-serialize the log messages
+     * Serializer used to (de)-serialize the LOG messages
      */
     final StandardSerializer serializer;
 
@@ -110,7 +110,7 @@ public class KCVSLogManager implements LogManager {
     private final int indexStoreTTL;
 
     /**
-     * Opens a log manager against the provided KCVS store with the given configuration.
+     * Opens a LOG manager against the provided KCVS store with the given configuration.
      *
      * @param storeManager
      * @param config
@@ -120,8 +120,8 @@ public class KCVSLogManager implements LogManager {
     }
 
     /**
-     * Opens a log manager against the provided KCVS store with the given configuration. Also provided is a list
-     * of read-partition-ids. These only apply when readers are registered against an opened log. In that case,
+     * Opens a LOG manager against the provided KCVS store with the given configuration. Also provided is a list
+     * of read-partition-ids. These only apply when readers are registered against an opened LOG. In that case,
      * the readers only read from the provided list of partition ids.
      *
      * @param storeManager
@@ -155,7 +155,7 @@ public class KCVSLogManager implements LogManager {
         if (config.has(LOG_MAX_PARTITIONS)) maxPartitions = config.get(LOG_MAX_PARTITIONS);
         else maxPartitions = Math.max(1, config.get(CLUSTER_MAX_PARTITIONS) / CLUSTER_SIZE_DIVIDER);
         Preconditions.checkArgument(maxPartitions <= config.get(CLUSTER_MAX_PARTITIONS),
-                "Number of log partitions cannot be larger than number of cluster partitions");
+                "Number of LOG partitions cannot be larger than number of cluster partitions");
         this.partitionBitWidth = NumberUtil.getPowerOf2(maxPartitions);
 
         Preconditions.checkArgument(partitionBitWidth >= 0 && partitionBitWidth < 32);
@@ -221,7 +221,7 @@ public class KCVSLogManager implements LogManager {
     }
 
     /**
-     * Must be triggered by a particular {@link KCVSLog} when it is closed so that this log can be removed from the list
+     * Must be triggered by a particular {@link KCVSLog} when it is closed so that this LOG can be removed from the list
      * of open logs.
      *
      * @param log
@@ -235,7 +235,7 @@ public class KCVSLogManager implements LogManager {
     public synchronized void close() throws BackendException {
         /* Copying the map is necessary to avoid ConcurrentModificationException.
          * The path to ConcurrentModificationException in the absence of a copy is
-         * log.close() -> manager.closedLog(log) -> openLogs.remove(log.getName()).
+         * LOG.close() -> manager.closedLog(LOG) -> openLogs.remove(LOG.getName()).
          */
         for (KCVSLog log : ImmutableMap.copyOf(openLogs).values()) log.close();
 

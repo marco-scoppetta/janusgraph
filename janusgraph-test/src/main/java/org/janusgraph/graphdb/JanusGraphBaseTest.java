@@ -74,9 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class JanusGraphBaseTest {
 
     public static final String LABEL_NAME = T.label.getAccessor();
@@ -270,7 +268,7 @@ public abstract class JanusGraphBaseTest {
             try {
                 logManagers.remove(logManagerName).close();
             } catch (BackendException e) {
-                throw new JanusGraphException("Could not close log manager " + logManagerName, e);
+                throw new JanusGraphException("Could not close LOG manager " + logManagerName, e);
             }
         }
     }
@@ -299,7 +297,7 @@ public abstract class JanusGraphBaseTest {
             }
             Preconditions.checkNotNull(logStoreManager);
             if (!logManagers.containsKey(logManagerName)) {
-                //Open log manager - only supports KCVSLog
+                //Open LOG manager - only supports KCVSLog
                 final Configuration logConfig = configuration.restrictTo(logManagerName);
                 Preconditions.checkState(logConfig.get(LOG_BACKEND).equals(LOG_BACKEND.getDefaultValue()));
                 logManagers.put(logManagerName, new KCVSLogManager(logStoreManager, logConfig));
@@ -307,7 +305,7 @@ public abstract class JanusGraphBaseTest {
             Preconditions.checkState(logManagers.containsKey(logManagerName));
             return logManagers.get(logManagerName).openLog(logName);
         } catch (BackendException e) {
-            throw new JanusGraphException("Could not open log: " + logName, e);
+            throw new JanusGraphException("Could not open LOG: " + logName, e);
         }
     }
 

@@ -20,9 +20,7 @@ import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.graphdb.query.BaseQuery;
 import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class RawQuery extends BaseQuery {
 
     private final String store;

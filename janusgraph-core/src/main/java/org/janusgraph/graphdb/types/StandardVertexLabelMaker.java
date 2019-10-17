@@ -22,9 +22,7 @@ import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.system.SystemTypeManager;
 import static org.janusgraph.graphdb.types.TypeDefinitionCategory.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StandardVertexLabelMaker implements VertexLabelMaker {
 
     private final StandardJanusGraphTx tx;

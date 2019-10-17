@@ -17,11 +17,13 @@ package org.janusgraph.graphdb.olap.job;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import org.janusgraph.core.JanusGraphException;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.janusgraph.core.JanusGraph;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.schema.RelationTypeIndex;
 import org.janusgraph.core.schema.SchemaStatus;
-import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.diskstorage.BackendTransaction;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
@@ -41,17 +43,12 @@ import org.janusgraph.graphdb.olap.VertexJobConverter;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.CompositeIndexType;
 import org.janusgraph.graphdb.types.vertices.JanusGraphSchemaVertex;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
 
     private final VertexJobConverter.GraphProvider graph = new VertexJobConverter.GraphProvider();
@@ -62,17 +59,13 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
     private long graphIndexId;
     private IDManager idManager;
 
-    public IndexRemoveJob() {
-        super();
-    }
-
     protected IndexRemoveJob(IndexRemoveJob copy) {
         super(copy);
         if (copy.graph.isProvided()) this.graph.setGraph(copy.graph.get());
     }
 
     public IndexRemoveJob(JanusGraph graph, String indexName, String indexType) {
-        super(indexName,indexType);
+        super(indexName, indexType);
         this.graph.setGraph(graph);
     }
 
@@ -97,11 +90,11 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
 
     @Override
     protected void validateIndexStatus() {
-        if(!(index instanceof RelationTypeIndex || index instanceof JanusGraphIndex)) {
-            throw new UnsupportedOperationException("Unsupported index found: "+index);
+        if (!(index instanceof RelationTypeIndex || index instanceof JanusGraphIndex)) {
+            throw new UnsupportedOperationException("Unsupported index found: " + index);
         }
         if (index instanceof JanusGraphIndex) {
-            JanusGraphIndex graphIndex = (JanusGraphIndex)index;
+            JanusGraphIndex graphIndex = (JanusGraphIndex) index;
             if (graphIndex.isMixedIndex())
                 throw new UnsupportedOperationException("Cannot remove mixed indexes through JanusGraph. This can " +
                         "only be accomplished in the indexing system directly.");
@@ -112,7 +105,7 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
         //Must be a relation type index or a composite graph index
         JanusGraphSchemaVertex schemaVertex = managementSystem.getSchemaVertex(index);
         SchemaStatus actualStatus = schemaVertex.getStatus();
-        Preconditions.checkArgument(actualStatus==SchemaStatus.DISABLED,"The index [%s] must be disabled before it can be removed",indexName);
+        Preconditions.checkArgument(actualStatus == SchemaStatus.DISABLED, "The index [%s] must be disabled before it can be removed", indexName);
     }
 
     @Override
@@ -121,13 +114,13 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
         try {
             BackendTransaction mutator = writeTx.getBackendTransaction();
             final List<Entry> deletions;
-            if (entries.size()==1) deletions = Iterables.getOnlyElement(entries.values());
+            if (entries.size() == 1) deletions = Iterables.getOnlyElement(entries.values());
             else {
-                final int size = IteratorUtils.stream(entries.values().iterator()).map(List::size).reduce(0, (x,y) -> x+y);
+                final int size = IteratorUtils.stream(entries.values().iterator()).map(List::size).reduce(0, (x, y) -> x + y);
                 deletions = new ArrayList<>(size);
                 entries.values().forEach(deletions::addAll);
             }
-            metrics.incrementCustom(DELETED_RECORDS_COUNT,deletions.size());
+            metrics.incrementCustom(DELETED_RECORDS_COUNT, deletions.size());
             if (isRelationTypeIndex()) {
                 mutator.mutateEdges(key, KCVSCache.NO_ADDITIONS, deletions);
             } else {
@@ -147,13 +140,12 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
             //Everything
             return ImmutableList.of(new SliceQuery(BufferUtil.zeroBuffer(1), BufferUtil.oneBuffer(128)));
         } else {
-            RelationTypeIndexWrapper wrapper = (RelationTypeIndexWrapper)index;
+            RelationTypeIndexWrapper wrapper = (RelationTypeIndexWrapper) index;
             InternalRelationType wrappedType = wrapper.getWrappedType();
-            Direction direction=null;
-            for (Direction dir : Direction.values()) if (wrappedType.isUnidirected(dir)) direction=dir;
-            assert direction!=null;
+            Direction direction = null;
+            for (Direction dir : Direction.values()) if (wrappedType.isUnidirected(dir)) direction = dir;
 
-            StandardJanusGraphTx tx = (StandardJanusGraphTx)graph.get().buildTransaction().readOnly().start();
+            StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.get().buildTransaction().readOnly().start();
             try {
                 QueryContainer qc = new QueryContainer(tx);
                 qc.addQuery().type(wrappedType).direction(direction).relations();
@@ -167,12 +159,11 @@ public class IndexRemoveJob extends IndexUpdateJob implements ScanJob {
     @Override
     public Predicate<StaticBuffer> getKeyFilter() {
         if (isGlobalGraphIndex()) {
-            assert graphIndexId>0;
             return (k -> {
                 try {
                     return indexSerializer.getIndexIdFromKey(k) == graphIndexId;
                 } catch (RuntimeException e) {
-                    log.error("Filtering key {} due to exception", k, e);
+                    LOG.error("Filtering key {} due to exception", k, e);
                     return false;
                 }
             });

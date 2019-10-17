@@ -18,8 +18,20 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.janusgraph.core.*;
-import org.janusgraph.core.schema.*;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.janusgraph.core.BaseVertexQuery;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.RelationType;
+import org.janusgraph.core.schema.JanusGraphIndex;
+import org.janusgraph.core.schema.JanusGraphSchemaType;
+import org.janusgraph.core.schema.RelationTypeIndex;
+import org.janusgraph.core.schema.SchemaAction;
+import org.janusgraph.core.schema.SchemaStatus;
 import org.janusgraph.diskstorage.BackendTransaction;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
@@ -39,13 +51,14 @@ import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.graphdb.types.MixedIndexType;
 import org.janusgraph.graphdb.types.system.BaseLabel;
 import org.janusgraph.graphdb.types.vertices.JanusGraphSchemaVertex;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
 
     /**
@@ -64,10 +77,12 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
         super();
     }
 
-    protected IndexRepairJob(IndexRepairJob job) { super(job); }
+    protected IndexRepairJob(IndexRepairJob job) {
+        super(job);
+    }
 
     public IndexRepairJob(String indexName, String indexType) {
-        super(indexName,indexType);
+        super(indexName, indexType);
     }
 
     /**
@@ -79,39 +94,37 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
         Set<SchemaStatus> acceptableStatuses = SchemaAction.REINDEX.getApplicableStatus();
         boolean isValidIndex = true;
         String invalidIndexHint;
-        if (index instanceof RelationTypeIndex ||
-                (index instanceof JanusGraphIndex && ((JanusGraphIndex)index).isCompositeIndex()) ) {
+        if (index instanceof RelationTypeIndex || (index instanceof JanusGraphIndex && ((JanusGraphIndex) index).isCompositeIndex())) {
             SchemaStatus actualStatus = schemaVertex.getStatus();
             isValidIndex = acceptableStatuses.contains(actualStatus);
             invalidIndexHint = String.format(
                     "The index has status %s, but one of %s is required",
                     actualStatus, acceptableStatuses);
         } else {
-            Preconditions.checkArgument(index instanceof JanusGraphIndex,"Unexpected index: %s",index);
-            JanusGraphIndex graphIndex = (JanusGraphIndex)index;
+            Preconditions.checkArgument(index instanceof JanusGraphIndex, "Unexpected index: %s", index);
+            JanusGraphIndex graphIndex = (JanusGraphIndex) index;
             Preconditions.checkArgument(graphIndex.isMixedIndex());
             Map<String, SchemaStatus> invalidKeyStatuses = new HashMap<>();
             int acceptableFields = 0;
             for (PropertyKey key : graphIndex.getFieldKeys()) {
                 SchemaStatus status = graphIndex.getIndexStatus(key);
-                if (status!=SchemaStatus.DISABLED && !acceptableStatuses.contains(status)) {
-                    isValidIndex=false;
+                if (status != SchemaStatus.DISABLED && !acceptableStatuses.contains(status)) {
+                    isValidIndex = false;
                     invalidKeyStatuses.put(key.name(), status);
-                    log.warn("Index {} has key {} in an invalid status {}",index,key,status);
+                    LOG.warn("Index {} has key {} in an invalid status {}", index, key, status);
                 }
                 if (acceptableStatuses.contains(status)) acceptableFields++;
             }
             invalidIndexHint = String.format(
                     "The following index keys have invalid status: %s (status must be one of %s)",
                     Joiner.on(",").withKeyValueSeparator(" has status ").join(invalidKeyStatuses), acceptableStatuses);
-            if (isValidIndex && acceptableFields==0) {
+            if (isValidIndex && acceptableFields == 0) {
                 isValidIndex = false;
                 invalidIndexHint = "The index does not contain any valid keys";
             }
         }
         Preconditions.checkArgument(isValidIndex, "The index %s is in an invalid state and cannot be indexed. %s", indexName, invalidIndexHint);
         // TODO consider retrieving the current Job object and calling killJob() if !isValidIndex -- would be more efficient than throwing an exception on the first pair processed by each mapper
-        log.debug("Index {} is valid for re-indexing");
     }
 
 
@@ -120,7 +133,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
         try {
             BackendTransaction mutator = writeTx.getBackendTransaction();
             if (index instanceof RelationTypeIndex) {
-                RelationTypeIndexWrapper wrapper = (RelationTypeIndexWrapper)index;
+                RelationTypeIndexWrapper wrapper = (RelationTypeIndexWrapper) index;
                 InternalRelationType wrappedType = wrapper.getWrappedType();
                 EdgeSerializer edgeSerializer = writeTx.getEdgeSerializer();
                 List<Entry> additions = new ArrayList<>();
@@ -139,7 +152,6 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                 metrics.incrementCustom(ADDED_RECORDS_COUNT, additions.size());
             } else if (index instanceof JanusGraphIndex) {
                 IndexType indexType = managementSystem.getSchemaVertex(index).asIndexType();
-                assert indexType!=null;
                 IndexSerializer indexSerializer = graph.getIndexSerializer();
                 //Gather elements to index
                 List<JanusGraphElement> elements;
@@ -149,31 +161,31 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                         break;
                     case PROPERTY:
                         elements = Lists.newArrayList();
-                        for (JanusGraphVertexProperty p : addIndexSchemaConstraint(vertex.query(),indexType).properties()) {
+                        for (JanusGraphVertexProperty p : addIndexSchemaConstraint(vertex.query(), indexType).properties()) {
                             elements.add(p);
                         }
                         break;
                     case EDGE:
                         elements = Lists.newArrayList();
-                        for (Object e : addIndexSchemaConstraint(vertex.query().direction(Direction.OUT),indexType).edges()) {
+                        for (Object e : addIndexSchemaConstraint(vertex.query().direction(Direction.OUT), indexType).edges()) {
                             elements.add((JanusGraphEdge) e);
                         }
                         break;
-                    default: throw new AssertionError("Unexpected category: " + indexType.getElement());
+                    default:
+                        throw new AssertionError("Unexpected category: " + indexType.getElement());
                 }
                 if (indexType.isCompositeIndex()) {
                     for (JanusGraphElement element : elements) {
-                        Set<IndexSerializer.IndexUpdate<StaticBuffer,Entry>> updates =
+                        Set<IndexSerializer.IndexUpdate<StaticBuffer, Entry>> updates =
                                 indexSerializer.reindexElement(element, (CompositeIndexType) indexType);
-                        for (IndexSerializer.IndexUpdate<StaticBuffer,Entry> update : updates) {
-                            log.debug("Mutating index {}: {}", indexType, update.getEntry());
+                        for (IndexSerializer.IndexUpdate<StaticBuffer, Entry> update : updates) {
+                            LOG.debug("Mutating index {}: {}", indexType, update.getEntry());
                             mutator.mutateIndex(update.getKey(), Lists.newArrayList(update.getEntry()), KCVSCache.NO_DELETIONS);
                             metrics.incrementCustom(ADDED_RECORDS_COUNT);
                         }
                     }
                 } else {
-                    assert indexType.isMixedIndex();
-                    Map<String,Map<String,List<IndexEntry>>> documentsPerStore = new HashMap<>();
+                    Map<String, Map<String, List<IndexEntry>>> documentsPerStore = new HashMap<>();
                     for (JanusGraphElement element : elements) {
                         indexSerializer.reindexElement(element, (MixedIndexType) indexType, documentsPerStore);
                         metrics.incrementCustom(DOCUMENT_UPDATES_COUNT);
@@ -181,7 +193,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                     mutator.getIndexTransaction(indexType.getBackingIndexName()).restore(documentsPerStore);
                 }
 
-            } else throw new UnsupportedOperationException("Unsupported index found: "+index);
+            } else throw new UnsupportedOperationException("Unsupported index found: " + index);
         } catch (Exception e) {
             managementSystem.rollback();
             writeTx.rollback();
@@ -198,7 +210,7 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
             IndexType indexType = managementSystem.getSchemaVertex(index).asIndexType();
             switch (indexType.getElement()) {
                 case PROPERTY:
-                    addIndexSchemaConstraint(queries.addQuery(),indexType).properties();
+                    addIndexSchemaConstraint(queries.addQuery(), indexType).properties();
                     break;
                 case VERTEX:
                     queries.addQuery().properties();
@@ -206,11 +218,12 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
                     break;
                 case EDGE:
                     indexType.hasSchemaTypeConstraint();
-                    addIndexSchemaConstraint(queries.addQuery().direction(Direction.OUT),indexType).edges();
+                    addIndexSchemaConstraint(queries.addQuery().direction(Direction.OUT), indexType).edges();
                     break;
-                default: throw new AssertionError("Unexpected category: " + indexType.getElement());
+                default:
+                    throw new AssertionError("Unexpected category: " + indexType.getElement());
             }
-        } else throw new UnsupportedOperationException("Unsupported index found: "+index);
+        } else throw new UnsupportedOperationException("Unsupported index found: " + index);
     }
 
     @Override
@@ -218,12 +231,12 @@ public class IndexRepairJob extends IndexUpdateJob implements VertexScanJob {
         return new IndexRepairJob(this);
     }
 
-    private static<Q extends BaseVertexQuery> Q addIndexSchemaConstraint(Q query, IndexType indexType) {
+    private static <Q extends BaseVertexQuery> Q addIndexSchemaConstraint(Q query, IndexType indexType) {
         if (indexType.hasSchemaTypeConstraint()) {
             JanusGraphSchemaType constraint = indexType.getSchemaTypeConstraint();
-            Preconditions.checkArgument(constraint instanceof RelationType,"Expected constraint to be a " +
-                    "relation type: %s",constraint);
-            query.types((RelationType)constraint);
+            Preconditions.checkArgument(constraint instanceof RelationType, "Expected constraint to be a " +
+                    "relation type: %s", constraint);
+            query.types((RelationType) constraint);
         }
         return query;
     }

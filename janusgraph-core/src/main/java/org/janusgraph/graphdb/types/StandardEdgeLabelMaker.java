@@ -27,9 +27,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
 import static org.janusgraph.graphdb.types.TypeDefinitionCategory.INVISIBLE;
 import static org.janusgraph.graphdb.types.TypeDefinitionCategory.UNIDIRECTIONAL;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class StandardEdgeLabelMaker extends StandardRelationTypeMaker implements EdgeLabelMaker {
 

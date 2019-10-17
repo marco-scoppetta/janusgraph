@@ -38,9 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class VertexJobConverter implements ScanJob {
 
     protected static final SliceQuery VERTEX_EXISTS_QUERY = new SliceQuery(BufferUtil.zeroBuffer(1),BufferUtil.oneBuffer(4)).setLimit(1);
@@ -119,7 +117,6 @@ public class VertexJobConverter implements ScanJob {
     @Override
     public void process(StaticBuffer key, Map<SliceQuery, EntryList> entries, ScanMetrics metrics) {
         long vertexId = getVertexId(key);
-        assert entries.get(VERTEX_EXISTS_QUERY)!=null;
         if (isGhostVertex(vertexId, entries.get(VERTEX_EXISTS_QUERY))) {
             metrics.incrementCustom(GHOST_VERTEX_COUNT);
             return;
@@ -131,7 +128,7 @@ public class VertexJobConverter implements ScanJob {
             if (sq.equals(VERTEX_EXISTS_QUERY)) continue;
             EntryList entryList = entry.getValue();
             if (entryList.size()>=sq.getLimit()) metrics.incrementCustom(TRUNCATED_ENTRY_LISTS);
-//            v.addToQueryCache(sq.updateLimit(Query.NO_LIMIT),entryList); // comment out as not sure what's really going on here
+//            v.addToQueryCache(sq.updateLimit(Query.NO_LIMIT),entryList); // commented out as not sure what's really going on here
         }
         job.process(v, metrics);
     }

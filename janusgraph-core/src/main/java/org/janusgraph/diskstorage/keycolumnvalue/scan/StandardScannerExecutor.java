@@ -34,9 +34,7 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 class StandardScannerExecutor extends AbstractFuture<ScanMetrics> implements JanusGraphManagement.IndexJobFuture, Runnable {
 
     private static final Logger log =

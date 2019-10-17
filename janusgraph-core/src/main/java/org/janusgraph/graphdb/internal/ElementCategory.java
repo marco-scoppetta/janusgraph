@@ -15,60 +15,74 @@
 package org.janusgraph.graphdb.internal;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.*;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.janusgraph.core.JanusGraphEdge;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
 import org.janusgraph.core.schema.JanusGraphSchemaType;
 import org.janusgraph.graphdb.relations.RelationIdentifier;
 import org.janusgraph.graphdb.types.VertexLabelVertex;
 import org.janusgraph.graphdb.types.vertices.EdgeLabelVertex;
 import org.janusgraph.graphdb.types.vertices.PropertyKeyVertex;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 
-/**
-* @author Matthias Broecheler (me@matthiasb.com)
-*/
 public enum ElementCategory {
     VERTEX, EDGE, PROPERTY;
 
     public Class<? extends Element> getElementType() {
-        switch(this) {
-            case VERTEX: return JanusGraphVertex.class;
-            case EDGE: return JanusGraphEdge.class;
-            case PROPERTY: return JanusGraphVertexProperty.class;
-            default: throw new IllegalArgumentException();
+        switch (this) {
+            case VERTEX:
+                return JanusGraphVertex.class;
+            case EDGE:
+                return JanusGraphEdge.class;
+            case PROPERTY:
+                return JanusGraphVertexProperty.class;
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
     public boolean isRelation() {
-        switch(this) {
-            case VERTEX: return false;
+        switch (this) {
+            case VERTEX:
+                return false;
             case EDGE:
-            case PROPERTY: return true;
-            default: throw new IllegalArgumentException();
+            case PROPERTY:
+                return true;
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
     public boolean isValidConstraint(JanusGraphSchemaType type) {
         Preconditions.checkNotNull(type);
-        switch(this) {
-            case VERTEX: return (type instanceof VertexLabelVertex);
-            case EDGE: return (type instanceof EdgeLabelVertex);
-            case PROPERTY: return (type instanceof PropertyKeyVertex);
-            default: throw new IllegalArgumentException();
+        switch (this) {
+            case VERTEX:
+                return (type instanceof VertexLabelVertex);
+            case EDGE:
+                return (type instanceof EdgeLabelVertex);
+            case PROPERTY:
+                return (type instanceof PropertyKeyVertex);
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
     public boolean matchesConstraint(JanusGraphSchemaType type, JanusGraphElement element) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(element);
-        assert isInstance(element);
-        assert isValidConstraint(type);
-        switch(this) {
-            case VERTEX: return ((JanusGraphVertex)element).vertexLabel().equals(type);
-            case EDGE: return ((JanusGraphEdge)element).edgeLabel().equals(type);
-            case PROPERTY: return ((JanusGraphVertexProperty)element).propertyKey().equals(type);
-            default: throw new IllegalArgumentException();
+        switch (this) {
+            case VERTEX:
+                return ((JanusGraphVertex) element).vertexLabel().equals(type);
+            case EDGE:
+                return ((JanusGraphEdge) element).edgeLabel().equals(type);
+            case PROPERTY:
+                return ((JanusGraphVertexProperty) element).propertyKey().equals(type);
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
@@ -86,23 +100,24 @@ public enum ElementCategory {
     }
 
     public JanusGraphElement retrieve(Object elementId, JanusGraphTransaction tx) {
-        Preconditions.checkArgument(elementId!=null,"Must provide elementId");
+        Preconditions.checkArgument(elementId != null, "Must provide elementId");
         switch (this) {
             case VERTEX:
                 Preconditions.checkArgument(elementId instanceof Long);
                 return tx.getVertex((Long) elementId);
             case EDGE:
                 Preconditions.checkArgument(elementId instanceof RelationIdentifier);
-                return ((RelationIdentifier)elementId).findEdge(tx);
+                return ((RelationIdentifier) elementId).findEdge(tx);
             case PROPERTY:
                 Preconditions.checkArgument(elementId instanceof RelationIdentifier);
-                return ((RelationIdentifier)elementId).findProperty(tx);
-            default: throw new IllegalArgumentException();
+                return ((RelationIdentifier) elementId).findProperty(tx);
+            default:
+                throw new IllegalArgumentException();
         }
     }
 
     public static ElementCategory getByClazz(Class<? extends Element> clazz) {
-        Preconditions.checkArgument(clazz!=null,"Need to provide a element class argument");
+        Preconditions.checkArgument(clazz != null, "Need to provide a element class argument");
         if (Vertex.class.isAssignableFrom(clazz)) return VERTEX;
         else if (Edge.class.isAssignableFrom(clazz)) return EDGE;
         else if (JanusGraphVertexProperty.class.isAssignableFrom(clazz)) return PROPERTY;

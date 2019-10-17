@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  *
  * This class starts Cassandra on the first invocation of
  * {@link CassandraDaemonWrapper#start(String)} in the life of the JVM.
- * Invocations after the first have no effect except that they may log a
+ * Invocations after the first have no effect except that they may LOG a
  * warning.
  *
  * When the thread that first called {@code #start(String)} dies, a daemon

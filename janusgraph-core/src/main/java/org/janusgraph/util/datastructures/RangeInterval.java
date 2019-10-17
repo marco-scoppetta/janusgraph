@@ -18,9 +18,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class RangeInterval<T> implements Interval<T> {
 

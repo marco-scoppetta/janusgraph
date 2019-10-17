@@ -14,9 +14,7 @@
 
 package org.janusgraph.hadoop.formats.util.input;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface SystemTypeInspector {
 
     boolean isSystemType(long typeId);

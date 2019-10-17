@@ -16,9 +16,7 @@ package org.janusgraph.graphdb.types;
 
 import com.google.common.base.Preconditions;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TypeDefinitionDescription {
 
     private final TypeDefinitionCategory category;

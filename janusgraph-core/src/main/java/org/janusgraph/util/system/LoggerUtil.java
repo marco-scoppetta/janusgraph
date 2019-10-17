@@ -19,7 +19,7 @@ import org.janusgraph.util.encoding.StringEncoding;
 public class LoggerUtil {
 
     /**
-     * Encode newline characters and launder string to mitigate log forging vulnerability.
+     * Encode newline characters and launder string to mitigate LOG forging vulnerability.
      * @param input
      * @return
      */

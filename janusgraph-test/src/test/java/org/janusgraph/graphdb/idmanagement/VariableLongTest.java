@@ -29,9 +29,7 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class VariableLongTest {
 

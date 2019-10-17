@@ -19,9 +19,7 @@ import org.janusgraph.graphdb.database.RelationReader;
 import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.types.TypeInspector;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface JanusGraphHadoopSetup {
 
     TypeInspector getTypeInspector();

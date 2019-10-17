@@ -27,9 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ConfigurationTest {
 
 

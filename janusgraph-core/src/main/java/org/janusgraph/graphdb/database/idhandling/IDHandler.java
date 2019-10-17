@@ -26,9 +26,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
 
 import static org.janusgraph.graphdb.idmanagement.IDManager.VertexIDType.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class IDHandler {
 

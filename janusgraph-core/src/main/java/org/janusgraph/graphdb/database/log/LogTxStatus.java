@@ -14,9 +14,7 @@
 
 package org.janusgraph.graphdb.database.log;
 
-/**
-* @author Matthias Broecheler (me@matthiasb.com)
-*/
+
 public enum LogTxStatus {
 
     PRECOMMIT, PRIMARY_SUCCESS, COMPLETE_SUCCESS, SECONDARY_SUCCESS, SECONDARY_FAILURE, USER_LOG;

@@ -20,9 +20,7 @@ import com.google.common.base.Preconditions;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StringEncoding {
 
     public static final String UTF8_ENCODING = "UTF-8";

@@ -17,27 +17,27 @@ package org.janusgraph.graphdb.util;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import org.janusgraph.core.*;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.PropertyKey;
 import org.janusgraph.graphdb.relations.RelationIdentifier;
-import org.apache.tinkerpop.gremlin.structure.*;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class ElementHelper {
 
     public static Iterable<Object> getValues(JanusGraphElement element, PropertyKey key) {
         if (element instanceof JanusGraphRelation) {
             Object value = element.valueOrNull(key);
-            if (value==null) return Collections.EMPTY_LIST;
+            if (value == null) return Collections.EMPTY_LIST;
             else return ImmutableList.of(value);
         } else {
-            assert element instanceof JanusGraphVertex;
             return Iterables.transform((((JanusGraphVertex) element).query()).keys(key.name()).properties(), new Function<JanusGraphVertexProperty, Object>() {
                 @Nullable
                 @Override
@@ -50,26 +50,26 @@ public class ElementHelper {
 
     public static long getCompareId(Element element) {
         Object id = element.id();
-        if (id instanceof Long) return (Long)id;
-        else if (id instanceof RelationIdentifier) return ((RelationIdentifier)id).getRelationId();
+        if (id instanceof Long) return (Long) id;
+        else if (id instanceof RelationIdentifier) return ((RelationIdentifier) id).getRelationId();
         else throw new IllegalArgumentException("Element identifier has unrecognized type: " + id);
     }
 
     public static void attachProperties(JanusGraphRelation element, Object... keyValues) {
-        if (keyValues==null || keyValues.length==0) return; //Do nothing
+        if (keyValues == null || keyValues.length == 0) return; //Do nothing
         org.apache.tinkerpop.gremlin.structure.util.ElementHelper.legalPropertyKeyValueArray(keyValues);
-        if (org.apache.tinkerpop.gremlin.structure.util.ElementHelper.getIdValue(keyValues).isPresent()) throw Edge.Exceptions.userSuppliedIdsNotSupported();
-        if (org.apache.tinkerpop.gremlin.structure.util.ElementHelper.getLabelValue(keyValues).isPresent()) throw new IllegalArgumentException("Cannot provide label as argument");
-        org.apache.tinkerpop.gremlin.structure.util.ElementHelper.attachProperties(element,keyValues);
+        if (org.apache.tinkerpop.gremlin.structure.util.ElementHelper.getIdValue(keyValues).isPresent())
+            throw Edge.Exceptions.userSuppliedIdsNotSupported();
+        if (org.apache.tinkerpop.gremlin.structure.util.ElementHelper.getLabelValue(keyValues).isPresent())
+            throw new IllegalArgumentException("Cannot provide label as argument");
+        org.apache.tinkerpop.gremlin.structure.util.ElementHelper.attachProperties(element, keyValues);
     }
 
     /**
-     * This is essentially an adjusted copy&amp;paste from TinkerPop's ElementHelper class.
+     * This is essentially an adjusted copy&paste from TinkerPop's ElementHelper class.
      * The reason for copying it is so that we can determine the cardinality of a property key based on
      * JanusGraph's schema which is tied to this particular transaction and not the graph.
      *
-     * @param vertex
-     * @param propertyKeyValues
      */
     public static void attachProperties(JanusGraphVertex vertex, Object... propertyKeyValues) {
         for (int i = 0; i < propertyKeyValues.length; i = i + 2) {

@@ -19,9 +19,7 @@ import org.janusgraph.core.TransactionBuilder;
 import org.janusgraph.graphdb.log.StandardTransactionId;
 import org.janusgraph.graphdb.transaction.TransactionConfiguration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public enum LogTxMeta {
 
     GROUPNAME {

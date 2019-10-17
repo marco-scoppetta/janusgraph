@@ -19,9 +19,7 @@ import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.Parameter;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StandardKeyInformation implements KeyInformation {
 
     private final Class<?> dataType;

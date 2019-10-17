@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Tests general log implementations
+ * Tests general LOG implementations
  *
  * @author Matthias Broecheler (me@matthiasb.com)
  */
@@ -65,7 +65,7 @@ public abstract class LogTest {
 
     @BeforeEach
     public void setup(TestInfo testInfo) throws Exception {
-        //Tests that assume that write order is preserved when reading from the log must suffix their test names with "serial"
+        //Tests that assume that write order is preserved when reading from the LOG must suffix their test names with "serial"
         Set<String> tags = testInfo.getTags();
         boolean requiresOrderPreserving = tags.contains(LogTest.requiresOrderPreserving);
         log.debug("Starting {}.{} - Order preserving {}", getClass().getSimpleName(), testInfo.getTestMethod().toString(), requiresOrderPreserving);
@@ -356,7 +356,7 @@ public abstract class LogTest {
             StaticBuffer content = message.getContent();
             assertEquals(8,content.length());
             long value = content.getLong(0);
-            log.debug("Read log value {} by senderid \"{}\"", value, message.getSenderId());
+            log.debug("Read LOG value {} by senderid \"{}\"", value, message.getSenderId());
             if (expectIncreasingValues) {
                 assertTrue(lastMessageValue < value, "Message out of order or duplicated: " + lastMessageValue + " preceded " + value);
                 lastMessageValue = value;

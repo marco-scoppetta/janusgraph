@@ -26,7 +26,7 @@ public class UncaughtExceptionLogger implements UncaughtExceptionHandler {
 
     /*
      * I don't like duplicating a subset of org.slf4j.Level, but the slf4j API
-     * as of 1.7.5 provides no general Logger.log(Level, String, Object...)
+     * as of 1.7.5 provides no general Logger.LOG(Level, String, Object...)
      * method. I can't seem to meta-program around this.
      */
     public enum UELevel implements UELogLevel {

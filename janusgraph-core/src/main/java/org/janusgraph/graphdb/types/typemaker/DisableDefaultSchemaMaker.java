@@ -21,9 +21,7 @@ import org.janusgraph.core.schema.PropertyKeyMaker;
 import org.janusgraph.core.schema.SchemaManager;
 import org.janusgraph.core.schema.VertexLabelMaker;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class DisableDefaultSchemaMaker implements DefaultSchemaMaker {
 

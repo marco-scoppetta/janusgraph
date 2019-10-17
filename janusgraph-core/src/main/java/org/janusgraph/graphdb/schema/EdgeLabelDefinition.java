@@ -18,9 +18,7 @@ import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.Multiplicity;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class EdgeLabelDefinition extends RelationTypeDefinition {
 
     private final boolean unidirected;

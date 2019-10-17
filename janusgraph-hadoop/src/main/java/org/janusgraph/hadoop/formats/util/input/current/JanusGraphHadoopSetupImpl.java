@@ -37,9 +37,7 @@ import org.janusgraph.hadoop.formats.util.input.JanusGraphHadoopSetupCommon;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.hadoop.conf.Configuration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphHadoopSetupImpl extends JanusGraphHadoopSetupCommon {
 
     private final ModifiableHadoopConfiguration scanConf;

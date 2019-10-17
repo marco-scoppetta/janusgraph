@@ -46,9 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class KCVSConfiguration implements ConcurrentWriteConfiguration {
 
     private final BackendOperation.TransactionalProvider txProvider;

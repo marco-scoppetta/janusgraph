@@ -23,9 +23,7 @@ import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import java.util.NoSuchElementException;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class SimpleJanusGraphProperty<V> implements JanusGraphProperty<V> {
 
     private final PropertyKey key;

@@ -102,7 +102,7 @@ public class RandomGenerator {
         }
         double avg = sum * 1.0 / trials;
         double error = (5 / Math.pow(trials, 0.3));
-        //log.debug(error);
+        //LOG.debug(error);
         assertTrue(Math.abs(avg - 50.5) < error);
     }
 
@@ -115,7 +115,7 @@ public class RandomGenerator {
         }
         double avg = sum * 1.0 / trials;
         double error = (5 / Math.pow(trials, 0.3));
-        //log.debug(error);
+        //LOG.debug(error);
         assertEquals(50.5,avg,error);
     }
 

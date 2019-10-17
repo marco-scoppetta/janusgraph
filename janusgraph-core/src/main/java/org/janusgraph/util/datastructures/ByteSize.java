@@ -14,9 +14,7 @@
 
 package org.janusgraph.util.datastructures;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ByteSize {
 
     public static final int OBJECT_HEADER = 12;

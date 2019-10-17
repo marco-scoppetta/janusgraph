@@ -19,9 +19,7 @@ import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.SchemaStatus;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ParameterIndexField extends IndexField {
 
     private final Parameter[] parameters;

@@ -46,9 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class VertexIDAssignerTest {
 
     public static Stream<Arguments> configs() {

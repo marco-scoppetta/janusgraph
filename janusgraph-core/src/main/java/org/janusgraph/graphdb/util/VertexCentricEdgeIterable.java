@@ -15,16 +15,13 @@
 package org.janusgraph.graphdb.util;
 
 import com.google.common.base.Preconditions;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.core.JanusGraphRelation;
 import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.internal.RelationCategory;
-import org.apache.tinkerpop.gremlin.structure.Direction;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 
 public class VertexCentricEdgeIterable<R extends JanusGraphRelation> implements Iterable<R> {
 
@@ -32,17 +29,15 @@ public class VertexCentricEdgeIterable<R extends JanusGraphRelation> implements 
     private final RelationCategory relationCategory;
 
     public VertexCentricEdgeIterable(Iterable<InternalVertex> vertices, RelationCategory relationCategory) {
-        Preconditions.checkArgument(vertices!=null && relationCategory!=null);
+        Preconditions.checkArgument(vertices != null && relationCategory != null);
         this.vertices = vertices;
         this.relationCategory = relationCategory;
     }
-
 
     @Override
     public Iterator<R> iterator() {
         return new EdgeIterator();
     }
-
 
     private class EdgeIterator implements Iterator<R> {
 
@@ -59,7 +54,6 @@ public class VertexCentricEdgeIterable<R extends JanusGraphRelation> implements 
         }
 
         private void getNextEdge() {
-            assert vertexIterator != null && currentOutEdges != null;
             nextEdge = null;
             while (nextEdge == null) {
                 if (currentOutEdges.hasNext()) {
@@ -81,7 +75,7 @@ public class VertexCentricEdgeIterable<R extends JanusGraphRelation> implements 
             if (nextEdge == null) throw new NoSuchElementException();
             JanusGraphRelation returnEdge = nextEdge;
             getNextEdge();
-            return (R)returnEdge;
+            return (R) returnEdge;
         }
 
         @Override

@@ -90,8 +90,8 @@
       trailing underscores (e.g. _version_) are reserved.
    -->
 
-   <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
-      or Solr won't start. _version_ and update log are required for SolrCloud
+   <!-- If you remove this field, you must _also_ disable the update LOG in solrconfig.xml
+      or Solr won't start. _version_ and update LOG are required for SolrCloud
    -->
    <field name="_version_" type="long" indexed="true" stored="true"/>
 

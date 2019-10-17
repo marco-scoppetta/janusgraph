@@ -14,6 +14,8 @@
 
 package org.janusgraph.graphdb.query.graph;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.janusgraph.diskstorage.indexing.IndexQuery;
 import org.janusgraph.graphdb.query.BackendQuery;
 import org.janusgraph.graphdb.query.BaseQuery;
@@ -22,9 +24,6 @@ import org.janusgraph.graphdb.query.profile.QueryProfiler;
 import org.janusgraph.graphdb.types.CompositeIndexType;
 import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.graphdb.types.MixedIndexType;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +38,6 @@ import java.util.Objects;
  * <p>
  * Those sub-queries are either targeting an external indexing backend or the internal index store which is a distinction this
  * query keeps track of through the sub-class {@link Subquery}, since their definition and execution differs starkly.
- *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class JointIndexQuery extends BaseQuery implements BackendQuery<JointIndexQuery>, ProfileObservable {
 
@@ -112,16 +109,16 @@ public class JointIndexQuery extends BaseQuery implements BackendQuery<JointInde
         private QueryProfiler profiler = QueryProfiler.NO_OP;
 
         private Subquery(IndexType index, BackendQuery query) {
-            assert index!=null && query!=null && (query instanceof MultiKeySliceQuery || query instanceof IndexQuery);
             this.index = index;
             this.query = query;
         }
 
         public void observeWith(QueryProfiler prof) {
             this.profiler = prof.addNested(QueryProfiler.AND_QUERY);
-            profiler.setAnnotation(QueryProfiler.QUERY_ANNOTATION,query);
-            profiler.setAnnotation(QueryProfiler.INDEX_ANNOTATION,index.getName());
-            if (index.isMixedIndex()) profiler.setAnnotation(QueryProfiler.INDEX_ANNOTATION+"_impl",index.getBackingIndexName());
+            profiler.setAnnotation(QueryProfiler.QUERY_ANNOTATION, query);
+            profiler.setAnnotation(QueryProfiler.INDEX_ANNOTATION, index.getName());
+            if (index.isMixedIndex())
+                profiler.setAnnotation(QueryProfiler.INDEX_ANNOTATION + "_impl", index.getBackingIndexName());
         }
 
         public QueryProfiler getProfiler() {
@@ -134,12 +131,12 @@ public class JointIndexQuery extends BaseQuery implements BackendQuery<JointInde
 
         public IndexQuery getMixedQuery() {
             Preconditions.checkArgument(index.isMixedIndex() && query instanceof IndexQuery);
-            return (IndexQuery)query;
+            return (IndexQuery) query;
         }
 
         public MultiKeySliceQuery getCompositeQuery() {
             Preconditions.checkArgument(index.isCompositeIndex() && query instanceof MultiKeySliceQuery);
-            return (MultiKeySliceQuery)query;
+            return (MultiKeySliceQuery) query;
         }
 
         @Override
@@ -158,12 +155,12 @@ public class JointIndexQuery extends BaseQuery implements BackendQuery<JointInde
 
         @Override
         public String toString() {
-            return index.toString()+":"+query.toString();
+            return index.toString() + ":" + query.toString();
         }
 
         @Override
         public Subquery updateLimit(int newLimit) {
-            return new Subquery(index,query.updateLimit(newLimit));
+            return new Subquery(index, query.updateLimit(newLimit));
         }
 
         @Override

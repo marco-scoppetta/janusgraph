@@ -26,9 +26,7 @@ import static org.janusgraph.diskstorage.util.MetricInstrumentedStore.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class MetricInstrumentedStoreManager implements KeyColumnValueStoreManager {
 
     public static final String M_OPEN_DATABASE = "openDatabase";

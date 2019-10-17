@@ -21,9 +21,7 @@ import org.janusgraph.graphdb.types.system.BaseRelationType;
 import org.janusgraph.util.stats.MetricManager;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class MetricInstrumentedSchemaCache implements SchemaCache {
 
     public static final String METRICS_NAME = "schemacache";

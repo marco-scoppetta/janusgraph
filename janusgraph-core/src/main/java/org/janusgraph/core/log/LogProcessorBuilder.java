@@ -17,7 +17,7 @@ package org.janusgraph.core.log;
 import java.time.Instant;
 
 /**
- * Builder for assembling a processor that processes a particular transaction log. A processor can be composed of one or multiple
+ * Builder for assembling a processor that processes a particular transaction LOG. A processor can be composed of one or multiple
  * {@link ChangeProcessor}s which are executed independently.
  *
  * @author Matthias Broecheler (me@matthiasb.com)
@@ -25,16 +25,16 @@ import java.time.Instant;
 public interface LogProcessorBuilder {
 
     /**
-     * Returns the identifier of the transaction log to be processed by this processor.
+     * Returns the identifier of the transaction LOG to be processed by this processor.
      *
      * @return
      */
     String getLogIdentifier();
 
     /**
-     * Sets the identifier of this processor. This String should uniquely identify a log processing instance and will be used to record
-     * up to which position in the log the log processor has advanced. In case of instance failure or instance restart,
-     * the log processor can then pick up where it left of.
+     * Sets the identifier of this processor. This String should uniquely identify a LOG processing instance and will be used to record
+     * up to which position in the LOG the LOG processor has advanced. In case of instance failure or instance restart,
+     * the LOG processor can then pick up where it left of.
      * <p>
      * This is an optional argument if recording the processing state is desired.
      *
@@ -44,7 +44,7 @@ public interface LogProcessorBuilder {
     LogProcessorBuilder setProcessorIdentifier(String name);
 
     /**
-     * Sets the time at which this log processor should start processing transaction log entries
+     * Sets the time at which this LOG processor should start processing transaction LOG entries
      *
      * @param startTime
      * @return
@@ -52,28 +52,28 @@ public interface LogProcessorBuilder {
     LogProcessorBuilder setStartTime(Instant startTime);
 
     /**
-     * Indicates that the transaction log processor should process newly added events.
+     * Indicates that the transaction LOG processor should process newly added events.
      *
      * @return
      */
     LogProcessorBuilder setStartTimeNow();
 
     /**
-     * Adds a {@link ChangeProcessor} to this transaction log processor. These are executed independently.
+     * Adds a {@link ChangeProcessor} to this transaction LOG processor. These are executed independently.
      * @param processor
      * @return
      */
     LogProcessorBuilder addProcessor(ChangeProcessor processor);
 
     /**
-     * Sets how often this log processor should attempt to retry executing a contained {@link ChangeProcessor} in case of failure.
+     * Sets how often this LOG processor should attempt to retry executing a contained {@link ChangeProcessor} in case of failure.
      * @param attempts
      * @return
      */
     LogProcessorBuilder setRetryAttempts(int attempts);
 
     /**
-     * Builds this transaction log processor and starts processing the log.
+     * Builds this transaction LOG processor and starts processing the LOG.
      */
     void build();
 

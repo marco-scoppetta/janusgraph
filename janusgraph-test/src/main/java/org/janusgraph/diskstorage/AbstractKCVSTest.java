@@ -19,9 +19,7 @@ import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
 import org.janusgraph.diskstorage.util.StandardBaseTransactionConfig;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class AbstractKCVSTest {
 
     protected static final TimestampProvider times = TimestampProviders.MICRO;

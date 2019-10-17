@@ -24,9 +24,7 @@ import org.janusgraph.graphdb.types.IndexField;
 import org.janusgraph.graphdb.types.system.ImplicitKey;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class IndexHelper {
     public static Iterable<? extends Element> getQueryResults(CompositeIndexType index, Object[] values, StandardJanusGraphTx tx) {
         GraphCentricQueryBuilder gb = getQuery(index,values,tx);

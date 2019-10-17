@@ -184,18 +184,18 @@ public abstract class AbstractDistCacheConfigurer {
 //                byte[] db = destCheck.getBytes();
 //                byte[] lb = localCheck.getBytes();
 //                if (null != db && null != lb && Arrays.equals(db, lb)) {
-//                    if (log.isDebugEnabled())
-//                        log.debug("Checksum {} for file {} is up-to-date", Arrays.toString(db), destPath);
+//                    if (LOG.isDebugEnabled())
+//                        LOG.debug("Checksum {} for file {} is up-to-date", Arrays.toString(db), destPath);
 //                    return true;
 //                } else {
-//                    log.debug("Checksum mismatch on file {}: local={} dest={}", destPath, lb, db);
+//                    LOG.debug("Checksum mismatch on file {}: local={} dest={}", destPath, lb, db);
 //                }
 //            } else {
-//                log.debug("Unable to checksum files: localPath={} localCheck={}, destPath={} destCheck={}",
+//                LOG.debug("Unable to checksum files: localPath={} localCheck={}, destPath={} destCheck={}",
 //                        localPath, localCheck, destPath, destCheck);
 //            }
 //        } else {
-//            log.debug("File {} does not exist", destPath);
+//            LOG.debug("File {} does not exist", destPath);
 //        }
 //        return false;
 //    }

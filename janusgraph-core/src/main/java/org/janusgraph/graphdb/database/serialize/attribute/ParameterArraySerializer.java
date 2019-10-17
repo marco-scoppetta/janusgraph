@@ -24,9 +24,7 @@ import org.janusgraph.graphdb.database.serialize.SerializerInjected;
 
 import java.lang.reflect.Array;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ParameterArraySerializer extends ArraySerializer implements AttributeSerializer<Parameter[]>, SerializerInjected {
 
     private Serializer serializer;

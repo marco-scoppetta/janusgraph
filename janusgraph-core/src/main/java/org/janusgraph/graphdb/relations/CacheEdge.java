@@ -17,30 +17,25 @@ package org.janusgraph.graphdb.relations;
 import com.carrotsearch.hppc.cursors.LongObjectCursor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.ConsistencyModifier;
-import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.graphdb.internal.ElementLifeCycle;
 import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.internal.InternalVertex;
 import org.janusgraph.graphdb.transaction.RelationConstructor;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.graphdb.types.system.ImplicitKey;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 
 public class CacheEdge extends AbstractEdge {
 
     public CacheEdge(long id, EdgeLabel label, InternalVertex start, InternalVertex end, Entry data) {
         super(id, label, start.it(), end.it());
-        assert data != null;
-
         this.data = data;
     }
 
@@ -63,13 +58,11 @@ public class CacheEdge extends AbstractEdge {
             //Test whether this relation has been replaced
             final long id = super.longId();
             final Iterable<InternalRelation> previous = startVertex.getAddedRelations(
-                internalRelation -> (internalRelation instanceof StandardEdge) && ((StandardEdge) internalRelation).getPreviousID() == id);
-            assert Iterables.size(previous) <= 1 || (isLoop() && Iterables.size(previous) == 2);
+                    internalRelation -> (internalRelation instanceof StandardEdge) && ((StandardEdge) internalRelation).getPreviousID() == id);
             it = Iterables.getFirst(previous, null);
         }
 
-        if (it != null)
-            return it;
+        if (it != null) return it;
 
         return super.it();
     }
@@ -88,7 +81,7 @@ public class CacheEdge extends AbstractEdge {
         copy.remove();
 
         StandardEdge u = (StandardEdge) tx().addEdge(getVertex(0), getVertex(1), edgeLabel());
-        if (type.getConsistencyModifier()!=ConsistencyModifier.FORK) u.setId(super.longId());
+        if (type.getConsistencyModifier() != ConsistencyModifier.FORK) u.setId(super.longId());
         u.setPreviousID(super.longId());
         copyProperties(u);
         setId(u.longId());
@@ -141,7 +134,7 @@ public class CacheEdge extends AbstractEdge {
     public void remove() {
         if (!tx().isRemovedRelation(super.longId())) {
             tx().removeRelation(this);
-        }// else throw InvalidElementException.removedException(this);
+        }
     }
 
 }

@@ -22,9 +22,7 @@ import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class EdgeSerializerTest {
 
     @Test

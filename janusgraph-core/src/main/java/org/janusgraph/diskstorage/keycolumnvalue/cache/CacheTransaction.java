@@ -39,9 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class CacheTransaction implements StoreTransaction, LoggableTransaction {
 
     private final StoreTransaction tx;
@@ -173,7 +171,7 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
 
     @Override
     public void logMutations(DataOutput out) {
-        Preconditions.checkArgument(!batchLoading, "Cannot log entire mutation set when batch-loading is enabled");
+        Preconditions.checkArgument(!batchLoading, "Cannot LOG entire mutation set when batch-loading is enabled");
         VariableLong.writePositive(out, mutations.size());
         for (Map.Entry<KCVSCache, Map<StaticBuffer, KCVEntryMutation>> storeMutations : mutations.entrySet()) {
             out.writeObjectNotNull(storeMutations.getKey().getName());

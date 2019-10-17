@@ -19,9 +19,7 @@ import com.google.common.collect.Iterables;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.JanusGraphVertexProperty;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class SimpleIndexCache implements IndexCache {
 

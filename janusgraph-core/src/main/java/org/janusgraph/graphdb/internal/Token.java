@@ -18,9 +18,7 @@ import com.google.common.base.Preconditions;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class Token {
 
     public static final char SEPARATOR_CHAR = 0x1e;

@@ -83,9 +83,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 @PreInitializeConfigOptions
 public class ElasticSearchIndex implements IndexProvider {

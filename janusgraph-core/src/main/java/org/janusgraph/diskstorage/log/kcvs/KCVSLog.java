@@ -62,14 +62,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ul>
  *
  * Each message is uniquely identified by its timestamp, sender id (which uniquely identifies a particular instance of {@link KCVSLogManager}), and the
- * message id (which is auto-incrementing). These three data points comprise the column of a log message. The actual content of the message
+ * message id (which is auto-incrementing). These three data points comprise the column of a LOG message. The actual content of the message
  * is written into the value.
  * <p>
  * When {@link MessageReader} are registered, one reader thread per partition id and bucket is created which periodically (as configured) checks for
  * new messages in the storage backend and invokes the reader. <br>
  * Read-markers are maintained (for each partition-id &amp; bucket id combination) under a dedicated key in the same {@link KeyColumnValueStoreManager} as the
- * log messages. The read markers are updated to the current position before each new iteration of reading messages from the log. If the system fails
- * while reading a batch of messages, a subsequently restarted log reader may therefore read messages twice. Hence, {@link MessageReader} implementations
+ * LOG messages. The read markers are updated to the current position before each new iteration of reading messages from the LOG. If the system fails
+ * while reading a batch of messages, a subsequently restarted LOG reader may therefore read messages twice. Hence, {@link MessageReader} implementations
  * should exhibit correct behavior for the (rare) circumstance that messages are read twice.
  *
  * Note: All time values in this class are in microseconds. Hence, there are many cases where milliseconds are converted to microseconds.
@@ -83,20 +83,20 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     //########## Configuration Options #############
 
     public static final ConfigOption<Duration> LOG_MAX_WRITE_TIME = new ConfigOption<>(LOG_NS,"max-write-time",
-            "Maximum time in ms to try persisting log messages against the backend before failing.",
+            "Maximum time in ms to try persisting LOG messages against the backend before failing.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(10000L));
 
     public static final ConfigOption<Duration> LOG_MAX_READ_TIME = new ConfigOption<>(LOG_NS,"max-read-time",
-            "Maximum time in ms to try reading log messages from the backend before failing.",
+            "Maximum time in ms to try reading LOG messages from the backend before failing.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(4000L));
 
     public static final ConfigOption<Duration> LOG_READ_LAG_TIME = new ConfigOption<>(LOG_NS,"read-lag-time",
             "Maximum time in ms that it may take for reads to appear in the backend. If a write does not become" +
-                    "visible in the storage backend in this amount of time, a log reader might miss the message.",
+                    "visible in the storage backend in this amount of time, a LOG reader might miss the message.",
             ConfigOption.Type.MASKABLE, Duration.ofMillis(500L));
 
     public static final ConfigOption<Boolean> LOG_KEY_CONSISTENT = new ConfigOption<>(LOG_NS, "key-consistent",
-            "Whether to require consistency for log reading and writing messages to the storage backend",
+            "Whether to require consistency for LOG reading and writing messages to the storage backend",
             ConfigOption.Type.MASKABLE, false);
 
     //########## INTERNAL CONSTANTS #############
@@ -144,7 +144,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
     /**
      * The first byte of any system column is used to indicate the type of column. The next two variables define
-     * the prefixes for message counter columns (i.e. keeping of the log message numbers) and for the marker columns
+     * the prefixes for message counter columns (i.e. keeping of the LOG message numbers) and for the marker columns
      * (i.e. keeping track of the timestamps to which it has been read)
      */
     private final static byte MESSAGE_COUNTER = 1;
@@ -164,21 +164,21 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
      */
     private final KCVSLogManager manager;
     /**
-     * Name of the log - logs are uniquely identified by name
+     * Name of the LOG - logs are uniquely identified by name
      */
     private final String name;
     /**
-     * The KCVSStore wrapped by this log
+     * The KCVSStore wrapped by this LOG
      */
     private final KeyColumnValueStore store;
     /**
-     * The read marker which indicates where to start reading from the log
+     * The read marker which indicates where to start reading from the LOG
      */
     private ReadMarker readMarker;
 
     /**
      * The number of buckets into which each time slice is subdivided. Increasing the number of buckets load balances
-     * the reads and writes to the log.
+     * the reads and writes to the LOG.
      */
     private final int numBuckets;
     private final boolean keyConsistentOperations;
@@ -187,7 +187,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     private final Duration maxSendDelay;
     private final Duration maxWriteTime;
     /**
-     * Used for batch addition of messages to the log. Newly added entries are buffered in this queue before being written in batch
+     * Used for batch addition of messages to the LOG. Newly added entries are buffered in this queue before being written in batch
      */
     private final ArrayBlockingQueue<MessageEnvelope> outgoingMsg;
     /**
@@ -220,11 +220,11 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
      */
     private final AtomicLong numMsgCounter;
     /**
-     * Registered readers for this log
+     * Registered readers for this LOG
      */
     private final List<MessageReader> readers;
     /**
-     * Whether this log is open (i.e. accepts writes)
+     * Whether this LOG is open (i.e. accepts writes)
      */
     private volatile boolean isOpen;
     /**
@@ -278,7 +278,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     }
 
     /**
-     * Closes the log by terminating all threads and waiting for their termination.
+     * Closes the LOG by terminating all threads and waiting for their termination.
      *
      * @throws org.janusgraph.diskstorage.BackendException
      */
@@ -621,7 +621,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 for (int bucketId = 0; bucketId < numBuckets; bucketId++) {
                     msgPullers[pos]=new MessagePuller(partitionId,bucketId);
 
-                    log.debug("Creating log read executor: initialDelay={} delay={} unit={}", INITIAL_READER_DELAY.toNanos(), readPollingInterval.toNanos(), TimeUnit.NANOSECONDS);
+                    log.debug("Creating LOG read executor: initialDelay={} delay={} unit={}", INITIAL_READER_DELAY.toNanos(), readPollingInterval.toNanos(), TimeUnit.NANOSECONDS);
                     readExecutor.scheduleWithFixedDelay(
                             msgPullers[pos],
                             INITIAL_READER_DELAY.toNanos(),

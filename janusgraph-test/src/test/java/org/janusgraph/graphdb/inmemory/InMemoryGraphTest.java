@@ -24,9 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class InMemoryGraphTest extends JanusGraphTest {
 
     public WriteConfiguration getConfigurationWithRandomKeyspace() {

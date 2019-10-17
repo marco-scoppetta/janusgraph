@@ -17,9 +17,7 @@ package org.janusgraph.graphdb.tinkerpop;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class Tp3DefaultSchemaMaker implements DefaultSchemaMaker {
 
     public static final DefaultSchemaMaker INSTANCE = new Tp3DefaultSchemaMaker();

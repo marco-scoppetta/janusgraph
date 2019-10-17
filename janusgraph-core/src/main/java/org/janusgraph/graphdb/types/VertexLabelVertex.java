@@ -26,9 +26,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class VertexLabelVertex extends JanusGraphSchemaVertex implements InternalVertexLabel {
 
 

@@ -71,7 +71,6 @@ public class ImplicitKey extends EmptyRelationType implements SystemRelationType
 
     private ImplicitKey(long id, String name, Class<?> datatype) {
         Preconditions.checkArgument(StringUtils.isNotBlank(name) && datatype != null && id > 0);
-        assert Token.isSystemName(name);
         this.datatype = datatype;
         this.name = name;
         this.id = BaseRelationType.getSystemTypeId(id, JanusGraphSchemaCategory.PROPERTYKEY);
@@ -97,7 +96,6 @@ public class ImplicitKey extends EmptyRelationType implements SystemRelationType
                 if (this == VISIBILITY) {
                     return r.getValueDirect(this);
                 } else {
-                    assert this == TIMESTAMP;
                     Long time = r.getValueDirect(this);
                     if (time == null) return null; //there is no timestamp
                     return (O) r.tx().getConfiguration().getTimestampProvider().getTime(time);

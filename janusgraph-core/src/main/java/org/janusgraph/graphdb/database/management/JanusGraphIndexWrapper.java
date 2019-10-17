@@ -27,9 +27,7 @@ import org.janusgraph.graphdb.types.IndexField;
 import org.janusgraph.graphdb.types.IndexType;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphIndexWrapper implements JanusGraphIndex {
 
     private final IndexType index;

@@ -18,9 +18,7 @@ import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.JanusGraphSchemaType;
 import org.janusgraph.graphdb.internal.ElementCategory;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface IndexType {
 
     ElementCategory getElement();

@@ -89,7 +89,6 @@ public class IterablesUtil {
                 next=headB;
                 headB=null;
             }
-            assert next!=null;
             Preconditions.checkArgument(result.isEmpty() || comp.compare(result.get(result.size()-1),next)<=0,
                     "The input collections are not sorted");
             result.add(next);

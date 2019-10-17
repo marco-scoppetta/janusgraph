@@ -19,9 +19,7 @@ import org.janusgraph.graphdb.query.profile.QueryProfiler;
 import org.apache.tinkerpop.gremlin.process.traversal.util.MutableMetrics;
 import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalMetrics;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TP3ProfileWrapper implements QueryProfiler {
 
     private final MutableMetrics metrics;

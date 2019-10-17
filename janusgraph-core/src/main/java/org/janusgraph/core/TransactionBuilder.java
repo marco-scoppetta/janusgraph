@@ -142,11 +142,11 @@ public interface TransactionBuilder {
     TransactionBuilder groupName(String name);
 
     /**
-     * Name of the log to be used for logging the mutations in this transaction. If no log identifier is set,
+     * Name of the LOG to be used for logging the mutations in this transaction. If no LOG identifier is set,
      * then this transaction will not be logged.
      *
-     * @param logName name of transaction log
-     * @return Object containing log identifier property
+     * @param logName name of transaction LOG
+     * @return Object containing LOG identifier property
      */
     TransactionBuilder logIdentifier(String logName);
 

@@ -36,9 +36,7 @@ import java.util.List;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ExpirationCacheTest extends KCVSCacheTest {
 
     private static final String METRICS_STRING = "metrics";

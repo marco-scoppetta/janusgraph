@@ -28,9 +28,7 @@ import org.janusgraph.graphdb.types.system.ImplicitKey;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class CacheVertexProperty extends AbstractVertexProperty {
 

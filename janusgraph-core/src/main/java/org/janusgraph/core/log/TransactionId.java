@@ -18,7 +18,7 @@ package org.janusgraph.core.log;
 import java.time.Instant;
 
 /**
- * Identifies a transaction. Used when processing user log entries to know which transaction caused a given change.
+ * Identifies a transaction. Used when processing user LOG entries to know which transaction caused a given change.
  * A transaction is uniquely identified by the unique identifier of the instance that executed the transaction, the time
  * of the transaction, and an instance local transaction id.
  * <p>

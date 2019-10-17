@@ -19,9 +19,7 @@ import org.janusgraph.diskstorage.WriteBuffer;
 import org.janusgraph.graphdb.database.serialize.OrderPreservingSerializer;
 import org.janusgraph.util.encoding.NumericUtils;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class FloatSerializer implements OrderPreservingSerializer<Float> {
 

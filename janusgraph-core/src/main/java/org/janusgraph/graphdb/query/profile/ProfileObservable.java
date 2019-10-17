@@ -14,9 +14,7 @@
 
 package org.janusgraph.graphdb.query.profile;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface ProfileObservable {
 
     void observeWith(QueryProfiler profiler);

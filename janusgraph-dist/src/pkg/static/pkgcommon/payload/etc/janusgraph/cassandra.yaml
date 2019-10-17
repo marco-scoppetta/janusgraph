@@ -122,7 +122,7 @@ partitioner: org.apache.cassandra.dht.Murmur3Partitioner
 data_file_directories:
     - /var/lib/cassandra/data
 
-# commit log
+# commit LOG
 commitlog_directory: /var/lib/cassandra/commitlog
 hints_directory: /var/lib/cassandra/data/hints
 cdc_raw_directory: /var/lib/cassandra/data/cdc_raw
@@ -139,7 +139,7 @@ disk_failure_policy: stop
 # policy for commit disk failures:
 # stop: shut down gossip and Thrift, leaving the node effectively dead, but
 #       can still be inspected via JMX.
-# stop_commit: shutdown the commit log, letting writes collect but 
+# stop_commit: shutdown the commit LOG, letting writes collect but
 #              continuing to service reads, as in pre-2.0.5 Cassandra
 # ignore: ignore fatal errors and let the batches fail
 commit_failure_policy: stop
@@ -211,7 +211,7 @@ row_cache_save_period: 0
 saved_caches_directory: /var/lib/cassandra/saved_caches
 
 # commitlog_sync may be either "periodic" or "batch." 
-# When in batch mode, Cassandra won't ack writes until the commit log
+# When in batch mode, Cassandra won't ack writes until the commit LOG
 # has been fsynced to disk.  It will wait up to
 # commitlog_sync_batch_window_in_ms milliseconds for other writes, before
 # performing the sync.

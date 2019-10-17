@@ -71,9 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class IDAuthorityTest {
 
     private static final Logger log = LoggerFactory.getLogger(IDAuthorityTest.class);

@@ -30,9 +30,7 @@ import org.janusgraph.graphdb.types.TypeUtil;
 
 import java.util.Iterator;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class RelationConstructor {
 
     public static RelationCache readRelationCache(Entry data, StandardJanusGraphTx tx) {
@@ -70,12 +68,10 @@ public class RelationConstructor {
     }
 
 
-    private static InternalRelation readRelation(InternalVertex vertex, RelationCache relation,
-                                                 Entry data, StandardJanusGraphTx tx) {
+    private static InternalRelation readRelation(InternalVertex vertex, RelationCache relation, Entry data, StandardJanusGraphTx tx) {
         InternalRelationType type = TypeUtil.getBaseType((InternalRelationType) tx.getExistingRelationType(relation.typeId));
 
         if (type.isPropertyKey()) {
-            assert relation.direction == Direction.OUT;
             return new CacheVertexProperty(relation.relationId, (PropertyKey) type, vertex, relation.getValue(), data);
         }
 

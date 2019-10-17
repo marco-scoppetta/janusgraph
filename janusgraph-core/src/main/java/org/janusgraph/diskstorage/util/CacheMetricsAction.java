@@ -14,9 +14,7 @@
 
 package org.janusgraph.diskstorage.util;
 
-/**
-* @author Matthias Broecheler (me@matthiasb.com)
-*/
+
 public enum CacheMetricsAction {
 
     RETRIEVAL("retrievals"), MISS("misses"), EXPIRE("expire");

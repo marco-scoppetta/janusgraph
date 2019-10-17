@@ -20,9 +20,7 @@ import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ConversionHelper {
 
     public static int getTTLSeconds(Duration duration) {

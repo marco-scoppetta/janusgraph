@@ -514,7 +514,7 @@ public abstract class LockKeyColumnValueStoreTest extends AbstractKCVSTest {
         @Override
         public void run() {
 
-            // Catch & log exceptions
+            // Catch & LOG exceptions
             for (int opIndex = 0; opIndex < opCount; opIndex++) {
 
                 StoreTransaction tx = null;

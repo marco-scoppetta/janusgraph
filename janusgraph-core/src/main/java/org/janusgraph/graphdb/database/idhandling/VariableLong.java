@@ -21,9 +21,7 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.WriteBuffer;
 import org.janusgraph.diskstorage.util.WriteByteBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class VariableLong {
 

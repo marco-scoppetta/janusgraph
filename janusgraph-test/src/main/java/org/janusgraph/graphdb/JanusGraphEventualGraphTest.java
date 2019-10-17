@@ -56,9 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 @Tag(TestCategory.SERIAL_TESTS)
 public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {

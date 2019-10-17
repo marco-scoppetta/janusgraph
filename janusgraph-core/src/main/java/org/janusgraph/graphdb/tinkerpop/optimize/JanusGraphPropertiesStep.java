@@ -39,9 +39,7 @@ import org.apache.tinkerpop.gremlin.structure.util.wrapped.WrappedVertex;
 
 import java.util.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphPropertiesStep<E> extends PropertiesStep<E> implements HasStepFolder<Element, E>, Profiling, MultiQueriable<Element,E> {
 
     private boolean initialized = false;

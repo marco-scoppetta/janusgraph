@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import static org.janusgraph.core.attribute.Text.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class TextTest {
 

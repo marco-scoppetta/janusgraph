@@ -41,9 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class KCVSCacheTest {
 
     public static final String STORE_NAME = "store";

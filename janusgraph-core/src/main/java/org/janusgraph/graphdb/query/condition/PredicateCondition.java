@@ -29,9 +29,7 @@ import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class PredicateCondition<K, E extends JanusGraphElement> extends Literal<E> {
 

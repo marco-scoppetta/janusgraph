@@ -47,9 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.janusgraph.graphdb.database.management.GraphCacheEvictionAction.DO_NOT_EVICT;
 import static org.janusgraph.graphdb.database.management.GraphCacheEvictionAction.EVICT;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ManagementLogger implements MessageReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagementLogger.class);

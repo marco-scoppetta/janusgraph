@@ -24,9 +24,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
 
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class DirectionCondition<E extends JanusGraphRelation> extends Literal<E> {
 

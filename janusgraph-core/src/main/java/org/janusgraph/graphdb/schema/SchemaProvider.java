@@ -14,9 +14,7 @@
 
 package org.janusgraph.graphdb.schema;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface SchemaProvider {
 
     EdgeLabelDefinition getEdgeLabel(String name);

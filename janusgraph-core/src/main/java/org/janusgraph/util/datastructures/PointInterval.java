@@ -20,9 +20,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.collections.comparators.ComparableComparator;
 import java.util.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class PointInterval<T> implements Interval<T> {
 

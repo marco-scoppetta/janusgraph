@@ -18,9 +18,7 @@ import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.Multiplicity;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class RelationTypeDefinition extends SchemaElementDefinition {
 
     private final Multiplicity multiplicity;

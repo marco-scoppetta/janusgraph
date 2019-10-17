@@ -14,9 +14,7 @@
 
 package org.janusgraph.graphdb.serializer.attributes;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public enum TEnum {
 
     ONE, TWO, THREE {

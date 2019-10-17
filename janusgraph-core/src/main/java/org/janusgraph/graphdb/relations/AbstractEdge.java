@@ -23,9 +23,7 @@ import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public abstract class AbstractEdge extends AbstractTypedRelation implements JanusGraphEdge {
 

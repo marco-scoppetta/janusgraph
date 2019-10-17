@@ -22,9 +22,7 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.KCVSCache;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ExternalCachePersistor implements ExternalPersistor {
 
     private final KCVSCache kcvs;
@@ -40,7 +38,7 @@ public class ExternalCachePersistor implements ExternalPersistor {
         try {
             kcvs.mutateEntries(key, Lists.newArrayList(cell), KCVSCache.NO_DELETIONS,tx);
         } catch (BackendException e) {
-            throw new JanusGraphException("Unexpected storage exception in log persistence against cache",e);
+            throw new JanusGraphException("Unexpected storage exception in LOG persistence against cache",e);
         }
     }
 }

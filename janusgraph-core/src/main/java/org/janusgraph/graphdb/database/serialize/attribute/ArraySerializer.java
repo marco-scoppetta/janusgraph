@@ -22,9 +22,7 @@ import org.janusgraph.graphdb.database.serialize.SupportsNullSerializer;
 
 import java.lang.reflect.Array;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class ArraySerializer implements SupportsNullSerializer {
 
     protected abstract Object getArray(int length);

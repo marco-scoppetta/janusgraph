@@ -17,9 +17,7 @@ package org.janusgraph.core;
 
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface QueryDescription {
 
     /**

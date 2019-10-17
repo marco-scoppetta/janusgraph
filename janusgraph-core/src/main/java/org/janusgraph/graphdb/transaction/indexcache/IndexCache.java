@@ -17,9 +17,7 @@ package org.janusgraph.graphdb.transaction.indexcache;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.JanusGraphVertexProperty;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface IndexCache {
 
     void add(JanusGraphVertexProperty property);

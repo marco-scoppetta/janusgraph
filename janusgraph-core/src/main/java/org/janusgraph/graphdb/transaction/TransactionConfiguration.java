@@ -122,7 +122,7 @@ public interface TransactionConfiguration extends BaseTransactionConfig {
     long getIndexCacheWeight();
 
     /**
-     * The name of the log to be used for logging the mutations in this transaction.
+     * The name of the LOG to be used for logging the mutations in this transaction.
      * If the identifier is NULL the mutations will not be logged.
      *
      * @return

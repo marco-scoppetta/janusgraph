@@ -454,7 +454,6 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
      * (MultiWrite especially)."
      */
     private void sleepAfterWrite(MaskedTimestamp mustPass) throws BackendException {
-        assert mustPass.getDeletionTime(times) < mustPass.getAdditionTime(times);
         try {
             times.sleepPast(mustPass.getAdditionTimeInstant(times));
         } catch (InterruptedException e) {

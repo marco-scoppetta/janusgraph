@@ -22,9 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public enum ParameterType {
 
     MAPPING("mapping"),

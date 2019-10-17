@@ -23,9 +23,7 @@ import org.janusgraph.graphdb.database.serialize.DataOutput;
 import org.janusgraph.graphdb.database.serialize.Serializer;
 import org.janusgraph.graphdb.database.serialize.SerializerInjected;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ParameterSerializer implements AttributeSerializer<Parameter>, SerializerInjected {
 
     private Serializer serializer;

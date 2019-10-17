@@ -33,9 +33,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ConfigOption<O> extends ConfigElement {
 
     public enum Type {
@@ -147,7 +145,7 @@ public class ConfigOption<O> extends ConfigElement {
         this.defaultValue = defaultValue;
         this.verificationFct = verificationFct;
         this.supersededBy = supersededBy;
-        // A static initializer calls this constructor, so log before throwing the IAE
+        // A static initializer calls this constructor, so LOG before throwing the IAE
         if (!ACCEPTED_DATATYPES.contains(dataType)) {
             String msg = String.format("Datatype %s is not one of %s", dataType, ACCEPTED_DATATYPES_STRING);
             log.error(msg);

@@ -28,23 +28,17 @@ import org.janusgraph.graphdb.relations.*;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
-public class ModificationDeserializer {
 
+public class ModificationDeserializer {
 
     public static InternalRelation parseRelation(TransactionLogHeader.Modification modification, StandardJanusGraphTx tx) {
         Change state = modification.state;
-        assert state.isProper();
         long outVertexId = modification.outVertexId;
         Entry relEntry = modification.relationEntry;
         InternalVertex outVertex = tx.getInternalVertex(outVertexId);
         //Special relation parsing, compare to {@link RelationConstructor}
         RelationCache relCache = tx.getEdgeSerializer().readRelation(relEntry, false, tx);
-        assert relCache.direction == Direction.OUT;
         InternalRelationType type = (InternalRelationType)tx.getExistingRelationType(relCache.typeId);
-        assert type.getBaseType()==null;
         InternalRelation rel;
         if (type.isPropertyKey()) {
             if (state==Change.REMOVED) {
@@ -53,7 +47,6 @@ public class ModificationDeserializer {
                 rel = new CacheVertexProperty(relCache.relationId,(PropertyKey)type,outVertex,relCache.getValue(),relEntry);
             }
         } else {
-            assert type.isEdgeLabel();
             InternalVertex otherVertex = tx.getInternalVertex(relCache.getOtherVertexId());
             if (state==Change.REMOVED) {
                 rel = new StandardEdge(relCache.relationId, (EdgeLabel) type, outVertex, otherVertex,ElementLifeCycle.Removed);

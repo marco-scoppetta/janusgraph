@@ -30,9 +30,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphAssert {
 
     public static void assertCount(int expected, Traversal traversal) {

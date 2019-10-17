@@ -17,9 +17,7 @@ package org.janusgraph.diskstorage.util;
 import com.google.common.hash.HashCode;
 import org.janusgraph.diskstorage.StaticBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class HashingUtil {
 
     public enum HashLength {

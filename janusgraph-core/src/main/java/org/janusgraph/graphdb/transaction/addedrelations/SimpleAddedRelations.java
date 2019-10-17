@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class SimpleAddedRelations extends ArrayList<InternalRelation> implements AddedRelationsContainer {
 

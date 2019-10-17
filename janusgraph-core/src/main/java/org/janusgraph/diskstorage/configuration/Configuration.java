@@ -20,9 +20,7 @@ import com.google.common.collect.Sets;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface Configuration {
 
     boolean has(ConfigOption option, String... umbrellaElements);

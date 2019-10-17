@@ -54,9 +54,7 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> implements HasStepFolder<Vertex, E>, Profiling, MultiQueriable<Vertex,E> {
 
     private boolean initialized = false;

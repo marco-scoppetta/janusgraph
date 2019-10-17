@@ -18,9 +18,7 @@ import com.google.common.base.Preconditions;
 import org.janusgraph.core.schema.SchemaStatus;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface SchemaSource {
 
     long longId();

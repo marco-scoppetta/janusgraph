@@ -16,9 +16,7 @@ package org.janusgraph.core;
 
 import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface JanusGraphComputer extends GraphComputer {
 
     enum ResultMode {

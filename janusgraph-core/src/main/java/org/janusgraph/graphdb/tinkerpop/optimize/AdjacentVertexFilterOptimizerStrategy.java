@@ -36,9 +36,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class AdjacentVertexFilterOptimizerStrategy extends AbstractTraversalStrategy<TraversalStrategy.ProviderOptimizationStrategy> implements TraversalStrategy.ProviderOptimizationStrategy {
 
     private static final AdjacentVertexFilterOptimizerStrategy INSTANCE = new AdjacentVertexFilterOptimizerStrategy();

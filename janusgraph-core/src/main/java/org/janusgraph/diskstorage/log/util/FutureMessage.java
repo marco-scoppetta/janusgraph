@@ -36,7 +36,7 @@ public class FutureMessage<M extends Message> extends AbstractFuture<Message> {
     }
 
     /**
-     * Returns the actual message that was added to the log
+     * Returns the actual message that was added to the LOG
      * @return
      */
     public M getMessage() {
@@ -45,14 +45,14 @@ public class FutureMessage<M extends Message> extends AbstractFuture<Message> {
 
     /**
      * This method should be called by {@link org.janusgraph.diskstorage.log.Log} implementations when the message was successfully
-     * added to the log.
+     * added to the LOG.
      */
     public void delivered() {
         super.set(message);
     }
 
     /**
-     * This method should be called by {@link org.janusgraph.diskstorage.log.Log} implementations when the message could not be added to the log
+     * This method should be called by {@link org.janusgraph.diskstorage.log.Log} implementations when the message could not be added to the LOG
      * with the respective exception object.
      * @param exception
      */

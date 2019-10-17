@@ -33,7 +33,7 @@ public interface Message {
 
     /**
      * Returns the timestamp of this message in the specified time unit.
-     * This is the time when the message was added to the log.
+     * This is the time when the message was added to the LOG.
      * @return
      */
     Instant getTimestamp();

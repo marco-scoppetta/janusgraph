@@ -35,18 +35,15 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class IndexUpdateJob {
 
-    protected final Logger log =
-            LoggerFactory.getLogger(getClass());
+    protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
-    protected static final String SUCCESS_TX = "success-tx";
+    private static final String SUCCESS_TX = "success-tx";
+    private static final ConfigNamespace INDEX_JOB_NS = new ConfigNamespace(GraphDatabaseConfiguration.JOB_NS,"index","Configuration options relating to index jobs");
     protected static final String FAILED_TX = "failed-tx";
 
-    public static final ConfigNamespace INDEX_JOB_NS = new ConfigNamespace(GraphDatabaseConfiguration.JOB_NS,"index","Configuration options relating to index jobs");
 
     public static final ConfigOption<String> INDEX_NAME = new ConfigOption<>(INDEX_JOB_NS,"index-name",
             "The name of the index to be repaired. For vertex-centric indexes this is the name of " +
@@ -98,7 +95,7 @@ public abstract class IndexUpdateJob {
             Preconditions.checkArgument(config.has(INDEX_NAME), "Need to configure the name of the index to be repaired");
             indexName = config.get(INDEX_NAME);
             indexRelationTypeName = config.get(INDEX_RELATION_TYPE);
-            log.info("Read index information: name={} type={}", indexName, indexRelationTypeName);
+            LOG.info("Read index information: name={} type={}", indexName, indexRelationTypeName);
         }
 
         try {
@@ -112,12 +109,12 @@ public abstract class IndexUpdateJob {
                 index = managementSystem.getRelationIndex(indexRelationType,indexName);
             }
             Preconditions.checkArgument(index!=null,"Could not find index: %s [%s]",indexName,indexRelationTypeName);
-            log.debug("Found index {}", indexName);
+            LOG.debug("Found index {}", indexName);
             validateIndexStatus();
 
             StandardTransactionBuilder txb = this.graph.buildTransaction();
             txb.commitTime(jobStartTime);
-            writeTx = (StandardJanusGraphTx)txb.start();
+            writeTx = txb.start();
         } catch (Exception e) {
             if (null != managementSystem && managementSystem.isOpen())
                 managementSystem.rollback();
@@ -136,13 +133,12 @@ public abstract class IndexUpdateJob {
                 writeTx.commit();
             metrics.incrementCustom(SUCCESS_TX);
         } catch (RuntimeException e) {
-            log.error("Transaction commit threw runtime exception:", e);
+            LOG.error("Transaction commit threw runtime exception:", e);
             metrics.incrementCustom(FAILED_TX);
             throw e;
         }
     }
 
     protected abstract void validateIndexStatus();
-
 
 }

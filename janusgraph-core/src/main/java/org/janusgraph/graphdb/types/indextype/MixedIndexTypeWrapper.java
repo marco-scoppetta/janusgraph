@@ -15,17 +15,15 @@
 package org.janusgraph.graphdb.types.indextype;
 
 import com.google.common.collect.Iterables;
-import org.janusgraph.core.schema.Parameter;
-import org.janusgraph.core.PropertyKey;
-import org.janusgraph.graphdb.types.*;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.schema.Parameter;
+import org.janusgraph.graphdb.types.MixedIndexType;
+import org.janusgraph.graphdb.types.ParameterIndexField;
+import org.janusgraph.graphdb.types.SchemaSource;
+import org.janusgraph.graphdb.types.TypeDefinitionCategory;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class MixedIndexTypeWrapper extends IndexTypeWrapper implements MixedIndexType {
-
-    public static final String NAME_PREFIX = "extindex";
 
     public MixedIndexTypeWrapper(SchemaSource base) {
         super(base);
@@ -46,25 +44,23 @@ public class MixedIndexTypeWrapper extends IndexTypeWrapper implements MixedInde
     @Override
     public ParameterIndexField[] getFieldKeys() {
         ParameterIndexField[] result = fields;
-        if (result==null) {
-            Iterable<SchemaSource.Entry> entries = base.getRelated(TypeDefinitionCategory.INDEX_FIELD,Direction.OUT);
+        if (result == null) {
+            Iterable<SchemaSource.Entry> entries = base.getRelated(TypeDefinitionCategory.INDEX_FIELD, Direction.OUT);
             int numFields = Iterables.size(entries);
             result = new ParameterIndexField[numFields];
             int pos = 0;
             for (SchemaSource.Entry entry : entries) {
-                assert entry.getSchemaType() instanceof PropertyKey;
-                assert entry.getModifier() instanceof Parameter[];
-                result[pos++]=ParameterIndexField.of((PropertyKey)entry.getSchemaType(),(Parameter[])entry.getModifier());
+
+                result[pos++] = ParameterIndexField.of((PropertyKey) entry.getSchemaType(), (Parameter[]) entry.getModifier());
             }
             fields = result;
         }
-        assert result!=null;
         return result;
     }
 
     @Override
     public ParameterIndexField getField(PropertyKey key) {
-        return (ParameterIndexField)super.getField(key);
+        return (ParameterIndexField) super.getField(key);
     }
 
     @Override
@@ -75,7 +71,7 @@ public class MixedIndexTypeWrapper extends IndexTypeWrapper implements MixedInde
 
     @Override
     public String getStoreName() {
-        return base.getDefinition().getValue(TypeDefinitionCategory.INDEXSTORE_NAME,String.class);
+        return base.getDefinition().getValue(TypeDefinitionCategory.INDEXSTORE_NAME, String.class);
     }
 
 

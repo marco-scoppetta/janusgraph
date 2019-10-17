@@ -22,9 +22,7 @@ import org.janusgraph.util.datastructures.Retriever;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class CacheVertex extends StandardVertex {
     // We don't try to be smart and match with previous queries

@@ -17,6 +17,7 @@ package org.janusgraph.graphdb.types.indextype;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.JanusGraphSchemaType;
 import org.janusgraph.graphdb.internal.ElementCategory;
@@ -24,18 +25,15 @@ import org.janusgraph.graphdb.types.IndexField;
 import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.graphdb.types.SchemaSource;
 import org.janusgraph.graphdb.types.TypeDefinitionCategory;
-import org.apache.tinkerpop.gremlin.structure.Direction;
 
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class IndexTypeWrapper implements IndexType {
 
     protected final SchemaSource base;
 
-    public IndexTypeWrapper(SchemaSource base) {
+    IndexTypeWrapper(SchemaSource base) {
         Preconditions.checkNotNull(base);
         this.base = base;
     }
@@ -46,7 +44,7 @@ public abstract class IndexTypeWrapper implements IndexType {
 
     @Override
     public ElementCategory getElement() {
-        return base.getDefinition().getValue(TypeDefinitionCategory.ELEMENT_CATEGORY,ElementCategory.class);
+        return base.getDefinition().getValue(TypeDefinitionCategory.ELEMENT_CATEGORY, ElementCategory.class);
     }
 
     @Override
@@ -56,9 +54,9 @@ public abstract class IndexTypeWrapper implements IndexType {
 
     @Override
     public boolean equals(Object oth) {
-        if (this==oth) return true;
-        else if (oth==null || !getClass().isInstance(oth)) return false;
-        IndexTypeWrapper other = (IndexTypeWrapper)oth;
+        if (this == oth) return true;
+        else if (oth == null || !getClass().isInstance(oth)) return false;
+        IndexTypeWrapper other = (IndexTypeWrapper) oth;
         return base.equals(other.base);
     }
 
@@ -72,18 +70,19 @@ public abstract class IndexTypeWrapper implements IndexType {
         return base.name();
     }
 
-    private volatile Map<PropertyKey,IndexField> fieldMap = null;
+    private volatile Map<PropertyKey, IndexField> fieldMap = null;
 
     @Override
     public IndexField getField(PropertyKey key) {
-        Map<PropertyKey,IndexField> result = fieldMap;
-        if (result==null) {
-            ImmutableMap.Builder<PropertyKey,IndexField> b = ImmutableMap.builder();
-            for (IndexField f : getFieldKeys()) b.put(f.getFieldKey(),f);
-            result=b.build();
-            fieldMap=result;
+        Map<PropertyKey, IndexField> result = fieldMap;
+        if (result == null) {
+            ImmutableMap.Builder<PropertyKey, IndexField> b = ImmutableMap.builder();
+            for (IndexField f : getFieldKeys()) {
+                b.put(f.getFieldKey(), f);
+            }
+            result = b.build();
+            fieldMap = result;
         }
-        assert result!=null;
         return result.get(key);
     }
 
@@ -92,7 +91,7 @@ public abstract class IndexTypeWrapper implements IndexType {
 
     @Override
     public boolean hasSchemaTypeConstraint() {
-        return getSchemaTypeConstraint()!=null;
+        return getSchemaTypeConstraint() != null;
     }
 
     @Override
@@ -101,11 +100,9 @@ public abstract class IndexTypeWrapper implements IndexType {
         if (!cachedTypeConstraint) {
             Iterable<SchemaSource.Entry> related = base.getRelated(TypeDefinitionCategory.INDEX_SCHEMA_CONSTRAINT, Direction.OUT);
             if (Iterables.isEmpty(related)) {
-                constraint=null;
+                constraint = null;
             } else {
-                constraint =
-                        (JanusGraphSchemaType)Iterables.getOnlyElement(related,null).getSchemaType();
-                assert constraint!=null;
+                constraint = (JanusGraphSchemaType) Iterables.getOnlyElement(related, null).getSchemaType();
             }
             schemaTypeConstraint = constraint;
             cachedTypeConstraint = true;
@@ -118,17 +115,17 @@ public abstract class IndexTypeWrapper implements IndexType {
     @Override
     public void resetCache() {
         base.resetCache();
-        fieldMap=null;
+        fieldMap = null;
     }
 
     @Override
     public boolean indexesKey(PropertyKey key) {
-        return getField(key)!=null;
+        return getField(key) != null;
     }
 
     @Override
     public String getBackingIndexName() {
-        return base.getDefinition().getValue(TypeDefinitionCategory.BACKING_INDEX,String.class);
+        return base.getDefinition().getValue(TypeDefinitionCategory.BACKING_INDEX, String.class);
     }
 
 }
