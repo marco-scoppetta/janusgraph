@@ -48,13 +48,6 @@ public class ElementHelper {
         }
     }
 
-    public static long getCompareId(Element element) {
-        Object id = element.id();
-        if (id instanceof Long) return (Long) id;
-        else if (id instanceof RelationIdentifier) return ((RelationIdentifier) id).getRelationId();
-        else throw new IllegalArgumentException("Element identifier has unrecognized type: " + id);
-    }
-
     public static void attachProperties(JanusGraphRelation element, Object... keyValues) {
         if (keyValues == null || keyValues.length == 0) return; //Do nothing
         org.apache.tinkerpop.gremlin.structure.util.ElementHelper.legalPropertyKeyValueArray(keyValues);

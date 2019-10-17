@@ -14,17 +14,13 @@
 
 package org.janusgraph.core.util;
 
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
-
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.diskstorage.util.time.Timer;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
+import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -32,13 +28,20 @@ import org.reflections.vfs.Vfs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Preconditions;
-import org.janusgraph.diskstorage.configuration.ConfigOption;
-import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class supports iteration over JanusGraph's ConfigNamespaces at runtime.
- *
+ * <p>
  * JanusGraph's ConfigOptions and ConfigNamespaces are defined by public static final fields
  * spread across more than ten classes in various janusgraph modules/jars.  A ConfigOption
  * effectively does not exist at runtime until the static initializer of the field in
@@ -52,27 +55,12 @@ public enum ReflectiveConfigOptionLoader {
     INSTANCE;
 
     private static final String SYS_PROP_NAME = "janusgraph.load.cfg.opts";
-    private static final String ENV_VAR_NAME  = "JANUSGRAPH_LOAD_CFG_OPTS";
+    private static final String ENV_VAR_NAME = "JANUSGRAPH_LOAD_CFG_OPTS";
 
     private static final Logger log =
             LoggerFactory.getLogger(ReflectiveConfigOptionLoader.class);
 
     private volatile LoaderConfiguration cfg = new LoaderConfiguration();
-
-    public ReflectiveConfigOptionLoader setUseThreadContextLoader(boolean b) {
-        cfg = cfg.setUseThreadContextLoader(b);
-        return this;
-    }
-
-    public ReflectiveConfigOptionLoader setUseCallerLoader(boolean b) {
-        cfg = cfg.setUseCallerLoader(b);
-        return this;
-    }
-
-    public ReflectiveConfigOptionLoader setPreferredClassLoaders(List<ClassLoader> loaders) {
-        cfg = cfg.setPreferredClassLoaders(ImmutableList.copyOf(loaders));
-        return this;
-    }
 
     public ReflectiveConfigOptionLoader setEnabled(boolean enabled) {
         cfg = cfg.setEnabled(enabled);
@@ -117,21 +105,21 @@ public enum ReflectiveConfigOptionLoader {
          * but the benefit isn't substantial.
          */
         List<String> classnames = ImmutableList.of(
-            "org.janusgraph.diskstorage.hbase.HBaseStoreManager",
-            "org.janusgraph.diskstorage.cassandra.astyanax.AstyanaxStoreManager",
-            "org.janusgraph.diskstorage.cassandra.AbstractCassandraStoreManager",
-            "org.janusgraph.diskstorage.cassandra.thrift.CassandraThriftStoreManager",
-            "org.janusgraph.diskstorage.cql.CQLConfigOptions",
-            "org.janusgraph.diskstorage.es.ElasticSearchIndex",
-            "org.janusgraph.diskstorage.solr.SolrIndex",
-            "org.janusgraph.diskstorage.LOG.kcvs.KCVSLog",
-            "org.janusgraph.diskstorage.LOG.kcvs.KCVSLogManager",
-            "org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration",
-            "org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy",
-            "org.janusgraph.graphdb.database.idassigner.VertexIDAssigner",
-            //"org.janusgraph.graphdb.TestMockIndexProvider",
-            //"org.janusgraph.graphdb.TestMockLog",
-            "org.janusgraph.diskstorage.berkeleyje.BerkeleyJEStoreManager");
+                "org.janusgraph.diskstorage.hbase.HBaseStoreManager",
+                "org.janusgraph.diskstorage.cassandra.astyanax.AstyanaxStoreManager",
+                "org.janusgraph.diskstorage.cassandra.AbstractCassandraStoreManager",
+                "org.janusgraph.diskstorage.cassandra.thrift.CassandraThriftStoreManager",
+                "org.janusgraph.diskstorage.cql.CQLConfigOptions",
+                "org.janusgraph.diskstorage.es.ElasticSearchIndex",
+                "org.janusgraph.diskstorage.solr.SolrIndex",
+                "org.janusgraph.diskstorage.log.kcvs.KCVSLog",
+                "org.janusgraph.diskstorage.log.kcvs.KCVSLogManager",
+                "org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration",
+                "org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy",
+                "org.janusgraph.graphdb.database.idassigner.VertexIDAssigner",
+                //"org.janusgraph.graphdb.TestMockIndexProvider",
+                //"org.janusgraph.graphdb.TestMockLog",
+                "org.janusgraph.diskstorage.berkeleyje.BerkeleyJEStoreManager");
 
         Timer t = new Timer(TimestampProviders.MILLI);
         t.start();
@@ -240,11 +228,10 @@ public enum ReflectiveConfigOptionLoader {
         }
 
         org.reflections.Configuration rc = new org.reflections.util.ConfigurationBuilder()
-            .setUrls(scanUrls)
-            .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner());
+                .setUrls(scanUrls)
+                .setScanners(new TypeAnnotationsScanner(), new SubTypesScanner());
         Reflections reflections = new Reflections(rc);
 
-        //for (Class<?> c : reflections.getSubTypesOf(Object.class)) {  // Returns nothing
         for (Class<?> c : reflections.getTypesAnnotatedWith(PreInitializeConfigOptions.class)) {
             try {
                 loadCount += loadSingleClassUnsafe(c);
@@ -260,7 +247,7 @@ public enum ReflectiveConfigOptionLoader {
 
     /**
      * This method is based on ClasspathHelper.forClassLoader from Reflections.
-     *
+     * <p>
      * We made our own copy to avoid dealing with bytecode-level incompatibilities
      * introduced by changing method signatures between 0.9.9-RC1 and 0.9.9.
      *
@@ -357,18 +344,6 @@ public enum ReflectiveConfigOptionLoader {
 
         LoaderConfiguration setEnabled(boolean b) {
             return new LoaderConfiguration(b, preferredLoaders, useCallerLoader, useThreadContextLoader);
-        }
-
-        LoaderConfiguration setPreferredClassLoaders(List<ClassLoader> cl) {
-            return new LoaderConfiguration(enabled, cl, useCallerLoader, useThreadContextLoader);
-        }
-
-        LoaderConfiguration setUseCallerLoader(boolean b) {
-            return new LoaderConfiguration(enabled, preferredLoaders, b, useThreadContextLoader);
-        }
-
-        LoaderConfiguration setUseThreadContextLoader(boolean b) {
-            return new LoaderConfiguration(enabled, preferredLoaders, useCallerLoader, b);
         }
     }
 }
