@@ -435,7 +435,6 @@ public class StandardJanusGraph implements JanusGraph {
 
             IOUtils.closeQuietly(idAssigner);
             IOUtils.closeQuietly(backend);
-            IOUtils.closeQuietly(queryCache);
             IOUtils.closeQuietly(serializer);
         } finally {
             isOpen = false;
