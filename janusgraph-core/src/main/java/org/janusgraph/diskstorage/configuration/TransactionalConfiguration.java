@@ -22,9 +22,7 @@ import org.janusgraph.graphdb.database.serialize.DataOutput;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TransactionalConfiguration implements WriteConfiguration {
 
     private final WriteConfiguration config;

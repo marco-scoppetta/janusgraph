@@ -16,10 +16,11 @@ package org.janusgraph.util.datastructures;
 
 import com.google.common.base.Preconditions;
 
+import java.util.Arrays;
+
 /**
  * Immutable set of integers
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class ImmutableIntSet implements IntSet {
 
@@ -30,7 +31,7 @@ public class ImmutableIntSet implements IntSet {
         Preconditions.checkNotNull(values);
         Preconditions.checkArgument(values.length > 0);
         this.values = values;
-        hashcode = ArraysUtil.sum(values);
+        hashcode = Arrays.stream(values).sum();
     }
 
     public ImmutableIntSet(int value) {

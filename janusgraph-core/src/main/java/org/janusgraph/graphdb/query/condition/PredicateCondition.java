@@ -29,9 +29,7 @@ import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class PredicateCondition<K, E extends JanusGraphElement> extends Literal<E> {
 
@@ -75,7 +73,6 @@ public class PredicateCondition<K, E extends JanusGraphElement> extends Literal<
             }
             return satisfiesCondition(null);
         } else {
-            assert ((InternalRelationType)type).multiplicity().isUnique(Direction.OUT);
             return satisfiesCondition(element.value(type.name()));
         }
     }
@@ -102,7 +99,7 @@ public class PredicateCondition<K, E extends JanusGraphElement> extends Literal<
         if (this == other)
             return true;
 
-        if (other == null || !getClass().isInstance(other))
+        if (!getClass().isInstance(other))
             return false;
 
         PredicateCondition oth = (PredicateCondition) other;

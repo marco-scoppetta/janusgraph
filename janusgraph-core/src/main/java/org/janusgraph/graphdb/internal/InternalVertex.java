@@ -26,7 +26,6 @@ import java.util.List;
 /**
  * Internal Vertex interface adding methods that should only be used by JanusGraph
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface InternalVertex extends JanusGraphVertex, InternalElement {
 

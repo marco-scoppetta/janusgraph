@@ -34,7 +34,6 @@ import java.util.stream.Stream;
  * Wraps the transaction handle of an index and buffers all mutations against an index for efficiency.
  * Also acts as a proxy to the {@link IndexProvider} methods.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 
 public class IndexTransaction implements BaseTransaction, LoggableTransaction {
@@ -85,7 +84,6 @@ public class IndexTransaction implements BaseTransaction, LoggableTransaction {
             //IndexMutation already exists => if we deleted and re-created it we need to remove the deleted flag
             if (isNew && m.isDeleted()) {
                 m.resetDelete();
-                assert !m.isNew() && !m.isDeleted();
             }
         }
         return m;
@@ -140,9 +138,7 @@ public class IndexTransaction implements BaseTransaction, LoggableTransaction {
         indexTx.rollback();
     }
 
-
-
-    private void flushInternal() throws BackendException {
+    private void flushInternal() {
         if (mutations!=null && !mutations.isEmpty()) {
             //Consolidate all mutations prior to persistence to ensure that no addition accidentally gets swallowed by a delete
             for (Map<String, IndexMutation> store : mutations.values()) {

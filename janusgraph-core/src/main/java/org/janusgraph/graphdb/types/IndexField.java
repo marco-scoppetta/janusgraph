@@ -18,9 +18,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.janusgraph.core.PropertyKey;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class IndexField {
 
     private final PropertyKey key;

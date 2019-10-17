@@ -23,7 +23,6 @@ package org.janusgraph.core.log;
  * <p>
  * {@link #ADDED} and {@link #REMOVED} are considered proper change states.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public enum Change {
 

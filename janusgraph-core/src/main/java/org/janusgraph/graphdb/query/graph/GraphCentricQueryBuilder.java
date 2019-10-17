@@ -72,7 +72,6 @@ import java.util.stream.StreamSupport;
  * Builds a {@link JanusGraphQuery}, optimizes the query and compiles the result into a {@link GraphCentricQuery} which
  * is then executed through a {@link QueryProcessor}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class GraphCentricQueryBuilder implements JanusGraphQuery<GraphCentricQueryBuilder> {
 
@@ -311,7 +310,6 @@ public class GraphCentricQueryBuilder implements JanusGraphQuery<GraphCentricQue
                             = getEqualityConditionValues(conditions, ImplicitKey.LABEL);
                     if (equalCon == null) continue;
                     Collection<Object> labels = equalCon.getValue();
-                    assert labels.size() >= 1;
                     if (labels.size() > 1) {
                         LOG.warn("The query optimizer currently does not support multiple label constraints in query: {}", this);
                         continue;
@@ -424,7 +422,6 @@ public class GraphCentricQueryBuilder implements JanusGraphQuery<GraphCentricQue
             Map.Entry<Condition, Collection<Object>> equalCon = getEqualityConditionValues(condition, field.getFieldKey());
             if (equalCon != null) {
                 coveredClauses.add(equalCon.getKey());
-                assert equalCon.getValue().size() > 0;
                 for (Object value : equalCon.getValue()) {
                     Object[] newValues = Arrays.copyOf(indexValues, fields.length);
                     newValues[position] = value;
@@ -474,7 +471,6 @@ public class GraphCentricQueryBuilder implements JanusGraphQuery<GraphCentricQue
             covered.add(condition);
             return condition;
         }
-        assert condition instanceof And;
         And<JanusGraphElement> subCondition = new And<>(condition.numChildren());
         for (Condition<JanusGraphElement> subClause : condition.getChildren()) {
             if (coversAll(index, subClause, indexInfo)) {

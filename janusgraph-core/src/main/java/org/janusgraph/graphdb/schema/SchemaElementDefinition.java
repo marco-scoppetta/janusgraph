@@ -17,9 +17,7 @@ package org.janusgraph.graphdb.schema;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang.StringUtils;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class SchemaElementDefinition {
 
     private final String name;

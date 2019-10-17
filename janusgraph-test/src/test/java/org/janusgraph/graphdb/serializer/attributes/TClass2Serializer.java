@@ -19,9 +19,7 @@ import org.janusgraph.diskstorage.ScanBuffer;
 import org.janusgraph.diskstorage.WriteBuffer;
 import org.janusgraph.graphdb.database.serialize.attribute.StringSerializer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TClass2Serializer implements AttributeSerializer<TClass2> {
 
     private final StringSerializer strings = new StringSerializer();

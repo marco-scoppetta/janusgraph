@@ -15,10 +15,17 @@
 package org.janusgraph.graphdb.relations;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.*;
-import org.janusgraph.graphdb.internal.*;
-import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphVertexProperty;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.graphdb.internal.AbstractElement;
+import org.janusgraph.graphdb.internal.InternalRelation;
+import org.janusgraph.graphdb.internal.InternalRelationType;
+import org.janusgraph.graphdb.internal.InternalVertex;
+import org.janusgraph.graphdb.internal.Order;
+import org.janusgraph.graphdb.internal.OrderList;
+import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 import java.util.Comparator;
 
@@ -27,7 +34,6 @@ import java.util.Comparator;
  * A {@link Comparator} for {@link JanusGraphRelation} that uses a defined order to compare the relations with
  * or otherwise uses the natural order of relations.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class RelationComparator implements Comparator<InternalRelation> {
 
@@ -36,7 +42,7 @@ public class RelationComparator implements Comparator<InternalRelation> {
     private final OrderList orders;
 
     public RelationComparator(InternalVertex v) {
-        this(v,OrderList.NO_ORDER);
+        this(v, OrderList.NO_ORDER);
     }
 
     public RelationComparator(InternalVertex v, OrderList orders) {
@@ -58,14 +64,13 @@ public class RelationComparator implements Comparator<InternalRelation> {
         }
 
         //2) RelationType (determine if property or edge - properties come first)
-        int relationTypeCompare = (r1.isProperty()?1:2) - (r2.isProperty()?1:2);
+        int relationTypeCompare = (r1.isProperty() ? 1 : 2) - (r2.isProperty() ? 1 : 2);
         if (relationTypeCompare != 0) return relationTypeCompare;
 
         //3) JanusGraphType
         InternalRelationType t1 = (InternalRelationType) r1.getType(), t2 = (InternalRelationType) r2.getType();
-        int typeCompare = AbstractElement.compare(t1,t2);
+        int typeCompare = AbstractElement.compare(t1, t2);
         if (typeCompare != 0) return typeCompare;
-        assert t1.equals(t2);
 
         //4) Direction
         Direction dir1 = null, dir2 = null;
@@ -79,7 +84,7 @@ public class RelationComparator implements Comparator<InternalRelation> {
                 dir2 = EdgeDirection.fromPosition(i);
                 break;
             }
-        assert dir1 != null && dir2 != null; // ("Either relation is not incident on vertex [%s]", vertex);
+        // ("Either relation is not incident on vertex [%s]", vertex);
         int dirCompare = EdgeDirection.position(dir1) - EdgeDirection.position(dir2);
         if (dirCompare != 0) return dirCompare;
 
@@ -97,7 +102,7 @@ public class RelationComparator implements Comparator<InternalRelation> {
             Object o2 = ((JanusGraphVertexProperty) r2).value();
             Preconditions.checkArgument(o1 != null && o2 != null);
             if (!o1.equals(o2)) {
-                final int objectCompare;
+                int objectCompare;
                 if (Comparable.class.isAssignableFrom(((PropertyKey) t1).dataType())) {
                     objectCompare = ((Comparable) o1).compareTo(o2);
                 } else {
@@ -115,14 +120,14 @@ public class RelationComparator implements Comparator<InternalRelation> {
         if (t1.multiplicity().isConstrained()) return 0;
 
         // 7)compare relation ids
-        return AbstractElement.compare(r1,r2);
+        return AbstractElement.compare(r1, r2);
     }
 
-    public static int compareValues(Object v1, Object v2, Order order) {
-        return compareValues(v1,v2)*(order==Order.DESC?-1:1);
+    private static int compareValues(Object v1, Object v2, Order order) {
+        return compareValues(v1, v2) * (order == Order.DESC ? -1 : 1);
     }
 
-    public static int compareValues(Object v1, Object v2) {
+    private static int compareValues(Object v1, Object v2) {
         if (v1 == null || v2 == null) {
             if (v1 != null) return -1;
             else if (v2 != null) return 1;
@@ -134,11 +139,11 @@ public class RelationComparator implements Comparator<InternalRelation> {
     }
 
     private int compareOnKey(JanusGraphRelation r1, JanusGraphRelation r2, long typeId, Order order) {
-        return compareOnKey(r1,r2,tx.getExistingPropertyKey(typeId),order);
+        return compareOnKey(r1, r2, tx.getExistingPropertyKey(typeId), order);
     }
 
     private int compareOnKey(JanusGraphRelation r1, JanusGraphRelation r2, PropertyKey type, Order order) {
         Object v1 = r1.valueOrNull(type), v2 = r2.valueOrNull(type);
-        return compareValues(v1, v2,order);
+        return compareValues(v1, v2, order);
     }
 }

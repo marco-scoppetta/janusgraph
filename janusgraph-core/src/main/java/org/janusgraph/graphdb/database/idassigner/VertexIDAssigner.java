@@ -18,39 +18,52 @@ package org.janusgraph.graphdb.database.idassigner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janusgraph.core.*;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
-import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
-import org.janusgraph.graphdb.internal.InternalRelationType;
-import org.janusgraph.graphdb.relations.EdgeDirection;
-import org.janusgraph.graphdb.relations.ReassignableRelation;
-import org.janusgraph.util.stats.NumberUtil;
-
+import org.janusgraph.core.EdgeLabel;
+import org.janusgraph.core.JanusGraphRelation;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.PropertyKey;
+import org.janusgraph.core.VertexLabel;
 import org.janusgraph.diskstorage.Backend;
+import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.IDAuthority;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.diskstorage.configuration.Configuration;
+import org.janusgraph.diskstorage.idmanagement.ConsistentKeyIDAuthority;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.graphdb.database.idassigner.placement.*;
+import org.janusgraph.graphdb.configuration.PreInitializeConfigOptions;
+import org.janusgraph.graphdb.database.idassigner.placement.IDPlacementStrategy;
+import org.janusgraph.graphdb.database.idassigner.placement.PartitionAssignment;
+import org.janusgraph.graphdb.database.idassigner.placement.PartitionIDRange;
+import org.janusgraph.graphdb.database.idassigner.placement.SimpleBulkPlacementStrategy;
 import org.janusgraph.graphdb.idmanagement.IDManager;
 import org.janusgraph.graphdb.internal.InternalElement;
 import org.janusgraph.graphdb.internal.InternalRelation;
+import org.janusgraph.graphdb.internal.InternalRelationType;
 import org.janusgraph.graphdb.internal.InternalVertex;
+import org.janusgraph.graphdb.relations.EdgeDirection;
+import org.janusgraph.graphdb.relations.ReassignableRelation;
 import org.janusgraph.graphdb.types.vertices.JanusGraphSchemaVertex;
-
+import org.janusgraph.util.stats.NumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_BLOCK_SIZE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_NS;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_RENEW_BUFFER_PERCENTAGE;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_RENEW_TIMEOUT;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDS_STORE_NAME;
 
 @PreInitializeConfigOptions
 public class VertexIDAssigner implements AutoCloseable {
@@ -121,7 +134,6 @@ public class VertexIDAssigner implements AutoCloseable {
             placementStrategy = Backend.getImplementationClass(config, config.get(PLACEMENT_STRATEGY), REGISTERED_PLACEMENT_STRATEGIES);
             placementStrategy.injectIDManager(idManager);
             LOG.debug("Partition IDs? [{}], Local Partitions? [{}]", true, hasLocalPartitions);
-
 
             renewTimeoutMS = config.get(IDS_RENEW_TIMEOUT);
             renewBufferPercentage = config.get(IDS_RENEW_BUFFER_PERCENTAGE);
@@ -220,7 +232,6 @@ public class VertexIDAssigner implements AutoCloseable {
             } catch (IDPoolExhaustedException e) {
                 continue; //try again on a different partition
             }
-            assert element.hasId();
 
             /*
               The next block of code checks the added the relation for partitioned vertices as either end point. If such exists,
@@ -287,7 +298,6 @@ public class VertexIDAssigner implements AutoCloseable {
                 for (int i = 0; i < relation.getArity(); i++) {
                     InternalVertex vertex = relation.getVertex(i);
                     if (!vertex.hasId()) {
-                        assert !(vertex instanceof JanusGraphSchemaVertex); //Those are assigned ids immediately in the transaction
                         if (vertex.vertexLabel().isPartitioned())
                             assignID(vertex, getVertexIDType(vertex)); //Assign partitioned vertex ids immediately
                         else
@@ -306,7 +316,7 @@ public class VertexIDAssigner implements AutoCloseable {
                         assignID(entry.getKey(), entry.getValue().getPartitionID(), getVertexIDType(entry.getKey()));
                         Preconditions.checkArgument(entry.getKey().hasId());
                     } catch (IDPoolExhaustedException e) {
-                        if (leftOvers == null) leftOvers = new HashMap<>();
+                        leftOvers = new HashMap<>();
                         leftOvers.put(entry.getKey(), PartitionAssignment.EMPTY);
                         break;
                     }

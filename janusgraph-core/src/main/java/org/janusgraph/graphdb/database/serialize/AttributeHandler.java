@@ -16,9 +16,7 @@ package org.janusgraph.graphdb.database.serialize;
 
 import org.janusgraph.core.attribute.AttributeSerializer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface AttributeHandler {
 
     <T> void registerClass(int registrationNo, Class<T> type, AttributeSerializer<T> attributeHandler);

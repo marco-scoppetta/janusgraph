@@ -102,9 +102,7 @@ import static org.apache.tinkerpop.gremlin.process.traversal.Order.asc;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class JanusGraphIndexTest extends JanusGraphBaseTest {
 

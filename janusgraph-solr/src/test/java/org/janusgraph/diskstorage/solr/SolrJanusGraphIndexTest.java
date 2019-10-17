@@ -21,9 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class SolrJanusGraphIndexTest extends JanusGraphIndexTest {
 
     @BeforeAll

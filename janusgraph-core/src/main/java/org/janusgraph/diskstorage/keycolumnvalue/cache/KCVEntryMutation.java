@@ -22,9 +22,7 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import javax.annotation.Nullable;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class KCVEntryMutation extends Mutation<Entry,Entry> {
 
     public KCVEntryMutation(List<Entry> additions, List<Entry> deletions) {

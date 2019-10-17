@@ -40,8 +40,7 @@ public interface JanusGraphEdge extends JanusGraphRelation, Edge {
      * @return edge label of this edge
      */
     default EdgeLabel edgeLabel() {
-        assert getType() instanceof EdgeLabel;
-        return (EdgeLabel)getType();
+        return (EdgeLabel) getType();
     }
 
     /**
@@ -76,8 +75,8 @@ public interface JanusGraphEdge extends JanusGraphRelation, Edge {
 
     @Override
     default Iterator<Vertex> vertices(Direction direction) {
-        final List<Vertex> vertices;
-        if (direction==Direction.BOTH) {
+        List<Vertex> vertices;
+        if (direction == Direction.BOTH) {
             vertices = ImmutableList.of(vertex(Direction.OUT), vertex(Direction.IN));
         } else {
             vertices = ImmutableList.of(vertex(direction));

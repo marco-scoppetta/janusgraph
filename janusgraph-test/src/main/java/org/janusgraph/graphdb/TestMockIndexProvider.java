@@ -26,9 +26,7 @@ import java.util.stream.Stream;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TestMockIndexProvider implements IndexProvider {
 
     public static final ConfigOption<Boolean> INDEX_MOCK_FAILADD = new ConfigOption<>(INDEX_NS, "fail-adds",

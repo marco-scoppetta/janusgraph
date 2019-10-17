@@ -164,17 +164,11 @@ public class ReadConfigurationBuilder {
     }
 
     private static Map<ConfigElement.PathIdentifier, Object> getGlobalSubset(Map<ConfigElement.PathIdentifier, Object> m) {
-        return Maps.filterEntries(m, entry -> {
-            assert entry.getKey().element.isOption();
-            return ((ConfigOption) entry.getKey().element).isGlobal();
-        });
+        return Maps.filterEntries(m, entry -> ((ConfigOption) entry.getKey().element).isGlobal());
     }
 
     private static Map<ConfigElement.PathIdentifier, Object> getManagedSubset(Map<ConfigElement.PathIdentifier, Object> m) {
-        return Maps.filterEntries(m, entry -> {
-            assert entry.getKey().element.isOption();
-            return ((ConfigOption) entry.getKey().element).isManaged();
-        });
+        return Maps.filterEntries(m, entry -> ((ConfigOption) entry.getKey().element).isManaged());
     }
 
     private static void checkJanusGraphStorageVersionEquality(ModifiableConfiguration globalWrite, String graphName) {
@@ -225,7 +219,6 @@ public class ReadConfigurationBuilder {
 //
 //        for (Map.Entry<ConfigElement.PathIdentifier, Object> entry : getManagedSubset(localBasicConfiguration.getAll()).entrySet()) {
 //            ConfigElement.PathIdentifier pathId = entry.getKey();
-//            assert pathId.element.isOption();
 //            ConfigOption<?> configOption = (ConfigOption<?>) pathId.element;
 //            Object localValue = entry.getValue();
 //

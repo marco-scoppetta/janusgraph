@@ -36,9 +36,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class LuceneIndexTest extends IndexProviderTest {
 

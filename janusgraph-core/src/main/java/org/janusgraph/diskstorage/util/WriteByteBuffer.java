@@ -22,9 +22,7 @@ import org.janusgraph.diskstorage.WriteBuffer;
 import java.nio.ByteBuffer;
 
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class WriteByteBuffer implements WriteBuffer {
 

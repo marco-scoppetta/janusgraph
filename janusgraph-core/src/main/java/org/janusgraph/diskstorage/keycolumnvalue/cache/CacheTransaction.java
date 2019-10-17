@@ -39,9 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class CacheTransaction implements StoreTransaction, LoggableTransaction {
 
     private final StoreTransaction tx;
@@ -106,14 +103,13 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
     }
 
     private KCVMutation convert(KCVEntryMutation mutation) {
-        assert !mutation.isEmpty();
         if (!mutation.hasDeletions())
             return new KCVMutation(mutation.getAdditions(), KeyColumnValueStore.NO_DELETIONS);
         else
             return new KCVMutation(mutation.getAdditions(), Lists.newArrayList(Iterables.transform(mutation.getDeletions(), KCVEntryMutation.ENTRY2COLUMN_FCT)));
     }
 
-    private void flushInternal() throws BackendException {
+    private void flushInternal() {
         if (numMutations > 0) {
             //Consolidate all mutations prior to persistence to ensure that no addition accidentally gets swallowed by a delete
             for (Map<StaticBuffer, KCVEntryMutation> store : mutations.values()) {
@@ -121,10 +117,10 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
             }
 
             //Chunk up mutations
-            final Map<String, Map<StaticBuffer, KCVMutation>> subMutations = new HashMap<>(mutations.size());
+            Map<String, Map<StaticBuffer, KCVMutation>> subMutations = new HashMap<>(mutations.size());
             int numSubMutations = 0;
             for (Map.Entry<KCVSCache, Map<StaticBuffer, KCVEntryMutation>> storeMutations : mutations.entrySet()) {
-                final Map<StaticBuffer, KCVMutation> sub = new HashMap<>();
+                Map<StaticBuffer, KCVMutation> sub = new HashMap<>();
                 subMutations.put(storeMutations.getKey().getName(), sub);
                 for (Map.Entry<StaticBuffer, KCVEntryMutation> mutationsForKey : storeMutations.getValue().entrySet()) {
                     if (mutationsForKey.getValue().isEmpty()) continue;
@@ -141,19 +137,17 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
 
 
             for (Map.Entry<KCVSCache, Map<StaticBuffer, KCVEntryMutation>> storeMutations : mutations.entrySet()) {
-                final KCVSCache cache = storeMutations.getKey();
+                KCVSCache cache = storeMutations.getKey();
                 for (Map.Entry<StaticBuffer, KCVEntryMutation> mutationsForKey : storeMutations.getValue().entrySet()) {
                     if (cache.hasValidateKeysOnly()) {
                         cache.invalidate(mutationsForKey.getKey(), Collections.EMPTY_LIST);
                     } else {
-                        final KCVEntryMutation m = mutationsForKey.getValue();
-                        final List<CachableStaticBuffer> entries = new ArrayList<>(m.getTotalMutations());
+                        KCVEntryMutation m = mutationsForKey.getValue();
+                        List<CachableStaticBuffer> entries = new ArrayList<>(m.getTotalMutations());
                         for (Entry e : m.getAdditions()) {
-                            assert e instanceof CachableStaticBuffer;
                             entries.add((CachableStaticBuffer) e);
                         }
                         for (StaticBuffer e : m.getDeletions()) {
-                            assert e instanceof CachableStaticBuffer;
                             entries.add((CachableStaticBuffer) e);
                         }
                         cache.invalidate(mutationsForKey.getKey(), entries);
@@ -173,7 +167,7 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
 
     @Override
     public void logMutations(DataOutput out) {
-        Preconditions.checkArgument(!batchLoading, "Cannot log entire mutation set when batch-loading is enabled");
+        Preconditions.checkArgument(!batchLoading, "Cannot LOG entire mutation set when batch-loading is enabled");
         VariableLong.writePositive(out, mutations.size());
         for (Map.Entry<KCVSCache, Map<StaticBuffer, KCVEntryMutation>> storeMutations : mutations.entrySet()) {
             out.writeObjectNotNull(storeMutations.getKey().getName());

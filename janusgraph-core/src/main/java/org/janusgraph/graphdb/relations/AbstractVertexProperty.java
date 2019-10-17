@@ -22,9 +22,7 @@ import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
 import java.util.Iterator;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public abstract class AbstractVertexProperty<V> extends AbstractTypedRelation implements JanusGraphVertexProperty<V> {
 

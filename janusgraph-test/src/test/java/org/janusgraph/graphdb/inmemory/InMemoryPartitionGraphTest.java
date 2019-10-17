@@ -19,9 +19,7 @@ import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphPartitionGraphTest;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class InMemoryPartitionGraphTest extends JanusGraphPartitionGraphTest {
 

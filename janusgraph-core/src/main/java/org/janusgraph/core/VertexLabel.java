@@ -24,7 +24,6 @@ import java.util.Collection;
  * <p>
  * Internally, a vertex label is also used to specify certain characteristics of vertices that have a given label.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface VertexLabel extends JanusGraphVertex, JanusGraphSchemaType {
 

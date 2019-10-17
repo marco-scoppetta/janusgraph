@@ -19,9 +19,7 @@ import org.janusgraph.core.attribute.AttributeSerializer;
 import org.janusgraph.diskstorage.ScanBuffer;
 import org.janusgraph.diskstorage.WriteBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ObjectSerializer implements AttributeSerializer<Object> {
 
     @Override

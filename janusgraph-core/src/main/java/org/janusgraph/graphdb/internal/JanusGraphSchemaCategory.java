@@ -19,9 +19,7 @@ import org.janusgraph.graphdb.types.TypeDefinitionCategory;
 import org.janusgraph.graphdb.types.TypeDefinitionMap;
 import org.janusgraph.graphdb.types.TypeUtil;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public enum JanusGraphSchemaCategory {
 

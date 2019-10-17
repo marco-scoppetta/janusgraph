@@ -21,9 +21,7 @@ import org.janusgraph.diskstorage.indexing.IndexInformation;
 import org.janusgraph.diskstorage.indexing.KeyInformation;
 import org.janusgraph.graphdb.query.JanusGraphPredicate;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class StandardIndexInformation implements IndexInformation {
 

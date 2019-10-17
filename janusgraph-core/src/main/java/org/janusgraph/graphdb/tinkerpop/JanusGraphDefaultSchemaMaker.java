@@ -26,7 +26,6 @@ import java.util.UUID;
 /**
  * {@link org.janusgraph.core.schema.DefaultSchemaMaker} implementation for Blueprints graphs
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class JanusGraphDefaultSchemaMaker implements DefaultSchemaMaker {
 

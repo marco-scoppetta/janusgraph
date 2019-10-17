@@ -18,7 +18,7 @@ package org.janusgraph.core;
  * Exception thrown due to invalid configuration options or when errors
  * occur during the configuration and initialization of JanusGraph.
  * <p>
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 
 public class JanusGraphConfigurationException extends JanusGraphException {

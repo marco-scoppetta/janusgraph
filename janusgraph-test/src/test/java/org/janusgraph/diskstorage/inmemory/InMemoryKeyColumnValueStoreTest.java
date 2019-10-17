@@ -18,9 +18,7 @@ import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.inmemory.InMemoryStoreManager;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class InMemoryKeyColumnValueStoreTest extends KeyColumnValueStoreTest {
 

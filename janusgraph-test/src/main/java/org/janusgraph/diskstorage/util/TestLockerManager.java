@@ -17,9 +17,7 @@ package org.janusgraph.diskstorage.util;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.locking.Locker;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TestLockerManager {
 
     public static boolean ERROR_ON_LOCKING = true;

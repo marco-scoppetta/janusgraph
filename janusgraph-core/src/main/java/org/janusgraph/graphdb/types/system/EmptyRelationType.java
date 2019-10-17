@@ -22,9 +22,7 @@ import org.janusgraph.core.schema.SchemaStatus;
 
 import java.util.Collections;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class EmptyRelationType extends EmptyVertex implements InternalRelationType {
 
     @Override

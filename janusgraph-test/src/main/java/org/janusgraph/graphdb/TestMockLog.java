@@ -36,13 +36,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TestMockLog implements LogManager {
 
     public static final ConfigOption<Boolean> LOG_MOCK_FAILADD = new ConfigOption<>(LOG_NS, "fail-adds",
-            "Sets the log to reject adding messages. FOR TESTING ONLY",
+            "Sets the LOG to reject adding messages. FOR TESTING ONLY",
             ConfigOption.Type.LOCAL, false).hide();
 
     private final Map<String,TestLog> openLogs = Maps.newHashMap();

@@ -23,9 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphVariables implements Graph.Variables {
 
     private final WriteConfiguration config;

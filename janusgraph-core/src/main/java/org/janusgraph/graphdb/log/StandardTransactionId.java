@@ -21,9 +21,7 @@ import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StandardTransactionId implements TransactionId {
 
     private final String instanceId;

@@ -38,7 +38,7 @@ public class Durations {
      * This method is based on the method of the same name in Stopwatch.java in
      * Google Guava 14.0.1, where it was defined with private visibility.
      */
-    public static String abbreviate(ChronoUnit unit) {
+    private static String abbreviate(ChronoUnit unit) {
         switch (unit) {
             case NANOS:
                 return "ns";
@@ -65,7 +65,6 @@ public class Durations {
             put(abbreviate(unit),unit); //abbreviated name
             String name = unit.toString().toLowerCase();
             put(name,unit); //abbreviated name in singular
-            assert name.endsWith("s");
             put(name.substring(0,name.length()-1),unit);
         }
         put("us",ChronoUnit.MICROS);

@@ -17,9 +17,7 @@ package org.janusgraph.diskstorage.util;
 import com.google.common.hash.HashCode;
 import org.janusgraph.diskstorage.StaticBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class HashingUtil {
 
     public enum HashLength {
@@ -53,7 +51,6 @@ public class HashingUtil {
 
         HashCode hashcode = key.as(hashFactory);
         WriteByteBuffer newKey = new WriteByteBuffer(prefixLen+key.length());
-        assert prefixLen==4 || prefixLen==8;
         if (prefixLen==4) newKey.putInt(hashcode.asInt());
         else newKey.putLong(hashcode.asLong());
         newKey.putBytes(key);
@@ -63,7 +60,5 @@ public class HashingUtil {
     public static StaticBuffer getKey(HashLength hashPrefixLen, StaticBuffer hasPrefixedKey) {
         return hasPrefixedKey.subrange(hashPrefixLen.length(), hasPrefixedKey.length() - hashPrefixLen.length());
     }
-
-
 
 }

@@ -114,7 +114,7 @@
          of detailed information when indexing.
 
          Setting the value to true will instruct the underlying Lucene
-         IndexWriter to write its info stream to solr's log. By default,
+         IndexWriter to write its info stream to solr's LOG. By default,
          this is enabled here, and controlled through log4j.properties.
       -->
      <infoStream>true</infoStream>
@@ -142,8 +142,8 @@
   <!-- The default high-performance update handler -->
   <updateHandler class="solr.DirectUpdateHandler2">
 
-    <!-- Enables a transaction log, used for real-time get, durability, and
-         and solr cloud replica recovery.  The log can grow as big as
+    <!-- Enables a transaction LOG, used for real-time get, durability, and
+         and solr cloud replica recovery.  The LOG can grow as big as
          uncommitted changes to the index, so use of a hard autoCommit
          is recommended (see below).
          "dir" - the target directory for transaction logs, defaults to the
@@ -171,7 +171,7 @@
            searcher to be opened to make those changes visible.
 
          If the updateLog is enabled, then it's highly recommended to
-         have some sort of hard autoCommit to limit the log size.
+         have some sort of hard autoCommit to limit the LOG size.
       -->
      <autoCommit> 
        <maxTime>${solr.autoCommit.maxTime:15000}</maxTime> 

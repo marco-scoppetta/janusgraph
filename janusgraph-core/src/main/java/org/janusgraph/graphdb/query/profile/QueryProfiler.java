@@ -20,9 +20,7 @@ import org.janusgraph.graphdb.query.graph.JointIndexQuery.Subquery;
 import java.util.Collection;
 import java.util.function.Function;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface QueryProfiler {
 
     String CONDITION_ANNOTATION = "condition";

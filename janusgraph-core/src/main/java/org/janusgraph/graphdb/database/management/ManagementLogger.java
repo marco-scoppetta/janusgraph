@@ -47,9 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.janusgraph.graphdb.database.management.GraphCacheEvictionAction.DO_NOT_EVICT;
 import static org.janusgraph.graphdb.database.management.GraphCacheEvictionAction.EVICT;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class ManagementLogger implements MessageReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagementLogger.class);
@@ -113,7 +111,6 @@ public class ManagementLogger implements MessageReader {
                 break;
             }
             default:
-                assert logType == MgmtLogType.CONFIG_MUTATION;
                 break;
         }
 
@@ -128,7 +125,6 @@ public class ManagementLogger implements MessageReader {
         VariableLong.writePositive(out, evictionId);
         VariableLong.writePositive(out, updatedTypes.size());
         for (JanusGraphSchemaVertex type : updatedTypes) {
-            assert type.hasId();
             VariableLong.writePositive(out, type.longId());
         }
         if (evictGraphFromCache) {

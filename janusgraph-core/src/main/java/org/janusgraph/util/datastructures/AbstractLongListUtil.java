@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 /**
  * Utility class for merging and sorting lists of longs
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class AbstractLongListUtil {
 
@@ -37,20 +36,20 @@ public class AbstractLongListUtil {
     }
 
     public static LongArrayList mergeSort(LongArrayList a, LongArrayList b) {
-        int positionA=0, positionB=0;
-        LongArrayList result = new LongArrayList(a.size()+b.size());
-        while (positionA<a.size() || positionB<b.size()) {
+        int positionA = 0, positionB = 0;
+        LongArrayList result = new LongArrayList(a.size() + b.size());
+        while (positionA < a.size() || positionB < b.size()) {
             long next;
-            if (positionA>=a.size()) {
-                next=b.get(positionB++);
-            } else if (positionB>=b.size()) {
-                next=a.get(positionA++);
-            } else if (a.get(positionA)<=b.get(positionB)) {
-                next=a.get(positionA++);
+            if (positionA >= a.size()) {
+                next = b.get(positionB++);
+            } else if (positionB >= b.size()) {
+                next = a.get(positionA++);
+            } else if (a.get(positionA) <= b.get(positionB)) {
+                next = a.get(positionA++);
             } else {
-                next=b.get(positionB++);
+                next = b.get(positionB++);
             }
-            Preconditions.checkArgument(result.isEmpty() || result.get(result.size()-1)<=next,
+            Preconditions.checkArgument(result.isEmpty() || result.get(result.size() - 1) <= next,
                     "The input lists are not sorted");
             result.add(next);
         }
@@ -58,8 +57,6 @@ public class AbstractLongListUtil {
     }
 
     public static LongArrayList mergeJoin(LongArrayList a, LongArrayList b, boolean unique) {
-        assert isSorted(a) : a.toString();
-        assert isSorted(b) : b.toString();
         int counterA = 0, counterB = 0;
         int sizeA = a.size();
         int sizeB = b.size();
@@ -82,7 +79,6 @@ public class AbstractLongListUtil {
             } else if (a.get(counterA) < b.get(counterB)) {
                 counterA++;
             } else {
-                assert a.get(counterA) > b.get(counterB);
                 counterB++;
             }
         }

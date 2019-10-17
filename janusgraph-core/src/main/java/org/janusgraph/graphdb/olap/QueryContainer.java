@@ -34,9 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class QueryContainer {
 
     public static final int DEFAULT_HARD_QUERY_LIMIT = 100000;

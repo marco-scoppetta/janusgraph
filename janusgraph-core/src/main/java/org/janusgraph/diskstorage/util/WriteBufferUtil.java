@@ -17,9 +17,7 @@ package org.janusgraph.diskstorage.util;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.WriteBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class WriteBufferUtil {
 

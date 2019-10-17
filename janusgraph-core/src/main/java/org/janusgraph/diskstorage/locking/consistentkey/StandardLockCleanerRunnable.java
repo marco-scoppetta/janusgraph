@@ -39,7 +39,7 @@ import static org.janusgraph.diskstorage.locking.consistentkey.ConsistentKeyLock
  *
  * This implementation is "best-effort." If the store or transaction closes in
  * the middle of its operation, or if the backend emits a storage exception, it
- * will fail without retrying and log the exception.
+ * will fail without retrying and LOG the exception.
  */
 public class StandardLockCleanerRunnable implements Runnable {
 

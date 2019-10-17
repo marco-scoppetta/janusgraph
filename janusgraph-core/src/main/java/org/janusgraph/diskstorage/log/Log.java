@@ -20,18 +20,17 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import java.util.concurrent.Future;
 
 /**
- * Represents a log that allows content to be added to it in the form of messages and to
- * read messages and their content from the log via registered {@link MessageReader}s.
+ * Represents a LOG that allows content to be added to it in the form of messages and to
+ * read messages and their content from the LOG via registered {@link MessageReader}s.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface Log {
 
 
     /**
-     * Attempts to add the given content to the log and returns a {@link Future} for this action.
+     * Attempts to add the given content to the LOG and returns a {@link Future} for this action.
      * <p>
-     * If the log is configured for immediate sending, then any exception encountered during this process is thrown
+     * If the LOG is configured for immediate sending, then any exception encountered during this process is thrown
      * by this method. Otherwise, encountered exceptions are attached to the returned future.
 
      * @param content
@@ -40,10 +39,10 @@ public interface Log {
     Future<Message> add(StaticBuffer content);
 
     /**
-     * Attempts to add the given content to the log and returns a {@link Future} for this action.
-     * In addition, a key is provided to signal the recipient of the log message in partitioned logging systems.
+     * Attempts to add the given content to the LOG and returns a {@link Future} for this action.
+     * In addition, a key is provided to signal the recipient of the LOG message in partitioned logging systems.
      * <p>
-     * If the log is configured for immediate sending, then any exception encountered during this process is thrown
+     * If the LOG is configured for immediate sending, then any exception encountered during this process is thrown
      * by this method. Otherwise, encountered exceptions are attached to the returned future.
      *
      * @param content
@@ -53,21 +52,21 @@ public interface Log {
 
     /**
      *
-     * @param readMarker Indicates where to start reading from the log once message readers are registered
+     * @param readMarker Indicates where to start reading from the LOG once message readers are registered
      * @param reader The readers to register (all at once)
      * @see #registerReaders(ReadMarker, Iterable)
      */
     void registerReader(ReadMarker readMarker, MessageReader... reader);
 
     /**
-     * Registers the given readers with this log. These readers will be invoked for each newly read message from the log
+     * Registers the given readers with this LOG. These readers will be invoked for each newly read message from the LOG
      * starting at the point identified by the provided {@link ReadMarker}.
      * <p>
      * If no previous readers were registered, invoking this method triggers reader threads to be instantiated.
      * If readers have been previously registered, then the provided {@link ReadMarker} must be compatible with the
      * previous {@link ReadMarker} or an exception will be thrown.
      *
-     * @param readMarker Indicates where to start reading from the log once message readers are registered
+     * @param readMarker Indicates where to start reading from the LOG once message readers are registered
      * @param readers The readers to register (all at once)
      */
     void registerReaders(ReadMarker readMarker, Iterable<MessageReader> readers);
@@ -83,13 +82,13 @@ public interface Log {
     boolean unregisterReader(MessageReader reader);
 
     /**
-     * Returns the name of this log
+     * Returns the name of this LOG
      * @return
      */
     String getName();
 
     /**
-     * Closes this log and stops the reading process.
+     * Closes this LOG and stops the reading process.
      *
      * @throws org.janusgraph.diskstorage.BackendException
      */

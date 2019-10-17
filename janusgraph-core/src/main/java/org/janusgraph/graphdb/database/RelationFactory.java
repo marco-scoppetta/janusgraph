@@ -17,9 +17,7 @@ package org.janusgraph.graphdb.database;
 import org.janusgraph.core.RelationType;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public interface RelationFactory {
 

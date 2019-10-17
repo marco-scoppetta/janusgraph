@@ -40,7 +40,6 @@ public class VertexCache {
                 .concurrencyLevel(concurrencyLevel)
                 .removalListener((RemovalListener<Long, InternalVertex>) notification -> {
                     if (notification.getCause() == RemovalCause.EXPLICIT) { //Due to invalidation at the end
-                        assert volatileVertices.isEmpty();
                         return;
                     }
                     //Should only get evicted based on size constraint or replaced through add
@@ -92,7 +91,7 @@ public class VertexCache {
      * Returns an iterable over all new vertices in the cache
      */
     public List<InternalVertex> getAllNew() {
-        final List<InternalVertex> vertices = new ArrayList<>(10);
+        List<InternalVertex> vertices = new ArrayList<>(10);
         for (InternalVertex v : volatileVertices.values()) {
             if (v.isNew()) vertices.add(v);
         }

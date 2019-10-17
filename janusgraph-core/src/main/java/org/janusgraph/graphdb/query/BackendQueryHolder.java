@@ -30,7 +30,6 @@ import org.janusgraph.graphdb.query.profile.QueryProfiler;
  *     and is passed through verbatim. Can be null.</li>
  * </ul>
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class BackendQueryHolder<E extends BackendQuery<E>> implements ProfileObservable {
 

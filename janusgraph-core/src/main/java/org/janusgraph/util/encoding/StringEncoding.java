@@ -20,9 +20,7 @@ import com.google.common.base.Preconditions;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StringEncoding {
 
     public static final String UTF8_ENCODING = "UTF-8";
@@ -47,7 +45,6 @@ public class StringEncoding {
         } else {
             for (int i = 0; i < attribute.length(); i++) {
                 int c = attribute.charAt(i);
-                assert c <= 127;
                 byte b = (byte)c;
                 if (i+1==attribute.length()) b |= 0x80; //End marker
                 array[startPos++]=b;

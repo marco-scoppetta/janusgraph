@@ -22,7 +22,6 @@ import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
  * Constructor returned by {@link org.janusgraph.core.JanusGraph#buildTransaction()} to build a new transaction.
  * The TransactionBuilder allows certain aspects of the resulting transaction to be configured up-front.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface TransactionBuilder {
 
@@ -142,11 +141,11 @@ public interface TransactionBuilder {
     TransactionBuilder groupName(String name);
 
     /**
-     * Name of the log to be used for logging the mutations in this transaction. If no log identifier is set,
+     * Name of the LOG to be used for logging the mutations in this transaction. If no LOG identifier is set,
      * then this transaction will not be logged.
      *
-     * @param logName name of transaction log
-     * @return Object containing log identifier property
+     * @param logName name of transaction LOG
+     * @return Object containing LOG identifier property
      */
     TransactionBuilder logIdentifier(String logName);
 

@@ -18,9 +18,7 @@ import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.VertexLabel;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface SchemaManager extends SchemaInspector {
 
     /**

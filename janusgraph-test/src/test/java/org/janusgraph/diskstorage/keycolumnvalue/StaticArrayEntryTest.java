@@ -32,9 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StaticArrayEntryTest {
 
     private static final RelationCache cache = new RelationCache(Direction.OUT,5,105,"Hello");

@@ -25,9 +25,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class WritableConfigurationTest {
 
     private WriteConfiguration config;

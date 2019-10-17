@@ -30,7 +30,6 @@ import java.util.NoSuchElementException;
  * retrieving more than needed elements in the first place. However, this still means the initial currentLimit in the
  * constructor should be chosen wisely.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public abstract class LimitAdjustingIterator<R> implements Iterator<R> {
 
@@ -43,9 +42,6 @@ public abstract class LimitAdjustingIterator<R> implements Iterator<R> {
     /**
      * Initializes this iterator with the current limit and the maximum number of elements that may be retrieved from the
      * wrapped iterator.
-     *
-     * @param maxLimit
-     * @param currentLimit
      */
     public LimitAdjustingIterator(int maxLimit, int currentLimit) {
         Preconditions.checkArgument(currentLimit>0 && maxLimit>0,"Invalid limits: current [%s], max [%s]",currentLimit,maxLimit);
@@ -57,9 +53,6 @@ public abstract class LimitAdjustingIterator<R> implements Iterator<R> {
 
     /**
      * This returns the wrapped iterator with up to the specified number of elements.
-     *
-     * @param newLimit
-     * @return
      */
     public abstract Iterator<R> getNewIterator(int newLimit);
 
@@ -81,7 +74,6 @@ public abstract class LimitAdjustingIterator<R> implements Iterator<R> {
         for (int i = 0; i < count; i++)
             iterator.next();
 
-        assert count < currentLimit : count + " vs " + currentLimit + " | " + maxLimit;
         return hasNext();
     }
 

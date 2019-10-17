@@ -18,8 +18,6 @@ import org.janusgraph.diskstorage.StaticBuffer;
 
 /**
  * Representation of a (key,value) pair.
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 
 public class KeyValueEntry {
@@ -28,8 +26,6 @@ public class KeyValueEntry {
     private final StaticBuffer value;
 
     public KeyValueEntry(StaticBuffer key, StaticBuffer value) {
-        assert key != null;
-        assert value != null;
         this.key = key;
         this.value = value;
     }
@@ -38,10 +34,8 @@ public class KeyValueEntry {
         return key;
     }
 
-
     public StaticBuffer getValue() {
         return value;
     }
-
 
 }

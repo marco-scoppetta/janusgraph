@@ -16,9 +16,7 @@ package org.janusgraph.diskstorage;
 
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface MetaAnnotated {
 
     /**

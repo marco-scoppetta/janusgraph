@@ -18,9 +18,7 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.util.StaticArrayBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class JanusGraphHadoopSetupCommon implements JanusGraphHadoopSetup {
 
     private static final StaticBuffer DEFAULT_COLUMN = StaticArrayBuffer.of(new byte[0]);

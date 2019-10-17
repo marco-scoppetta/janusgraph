@@ -75,9 +75,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class LuceneIndex implements IndexProvider {
     private static final Logger log = LoggerFactory.getLogger(LuceneIndex.class);

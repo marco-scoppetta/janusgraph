@@ -23,9 +23,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TTLKCVS extends KCVSProxy {
 
     private final int ttl;

@@ -45,9 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JanusGraphTraversalUtil {
 
     /**

@@ -79,9 +79,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 @Testcontainers
 public class ElasticsearchIndexTest extends IndexProviderTest {
 

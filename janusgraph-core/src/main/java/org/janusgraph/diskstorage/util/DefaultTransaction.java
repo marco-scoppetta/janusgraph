@@ -19,9 +19,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.BaseTransactionConfigurable;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class DefaultTransaction implements BaseTransactionConfigurable {
 
     private final BaseTransactionConfig config;

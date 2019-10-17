@@ -29,9 +29,7 @@ import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class VariableLongTest {
 
@@ -309,7 +307,6 @@ public class VariableLongTest {
     public static long randomPosLong(long scaling) {
         long l = Math.round(random.nextGaussian()/3*scaling);
         if (l<0) l=Math.abs(l+1);
-        assert l>=0;
         return l;
     }
 

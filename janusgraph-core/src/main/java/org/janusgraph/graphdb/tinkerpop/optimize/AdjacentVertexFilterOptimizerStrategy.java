@@ -36,9 +36,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class AdjacentVertexFilterOptimizerStrategy extends AbstractTraversalStrategy<TraversalStrategy.ProviderOptimizationStrategy> implements TraversalStrategy.ProviderOptimizationStrategy {
 
     private static final AdjacentVertexFilterOptimizerStrategy INSTANCE = new AdjacentVertexFilterOptimizerStrategy();
@@ -67,7 +64,6 @@ public class AdjacentVertexFilterOptimizerStrategy extends AbstractTraversalStra
                     EdgeVertexStep evs = (EdgeVertexStep) steps.get(0);
                     if (evs.getDirection() != Direction.BOTH) direction = evs.getDirection();
                 } else {
-                    assert steps.get(0) instanceof EdgeOtherVertexStep;
                     direction = Direction.BOTH;
                 }
                 P predicate = ((IsStep) steps.get(1)).getPredicate();
@@ -89,8 +85,7 @@ public class AdjacentVertexFilterOptimizerStrategy extends AbstractTraversalStra
                                 && (direction == Direction.BOTH || direction.equals(vertexStep.getDirection().opposite()))) {
                             //Now replace the step with a has condition
                             TraversalHelper.replaceStep(originalStep,
-                                new HasStep(traversal,
-                                    new HasContainer(ImplicitKey.ADJACENT_ID.name(), P.eq(vertex))),
+                                new HasStep(traversal, new HasContainer(ImplicitKey.ADJACENT_ID.name(), P.eq(vertex))),
                                 traversal);
                         }
                     }

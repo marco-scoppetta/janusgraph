@@ -331,7 +331,7 @@ public class ConsistentKeyLocker extends AbstractLocker<ConsistentKeyLockStatus>
             handleMutationFailure(lockID, lockKey, wr, txh);
         }
         tryDeleteLockOnce(lockKey, oldLockCol, txh);
-        // TODO log exception or successful too-slow write here
+        // TODO LOG exception or successful too-slow write here
         throw new TemporaryBackendException("Lock write retry count exceeded");
     }
 
@@ -437,7 +437,7 @@ public class ConsistentKeyLocker extends AbstractLocker<ConsistentKeyLockStatus>
                 log.warn("Discarded expired claim on {} with timestamp {}", kc, tr.getTimestamp());
                 if (null != cleanerService)
                     cleanerService.clean(kc, cutoffTime, tx);
-                // Locks that this instance wrote that have now expired should not only log
+                // Locks that this instance wrote that have now expired should not only LOG
                 // but also throw a descriptive exception
                 if (rid.equals(tr.getRid()) && ls.getWriteTimestamp().equals(tr.getTimestamp())) {
                     throw new ExpiredLockException("Expired lock on " + kc.toString() +
@@ -488,7 +488,7 @@ public class ConsistentKeyLocker extends AbstractLocker<ConsistentKeyLockStatus>
             }
 
             if (tr.getTimestamp().equals(ls.getWriteTimestamp())) {
-//                log.debug("Checked lock {} in store {}", target, store.getName());
+//                LOG.debug("Checked lock {} in store {}", target, store.getName());
                 log.debug("Checked lock {}", target);
                 return;
             }

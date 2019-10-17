@@ -84,14 +84,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 @Tag(TestCategory.SERIAL_TESTS)
 public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest {
 
     public MetricManager metric;
-    public final String SYSTEM_METRICS = GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT;
 
     public abstract WriteConfiguration getBaseConfiguration();
 
@@ -116,15 +113,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         super.open(config);
     }
 
-
-    private void verifyLockingOverwrite(long num) {
-        if (storeUsesConsistentKeyLocker()) {
-            verifyStoreMetrics(org.janusgraph.diskstorage.Backend.INDEXSTORE_NAME, ImmutableMap.of(M_GET_SLICE, 2 * num));
-            verifyStoreMetrics(org.janusgraph.diskstorage.Backend.INDEXSTORE_NAME + LOCK_STORE_SUFFIX, ImmutableMap.of(M_GET_SLICE, num, M_MUTATE, 2 * num));
-        } else {
-            verifyStoreMetrics(org.janusgraph.diskstorage.Backend.INDEXSTORE_NAME, ImmutableMap.of(M_GET_SLICE, num, M_ACQUIRE_LOCK, num));
-        }
-    }
 
     @Test
     public void testReadOperations() {
@@ -284,15 +272,15 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
 
     private String metricsPrefix;
 
-    public void verifyStoreMetrics(String storeName) {
+    void verifyStoreMetrics(String storeName) {
         verifyStoreMetrics(storeName, new HashMap<>(0));
     }
 
-    public void verifyStoreMetrics(String storeName, Map<String, Long> operationCounts) {
+    void verifyStoreMetrics(String storeName, Map<String, Long> operationCounts) {
         verifyStoreMetrics(storeName, metricsPrefix, operationCounts);
     }
 
-    public void verifyStoreMetrics(String storeName, String prefix, Map<String, Long> operationCounts) {
+    void verifyStoreMetrics(String storeName, String prefix, Map<String, Long> operationCounts) {
         for (String operation : OPERATION_NAMES) {
             Long count = operationCounts.get(operation);
             if (count == null) count = 0L;
@@ -305,29 +293,14 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         verifyTypeCacheMetrics(metricsPrefix, nameMisses, relationMisses);
     }
 
-    public void verifyTypeCacheMetrics(String prefix, int nameMisses, int relationMisses) {
-//        assertEquals("On type cache name retrievals",nameRetrievals, metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_TYPENAME, CacheMetricsAction.RETRIEVAL.getName()).getCount());
+    void verifyTypeCacheMetrics(String prefix, int nameMisses, int relationMisses) {
         assertEquals(nameMisses, metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_TYPENAME, CacheMetricsAction.MISS.getName()).getCount(),
                 "On type cache name misses");
         assertTrue(nameMisses <= metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_TYPENAME, CacheMetricsAction.RETRIEVAL.getName()).getCount());
-//        assertEquals("On type cache relation retrievals",relationRetrievals, metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_RELATIONS, CacheMetricsAction.RETRIEVAL.getName()).getCount());
         assertEquals(relationMisses, metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_RELATIONS, CacheMetricsAction.MISS.getName()).getCount(),
                 "On type cache relation misses");
         assertTrue(relationMisses <= metric.getCounter(GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT, METRICS_NAME, METRICS_RELATIONS, CacheMetricsAction.RETRIEVAL.getName()).getCount());
     }
-
-//    public void verifyCacheMetrics(String storeName) {
-//        verifyCacheMetrics(storeName,0,0);
-//    }
-//
-//    public void verifyCacheMetrics(String storeName, int misses, int retrievals) {
-//        verifyCacheMetrics(storeName, metricsPrefix, misses, retrievals);
-//    }
-//
-//    public void verifyCacheMetrics(String storeName, String prefix, int misses, int retrievals) {
-//        assertEquals("On "+storeName+"-cache retrievals",retrievals, metric.getCounter(prefix, storeName + Backend.METRICS_CACHE_SUFFIX, CacheMetricsAction.RETRIEVAL.getName()).getCount());
-//        assertEquals("On "+storeName+"-cache misses",misses, metric.getCounter(prefix, storeName + Backend.METRICS_CACHE_SUFFIX, CacheMetricsAction.MISS.getName()).getCount());
-//    }
 
     public void printAllMetrics(String prefix) {
         List<String> storeNames = new ArrayList<>();
@@ -436,7 +409,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
         });
         updater.start();
         updater.join();
-//        reader.start();
         reader.join();
 
         System.out.println("Retrievals: " + getEdgeCacheRetrievals());
@@ -522,7 +494,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
                 timeWarmGlobal += timeWarm;
                 timeHotGlobal += timeHot;
             }
-//            System.out.println(timeCold + "\t" + timeWarm + "\t" + timeHot);
             clopen(newConfig);
         }
         timeColdGlobal = timeColdGlobal / measurements;
@@ -531,7 +502,6 @@ public abstract class JanusGraphOperationCountingTest extends JanusGraphBaseTest
 
         System.out.println(round(timeColdGlobal) + "\t" + round(timeWarmGlobal) + "\t" + round(timeHotGlobal));
         assertTrue(timeColdGlobal > timeWarmGlobal * 2, timeColdGlobal + " vs " + timeWarmGlobal);
-        //assertTrue(timeWarmGlobal + " vs " + timeHotGlobal, timeWarmGlobal>timeHotGlobal); Sometimes, this is not true
     }
 
     private double testAllVertices(long vid, int numV) {

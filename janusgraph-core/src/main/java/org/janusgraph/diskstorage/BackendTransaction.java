@@ -53,7 +53,6 @@ import org.janusgraph.graphdb.database.serialize.DataOutput;
  * methods for convenience. Also increases robustness of read call by attempting
  * read calls multiple times on failure.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 
 public class BackendTransaction implements LoggableTransaction {

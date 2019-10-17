@@ -16,9 +16,7 @@ package org.janusgraph.util.stats;
 
 import com.google.common.base.Preconditions;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class NumberUtil {
 
     public static boolean isPowerOf2(long value) {

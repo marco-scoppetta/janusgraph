@@ -24,9 +24,7 @@ import org.janusgraph.graphdb.database.serialize.SerializerInjected;
 import org.janusgraph.graphdb.types.TypeDefinitionCategory;
 import org.janusgraph.graphdb.types.TypeDefinitionDescription;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TypeDefinitionDescriptionSerializer implements AttributeSerializer<TypeDefinitionDescription>, SerializerInjected {
 
     private Serializer serializer;

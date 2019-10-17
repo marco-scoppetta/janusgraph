@@ -14,9 +14,7 @@
 
 package org.janusgraph.diskstorage.configuration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface WriteConfiguration extends ReadConfiguration {
 
     <O> void set(String key, O value);

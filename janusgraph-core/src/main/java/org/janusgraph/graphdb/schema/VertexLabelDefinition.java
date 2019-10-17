@@ -16,9 +16,7 @@ package org.janusgraph.graphdb.schema;
 
 import org.janusgraph.core.VertexLabel;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class VertexLabelDefinition extends SchemaElementDefinition {
 
     private final boolean isPartitioned;

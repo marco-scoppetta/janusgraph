@@ -21,7 +21,6 @@ import java.time.Instant;
 /**
  * Messages which are added to and received from the {@link Log}.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface Message {
 
@@ -33,7 +32,7 @@ public interface Message {
 
     /**
      * Returns the timestamp of this message in the specified time unit.
-     * This is the time when the message was added to the log.
+     * This is the time when the message was added to the LOG.
      * @return
      */
     Instant getTimestamp();

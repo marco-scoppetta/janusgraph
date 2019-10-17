@@ -258,8 +258,6 @@ public class IDManagementTest {
     @Test
     public void testUserVertexBitWidth() {
         for (IDManager.VertexIDType type : IDManager.VertexIDType.values()) {
-            assert !IDManager.VertexIDType.UserVertex.is(type.suffix()) || !type.isProper()
-                    || type.offset() == IDManager.USERVERTEX_PADDING_BITWIDTH;
             assertTrue(type.offset()<=IDManager.MAX_PADDING_BITWIDTH);
         }
     }

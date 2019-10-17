@@ -93,7 +93,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         // Iterate over edgestore columns to find the vertex's label relation
         for (Entry data : entries) {
             RelationReader relationReader = setup.getRelationReader();
-            final RelationCache relation = relationReader.parseRelation(data, false, typeManager);
+            RelationCache relation = relationReader.parseRelation(data, false, typeManager);
             if (systemTypes.isVertexLabelSystemType(relation.typeId)) {
                 // Found vertex Label
                 long vertexLabelId = relation.getOtherVertexId();
@@ -117,7 +117,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
                 RelationCache relation = relationReader.parseRelation(data, false, typeManager);
 
                 if (systemTypes.isSystemType(relation.typeId)) continue; //Ignore system types
-                final RelationType type = typeManager.getExistingRelationType(relation.typeId);
+                RelationType type = typeManager.getExistingRelationType(relation.typeId);
                 if (((InternalRelationType)type).isInvisibleType()) continue; //Ignore hidden types
 
                 // Decode and create the relation (edge or property)
@@ -128,8 +128,6 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
                     VertexProperty.Cardinality card = getPropertyKeyCardinality(type.name());
                     tv.property(card, type.name(), value, T.id, relation.relationId);
                 } else {
-                    assert type.isEdgeLabel();
-
                     // Partitioned vertex handling
                     if (idManager.isPartitionedVertex(relation.getOtherVertexId())) {
                         Preconditions.checkState(setup.getFilterPartitionedVertices(),
@@ -163,7 +161,6 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
                     if (relation.hasProperties()) {
                         // Load relation properties
                         for (LongObjectCursor<Object> next : relation) {
-                            assert next.value != null;
                             RelationType rt = typeManager.getExistingRelationType(next.key);
                             if (rt.isPropertyKey()) {
                                 te.property(rt.name(), next.value);
@@ -187,7 +184,7 @@ public class JanusGraphVertexDeserializer implements AutoCloseable {
         return tv;
     }
 
-    public TinkerVertex getOrCreateVertex(long vertexId, String label, TinkerGraph tg) {
+    private TinkerVertex getOrCreateVertex(long vertexId, String label, TinkerGraph tg) {
         TinkerVertex v;
 
         try {

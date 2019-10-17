@@ -20,11 +20,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class ResultMergeSortIterator<R> implements Iterator<R> {
-
 
     private final Iterator<R> first;
     private final Iterator<R> second;
@@ -65,16 +61,14 @@ public class ResultMergeSortIterator<R> implements Iterator<R> {
         return current;
     }
 
-    public R nextInternal() {
+    private R nextInternal() {
         if (nextFirst == null && first.hasNext()) {
             nextFirst = first.next();
-            assert nextFirst != null;
         }
         if (nextSecond == null && second.hasNext()) {
             nextSecond = second.next();
-            assert nextSecond != null;
         }
-        final R result;
+        R result;
         if (nextFirst == null && nextSecond == null) {
             return null;
         } else if (nextFirst == null) {
@@ -102,11 +96,9 @@ public class ResultMergeSortIterator<R> implements Iterator<R> {
         throw new UnsupportedOperationException();
     }
 
-    public static<R> Iterable<R> mergeSort(Iterable<R> first, Iterable<R> second,
-                                           final Comparator<R> comparator, boolean filterDuplicates) {
-        return () -> new ResultMergeSortIterator<>(first.iterator(),second.iterator(),comparator,filterDuplicates);
+    public static <R> Iterable<R> mergeSort(Iterable<R> first, Iterable<R> second, Comparator<R> comparator, boolean filterDuplicates) {
+        return () -> new ResultMergeSortIterator<>(first.iterator(), second.iterator(), comparator, filterDuplicates);
     }
-
 
 
 }

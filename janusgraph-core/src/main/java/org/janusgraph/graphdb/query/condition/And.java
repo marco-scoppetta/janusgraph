@@ -19,7 +19,6 @@ import org.janusgraph.core.JanusGraphElement;
 /**
  * Combines multiple conditions under semantic AND, i.e. all conditions must be true for this combination to be true
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class And<E extends JanusGraphElement> extends MultiCondition<E> {
 

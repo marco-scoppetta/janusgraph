@@ -266,9 +266,9 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
         this.temporaryIds = buildTemporaryIDsPool();
         this.isOpen = true;
 
-        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence());
-        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence());
-        this.existingVertexRetriever = new VertexConstructor(false);
+        this.externalVertexRetriever = new VertexConstructor(config.hasVerifyExternalVertexExistence()); // used to retrieve vertices when vertex ID is provided as a parameter by the user, e.g. getVertex("1234")
+        this.internalVertexRetriever = new VertexConstructor(config.hasVerifyInternalVertexExistence()); // used to retrieve vertices, but only invoked by internal methods, e.g. vertexVariable.query().direction(Direction.OUT).labels("link").vertices()
+        this.existingVertexRetriever = new VertexConstructor(false); // use to retrieve vertices when we are 100% sure that the vertex exists
 
 
         int concurrencyLevel = (config.isSingleThreaded()) ? 1 : 4;
@@ -885,7 +885,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
             if (schemaCategory == JanusGraphSchemaCategory.PROPERTYKEY) {
                 schemaVertex = new PropertyKeyVertex(this, IDManager.getTemporaryVertexID(IDManager.VertexIDType.UserPropertyKey, temporaryIds.nextID()), ElementLifeCycle.New);
             } else {
-                assert schemaCategory == JanusGraphSchemaCategory.EDGELABEL;
+                // Case: JanusGraphSchemaCategory.EDGELABEL
                 schemaVertex = new EdgeLabelVertex(this, IDManager.getTemporaryVertexID(IDManager.VertexIDType.UserEdgeLabel, temporaryIds.nextID()), ElementLifeCycle.New);
             }
         } else if (schemaCategory == JanusGraphSchemaCategory.VERTEXLABEL) {
@@ -1066,7 +1066,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
     @Override
     public VertexLabel getExistingVertexLabel(long id) {
-        assert idManager.isVertexLabelVertexId(id);
         InternalVertex v = getInternalVertex(id);
         return (VertexLabelVertex) v;
     }
@@ -1190,7 +1189,6 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
         @Override
         public Iterator<JanusGraphRelation> execute(VertexCentricQuery query, SliceQuery sq, Object exeInfo, QueryProfiler profiler) {
-            assert exeInfo == null;
             if (query.getVertex().isNew()) {
                 return Collections.emptyIterator();
             }

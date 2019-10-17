@@ -16,9 +16,7 @@ package org.janusgraph.diskstorage.util;
 
 import org.janusgraph.diskstorage.StaticBuffer;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public interface BackendCompression {
 

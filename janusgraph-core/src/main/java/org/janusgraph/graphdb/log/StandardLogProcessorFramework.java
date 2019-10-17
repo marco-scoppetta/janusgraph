@@ -17,15 +17,19 @@ package org.janusgraph.graphdb.log;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import org.apache.commons.lang.StringUtils;
 import org.janusgraph.core.JanusGraphException;
-
+import org.janusgraph.core.log.Change;
+import org.janusgraph.core.log.ChangeProcessor;
 import org.janusgraph.core.log.LogProcessorBuilder;
 import org.janusgraph.core.log.LogProcessorFramework;
 import org.janusgraph.core.schema.JanusGraphSchemaElement;
-import org.janusgraph.core.log.Change;
-import org.janusgraph.core.log.ChangeProcessor;
-import org.janusgraph.diskstorage.*;
-import org.janusgraph.diskstorage.log.*;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.ReadBuffer;
+import org.janusgraph.diskstorage.log.Log;
+import org.janusgraph.diskstorage.log.Message;
+import org.janusgraph.diskstorage.log.MessageReader;
+import org.janusgraph.diskstorage.log.ReadMarker;
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
 import org.janusgraph.graphdb.database.log.LogTxMeta;
@@ -36,7 +40,6 @@ import org.janusgraph.graphdb.internal.InternalRelation;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.system.BaseKey;
 import org.janusgraph.graphdb.vertices.StandardVertex;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,23 +50,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
 public class StandardLogProcessorFramework implements LogProcessorFramework {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(StandardLogProcessorFramework.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StandardLogProcessorFramework.class);
 
     private final StandardJanusGraph graph;
     private final Serializer serializer;
     private final TimestampProvider times;
-    private final Map<String,Log> processorLogs;
+    private final Map<String, Log> processorLogs;
 
     private boolean isOpen = true;
 
     public StandardLogProcessorFramework(StandardJanusGraph graph) {
-        Preconditions.checkArgument(graph!=null && graph.isOpen());
+        Preconditions.checkArgument(graph != null && graph.isOpen());
         this.graph = graph;
         this.serializer = graph.getDataSerializer();
         this.times = graph.getConfiguration().getTimestampProvider();
@@ -71,7 +70,7 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
     }
 
     private void checkOpen() {
-        Preconditions.checkState(isOpen, "Transaction log framework has already been closed");
+        Preconditions.checkState(isOpen, "Transaction LOG framework has already been closed");
     }
 
     @Override
@@ -81,7 +80,7 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
             try {
                 processorLogs.get(logIdentifier).close();
             } catch (BackendException e) {
-                throw new JanusGraphException("Could not close transaction log: "+ logIdentifier,e);
+                throw new JanusGraphException("Could not close transaction LOG: " + logIdentifier, e);
             }
             processorLogs.remove(logIdentifier);
             return true;
@@ -149,37 +148,37 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
 
         @Override
         public LogProcessorBuilder addProcessor(ChangeProcessor processor) {
-            Preconditions.checkArgument(processor!=null);
+            Preconditions.checkArgument(processor != null);
             this.processors.add(processor);
             return this;
         }
 
         @Override
         public LogProcessorBuilder setRetryAttempts(int attempts) {
-            Preconditions.checkArgument(attempts>0,"Invalid number: %s",attempts);
+            Preconditions.checkArgument(attempts > 0, "Invalid number: %s", attempts);
             this.retryAttempts = attempts;
             return this;
         }
 
         @Override
         public void build() {
-            Preconditions.checkArgument(!processors.isEmpty(),"Must add at least one processor");
+            Preconditions.checkArgument(!processors.isEmpty(), "Must add at least one processor");
             ReadMarker readMarker;
-            if (startTime==null && readMarkerName==null) {
+            if (startTime == null && readMarkerName == null) {
                 readMarker = ReadMarker.fromNow();
-            } else if (readMarkerName==null) {
+            } else if (readMarkerName == null) {
                 readMarker = ReadMarker.fromTime(startTime);
-            } else if (startTime==null) {
+            } else if (startTime == null) {
                 readMarker = ReadMarker.fromIdentifierOrNow(readMarkerName);
             } else {
                 readMarker = ReadMarker.fromIdentifierOrTime(readMarkerName, startTime);
             }
             synchronized (StandardLogProcessorFramework.this) {
                 Preconditions.checkArgument(!processorLogs.containsKey(userLogName),
-                        "Processors have already been registered for user log: %s",userLogName);
+                        "Processors have already been registered for user LOG: %s", userLogName);
                 try {
                     Log log = graph.getBackend().getUserLog(userLogName);
-                    log.registerReaders(readMarker,Iterables.transform(processors, new Function<ChangeProcessor, MessageReader>() {
+                    log.registerReaders(readMarker, Iterables.transform(processors, new Function<ChangeProcessor, MessageReader>() {
                         @Nullable
                         @Override
                         public MessageReader apply(@Nullable ChangeProcessor changeProcessor) {
@@ -187,7 +186,7 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
                         }
                     }));
                 } catch (BackendException e) {
-                    throw new JanusGraphException("Could not open user transaction log for name: "+ userLogName,e);
+                    throw new JanusGraphException("Could not open user transaction LOG for name: " + userLogName, e);
                 }
             }
         }
@@ -208,62 +207,62 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
         private void readRelations(TransactionLogHeader.Entry transactionEntry,
                                    StandardJanusGraphTx tx, StandardChangeState changes) {
             for (TransactionLogHeader.Modification modification : transactionEntry.getContentAsModifications(serializer)) {
-                InternalRelation rel = ModificationDeserializer.parseRelation(modification,tx);
+                InternalRelation rel = ModificationDeserializer.parseRelation(modification, tx);
 
                 //Special case for vertex addition/removal
                 Change state = modification.state;
                 if (rel.getType().equals(BaseKey.VertexExists) && !(rel.getVertex(0) instanceof JanusGraphSchemaElement)) {
-                    if (state==Change.REMOVED) { //Mark as removed
-                        ((StandardVertex)rel.getVertex(0)).updateLifeCycle(ElementLifeCycle.Event.REMOVED);
+                    if (state == Change.REMOVED) { //Mark as removed
+                        ((StandardVertex) rel.getVertex(0)).updateLifeCycle(ElementLifeCycle.Event.REMOVED);
                     }
                     changes.addVertex(rel.getVertex(0), state);
                 } else if (!rel.isInvisible()) {
-                    changes.addRelation(rel,state);
+                    changes.addRelation(rel, state);
                 }
             }
         }
 
         @Override
         public void read(Message message) {
-            for (int i=1;i<=retryAttempts;i++) {
-                StandardJanusGraphTx tx = (StandardJanusGraphTx)graph.newTransaction();
+            for (int i = 1; i <= retryAttempts; i++) {
+                StandardJanusGraphTx tx = (StandardJanusGraphTx) graph.newTransaction();
                 StandardChangeState changes = new StandardChangeState();
-                final StandardTransactionId transactionId;
+                StandardTransactionId transactionId;
                 try {
                     ReadBuffer content = message.getContent().asReadBuffer();
-                    String senderId =  message.getSenderId();
+                    String senderId = message.getSenderId();
                     TransactionLogHeader.Entry transactionEntry = TransactionLogHeader.parse(content, serializer, times);
                     if (transactionEntry.getMetadata().containsKey(LogTxMeta.SOURCE_TRANSACTION)) {
-                        transactionId = (StandardTransactionId)transactionEntry.getMetadata().get(LogTxMeta.SOURCE_TRANSACTION);
+                        transactionId = (StandardTransactionId) transactionEntry.getMetadata().get(LogTxMeta.SOURCE_TRANSACTION);
                     } else {
-                        transactionId = new StandardTransactionId(senderId,transactionEntry.getHeader().getId(), transactionEntry.getHeader().getTimestamp());
+                        transactionId = new StandardTransactionId(senderId, transactionEntry.getHeader().getId(), transactionEntry.getHeader().getTimestamp());
                     }
-                    readRelations(transactionEntry,tx,changes);
+                    readRelations(transactionEntry, tx, changes);
                 } catch (Throwable e) {
                     tx.rollback();
-                    logger.error("Encountered exception [{}] when preparing processor [{}] for user log [{}] on attempt {} of {}",
-                            e.getMessage(),processor, userlogName,i,retryAttempts);
-                    logger.error("Full exception: ",e);
+                    LOG.error("Encountered exception [{}] when preparing processor [{}] for user LOG [{}] on attempt {} of {}",
+                            e.getMessage(), processor, userlogName, i, retryAttempts);
+                    LOG.error("Full exception: ", e);
                     continue;
                 }
-                assert transactionId!=null;
                 try {
-                    processor.process(tx,transactionId,changes);
+                    processor.process(tx, transactionId, changes);
                     return;
                 } catch (Throwable e) {
                     tx.rollback();
                     tx = null;
-                    logger.error("Encountered exception [{}] when running processor [{}] for user log [{}] on attempt {} of {}",
-                            e.getMessage(),processor, userlogName,i,retryAttempts);
-                    logger.error("Full exception: ",e);
+                    LOG.error("Encountered exception [{}] when running processor [{}] for user LOG [{}] on attempt {} of {}",
+                            e.getMessage(), processor, userlogName, i, retryAttempts);
+                    LOG.error("Full exception: ", e);
                 } finally {
-                    if (tx!=null) tx.commit();
+                    if (tx != null) tx.commit();
                 }
             }
         }
 
         @Override
-        public void updateState() {}
+        public void updateState() {
+        }
     }
 
 }

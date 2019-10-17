@@ -29,9 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class CommonConfigTest extends WritableConfigurationTest {
 
     @Override

@@ -70,7 +70,7 @@ public class ManagementLoggerGraphCacheEvictionTest {
         mgmt.evictGraphFromCache();
         mgmt.commit();
 
-        // wait for log to be asynchronously pulled
+        // wait for LOG to be asynchronously pulled
         Thread.sleep(10000);
 
         assertNull(jgm.getGraph("graph1"));

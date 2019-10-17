@@ -19,9 +19,7 @@ import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.RelationType;
 import org.janusgraph.core.VertexLabel;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public interface TypeInspector {
 
     default PropertyKey getExistingPropertyKey(long id) {

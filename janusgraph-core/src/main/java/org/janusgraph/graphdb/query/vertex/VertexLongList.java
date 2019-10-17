@@ -31,8 +31,6 @@ import java.util.NoSuchElementException;
  * <p>
  * This is a more efficient way to represent a vertex result set but only applies to loaded vertices that have ids.
  * So, compared to {@link VertexArrayList} this is an optimization for the special use case that a vertex is loaded.
- *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class VertexLongList implements VertexListInternal {
 
@@ -41,11 +39,10 @@ public class VertexLongList implements VertexListInternal {
     private boolean sorted;
 
     public VertexLongList(StandardJanusGraphTx tx) {
-        this(tx,new LongArrayList(10),true);
+        this(tx, new LongArrayList(10), true);
     }
 
     public VertexLongList(StandardJanusGraphTx tx, LongArrayList vertices, boolean sorted) {
-        assert !sorted || AbstractLongListUtil.isSorted(vertices);
         this.tx = tx;
         this.vertices = vertices;
         this.sorted = sorted;
@@ -53,7 +50,7 @@ public class VertexLongList implements VertexListInternal {
 
     @Override
     public void add(JanusGraphVertex n) {
-        if (!vertices.isEmpty()) sorted = sorted && vertices.get(vertices.size()-1)<=n.longId();
+        if (!vertices.isEmpty()) sorted = sorted && vertices.get(vertices.size() - 1) <= n.longId();
         vertices.add(n.longId());
     }
 
@@ -75,7 +72,7 @@ public class VertexLongList implements VertexListInternal {
     @Override
     public void sort() {
         if (sorted) return;
-        Arrays.sort(vertices.buffer,0,vertices.size());
+        Arrays.sort(vertices.buffer, 0, vertices.size());
         sorted = true;
     }
 
@@ -88,8 +85,7 @@ public class VertexLongList implements VertexListInternal {
     public VertexList subList(int fromPosition, int length) {
         LongArrayList subList = new LongArrayList(length);
         subList.add(vertices.buffer, fromPosition, length);
-        assert subList.size()==length;
-        return new VertexLongList(tx,subList,sorted);
+        return new VertexLongList(tx, subList, sorted);
     }
 
     @Override
@@ -111,7 +107,7 @@ public class VertexLongList implements VertexListInternal {
         }
         if (sorted && vertexlist.isSorted()) {
             //Merge join
-            vertices = AbstractLongListUtil.mergeSort(vertices,otherVertexIds);
+            vertices = AbstractLongListUtil.mergeSort(vertices, otherVertexIds);
         } else {
             sorted = false;
             vertices.add(otherVertexIds.buffer, 0, otherVertexIds.size());
@@ -120,7 +116,7 @@ public class VertexLongList implements VertexListInternal {
 
     public VertexArrayList toVertexArrayList() {
         VertexArrayList list = new VertexArrayList(tx);
-        for (int i=0;i<vertices.size();i++) {
+        for (int i = 0; i < vertices.size(); i++) {
             list.add(get(i));
         }
         return list;

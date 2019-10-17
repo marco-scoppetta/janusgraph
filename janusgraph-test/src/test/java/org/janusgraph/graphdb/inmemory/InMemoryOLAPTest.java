@@ -21,7 +21,7 @@
 //import org.janusgraph.olap.OLAPTest;
 //
 ///**
-// * @author Matthias Broecheler (me@matthiasb.com)
+//
 // */
 //
 //public class InMemoryOLAPTest extends OLAPTest {

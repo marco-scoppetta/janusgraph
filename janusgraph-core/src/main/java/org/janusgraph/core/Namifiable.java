@@ -17,7 +17,6 @@ package org.janusgraph.core;
 /**
  * Represents an entity that can be uniquely identified by a String name.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface Namifiable {
 

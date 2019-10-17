@@ -14,17 +14,8 @@
 
 package org.janusgraph.graphdb.tinkerpop.optimize;
 
-import org.janusgraph.core.BaseVertexQuery;
-import org.janusgraph.core.JanusGraphElement;
-import org.janusgraph.core.JanusGraphMultiVertexQuery;
-import org.janusgraph.core.JanusGraphVertex;
-import org.janusgraph.core.JanusGraphVertexQuery;
-import org.janusgraph.graphdb.query.BaseQuery;
-import org.janusgraph.graphdb.query.Query;
-import org.janusgraph.graphdb.query.JanusGraphPredicate;
-import org.janusgraph.graphdb.query.profile.QueryProfiler;
-import org.janusgraph.graphdb.query.vertex.BasicVertexCentricQueryBuilder;
-import org.janusgraph.graphdb.tinkerpop.profile.TP3ProfileWrapper;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.tinkerpop.gremlin.process.traversal.Order;
 import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
@@ -43,6 +34,17 @@ import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalHelper;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+import org.janusgraph.core.BaseVertexQuery;
+import org.janusgraph.core.JanusGraphElement;
+import org.janusgraph.core.JanusGraphMultiVertexQuery;
+import org.janusgraph.core.JanusGraphVertex;
+import org.janusgraph.core.JanusGraphVertexQuery;
+import org.janusgraph.graphdb.query.BaseQuery;
+import org.janusgraph.graphdb.query.JanusGraphPredicate;
+import org.janusgraph.graphdb.query.Query;
+import org.janusgraph.graphdb.query.profile.QueryProfiler;
+import org.janusgraph.graphdb.query.vertex.BasicVertexCentricQueryBuilder;
+import org.janusgraph.graphdb.tinkerpop.profile.TP3ProfileWrapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,13 +53,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
-public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> implements HasStepFolder<Vertex, E>, Profiling, MultiQueriable<Vertex,E> {
+public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> implements HasStepFolder<Vertex, E>, Profiling, MultiQueriable<Vertex, E> {
 
     private boolean initialized = false;
     private boolean useMultiQuery = false;
@@ -87,7 +84,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
         this.txVertexCacheSize = txVertexCacheSize;
     }
 
-    public <Q extends BaseVertexQuery> Q makeQuery(Q query) {
+    private <Q extends BaseVertexQuery> Q makeQuery(Q query) {
         query.labels(getEdgeLabels());
         query.direction(getDirection());
         for (HasContainer condition : hasContainers) {
@@ -100,7 +97,6 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
     }
 
     private void initialize() {
-        assert !initialized;
         initialized = true;
         if (useMultiQuery) {
             setParentMultiQueryStep();
@@ -109,9 +105,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
                 throw FastNoSuchElementException.instance();
             }
             final List<Traverser.Admin<Vertex>> vertices = new ArrayList<>();
-            starts.forEachRemaining(v -> {
-                vertices.add(v);
-            });
+            starts.forEachRemaining(vertices::add);
             starts.add(vertices.iterator());
             initializeMultiQuery(vertices);
         }
@@ -122,15 +116,15 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
      * an attempt to retrieve a vertex from the cached multiQuery results doesn't find an entry.
      * If initialised with just a single vertex this might be a drip feed from a parent so it
      * will additionally include any cached starts the parent step may have.
+     *
      * @param vertices A list of vertices with which to initialise the multiQuery
      */
     private void initializeMultiQuery(List<Traverser.Admin<Vertex>> vertices) {
-        assert vertices.size() > 0;
         List<Admin<Vertex>> parentStarts = new ArrayList<>();
         if (vertices.size() == 1 && parentMultiQueryStep != null) {
             parentStarts = parentMultiQueryStep.getCachedStarts();
         }
-        final JanusGraphMultiVertexQuery multiQuery = JanusGraphTraversalUtil.getTx(traversal).multiQuery();
+        JanusGraphMultiVertexQuery multiQuery = JanusGraphTraversalUtil.getTx(traversal).multiQuery();
         vertices.forEach(v -> multiQuery.addVertex(v.get()));
         parentStarts.forEach(v -> multiQuery.addVertex(v.get()));
         makeQuery(multiQuery);
@@ -159,7 +153,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
             if (JanusGraphTraversalUtil.isMultiQueryCompatibleStep(parentStep)) {
                 Step<?, ?> parentPreviousStep = parentStep.getPreviousStep();
                 if (parentStep instanceof RepeatStep) {
-                    RepeatStep repeatStep = (RepeatStep)parentStep;
+                    RepeatStep repeatStep = (RepeatStep) parentStep;
                     List<RepeatEndStep> repeatEndSteps = TraversalHelper.getStepsOfClass(RepeatEndStep.class, repeatStep.getRepeatTraversal());
                     if (repeatEndSteps.size() == 1) {
                         parentPreviousStep = repeatEndSteps.get(0).getPreviousStep();
@@ -169,8 +163,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
                     parentPreviousStep = parentPreviousStep.getPreviousStep();
                 }
                 if (parentPreviousStep instanceof JanusGraphMultiQueryStep) {
-                    JanusGraphMultiQueryStep multiQueryStep = (JanusGraphMultiQueryStep)parentPreviousStep;
-                    parentMultiQueryStep = multiQueryStep;
+                    parentMultiQueryStep = (JanusGraphMultiQueryStep) parentPreviousStep;
                 }
             }
         }
@@ -200,7 +193,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
         if (batchPropertyPrefetching) {
             Set<Vertex> vertices = Sets.newHashSet();
             result.forEach(v -> {
-                if (vertices.size() < txVertexCacheSize ) {
+                if (vertices.size() < txVertexCacheSize) {
                     vertices.add((Vertex) v);
                 }
             });
@@ -225,7 +218,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
 
     @Override
     public JanusGraphVertexStep<E> clone() {
-        final JanusGraphVertexStep<E> clone = (JanusGraphVertexStep<E>) super.clone();
+        JanusGraphVertexStep<E> clone = (JanusGraphVertexStep<E>) super.clone();
         clone.initialized = false;
         return clone;
     }
@@ -255,7 +248,7 @@ public class JanusGraphVertexStep<E extends Element> extends VertexStep<E> imple
 
     @Override
     public void localOrderBy(List<HasContainer> hasContainers, String key, Order order) {
-       throw new UnsupportedOperationException("localOrderBy is not supported for graph vertex step.");
+        throw new UnsupportedOperationException("localOrderBy is not supported for graph vertex step.");
     }
 
     @Override

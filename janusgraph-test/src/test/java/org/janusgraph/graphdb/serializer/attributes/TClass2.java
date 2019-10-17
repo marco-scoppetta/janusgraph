@@ -14,9 +14,7 @@
 
 package org.janusgraph.graphdb.serializer.attributes;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class TClass2 {
 
     private final String s;

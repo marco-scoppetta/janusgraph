@@ -76,8 +76,6 @@ import static org.janusgraph.util.encoding.StringEncoding.UTF8_CHARSET;
  * The partition id is used as the key and since key operations are considered
  * consistent, this protocol guarantees unique id block assignments.
  * <p>
- *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 
 public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalProvider, IDAuthority {
@@ -130,8 +128,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
     protected final String uid;
     private final byte[] uidBytes;
 
-    private final String metricsPrefix;
-
     private final IDBlockSizer blockSizer;
 
     private final Random random = new Random();
@@ -144,7 +140,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
 
         this.idApplicationWaitMS = config.get(GraphDatabaseConfiguration.IDAUTHORITY_WAIT);
 
-        this.metricsPrefix = GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT;
         Preconditions.checkArgument(manager.getFeatures().isKeyConsistent());
         this.manager = manager;
         this.idStore = idStore;
@@ -159,7 +154,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
         uniqueIdBitWidth = config.get(IDAUTHORITY_CAV_BITS);
         Preconditions.checkArgument(uniqueIdBitWidth <= 16 && uniqueIdBitWidth >= 0);
         uniqueIDUpperBound = 1 << uniqueIdBitWidth;
-
+        String metricsPrefix = GraphDatabaseConfiguration.METRICS_SYSTEM_PREFIX_DEFAULT;
         storeTxConfigBuilder = new StandardBaseTransactionConfig.Builder().groupName(metricsPrefix).timestampProvider(times);
 
         ConflictAvoidanceMode conflictAvoidanceMode = config.get(IDAUTHORITY_CONFLICT_AVOIDANCE);
@@ -196,9 +191,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
 
     /**
      * Returns the block size of the specified partition as determined by the configured {@link IDBlockSizer}.
-     *
-     * @param idNamespace
-     * @return
      */
     private long getBlockSize(int idNamespace) {
         long blockSize = blockSizer.getBlockSize(idNamespace);
@@ -256,15 +248,10 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
         if (randomizeUniqueId) {
             id = random.nextInt(uniqueIDUpperBound);
         } else id = uniqueId;
-        assert id >= 0 && id < uniqueIDUpperBound;
         return id;
     }
 
     private StaticBuffer getPartitionKey(int partition, int idNamespace, int uniqueId) {
-        assert partition >= 0 && partition < (1 << partitionBitWidth);
-        assert idNamespace >= 0;
-        assert uniqueId >= 0 && uniqueId < (1 << uniqueIdBitWidth);
-
         int[] components = new int[2];
         components[0] = (partitionBitWidth > 0 ? (partition << (Integer.SIZE - partitionBitWidth)) : 0) + uniqueId;
         components[1] = idNamespace;
@@ -290,8 +277,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
 
         Duration backoffMS = idApplicationWaitMS;
 
-        Preconditions.checkArgument(idBlockUpperBound > blockSize,
-                "Block size [%s] is larger than upper bound [%s] for bit width [%s]", blockSize, idBlockUpperBound, uniqueIdBitWidth);
+        Preconditions.checkArgument(idBlockUpperBound > blockSize, "Block size [%s] is larger than upper bound [%s] for bit width [%s]", blockSize, idBlockUpperBound, uniqueIdBitWidth);
 
         while (methodTime.elapsed().compareTo(timeout) < 0) {
             int uniquePID = getUniquePartitionID();
@@ -315,7 +301,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
                 }
 
                 // calculate the start (inclusive) and end (exclusive) of the allocation we're about to attempt
-                assert idBlockUpperBound - blockSize > nextStart;
                 long nextEnd = nextStart + blockSize;
                 StaticBuffer target = null;
 
@@ -335,8 +320,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
                     if (idApplicationWaitMS.compareTo(writeElapsed) < 0) {
                         throw new TemporaryBackendException("Wrote claim for id block [" + nextStart + ", " + nextEnd + ") in " + (writeElapsed) + " => too slow, threshold is: " + idApplicationWaitMS);
                     } else {
-
-                        assert 0 != target.length();
                         StaticBuffer[] slice = getBlockSlice(nextEnd);
 
                         /* At this point we've written our claim on [nextStart, nextEnd),
@@ -358,7 +341,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
                          * is the most senior one and we own this id block
                          */
                         if (target.equals(blocks.get(0).getColumnAs(StaticBuffer.STATIC_FACTORY))) {
-
                             ConsistentKeyIDBlock idBlock = new ConsistentKeyIDBlock(nextStart, blockSize, uniqueIdBitWidth, uniquePID);
 
                             LOG.debug("Acquired ID block [{}] on partition({})-namespace({}) (my rid is {})", idBlock, partition, idNamespace, uid);
@@ -371,7 +353,7 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
                         }
                     }
                 } finally {
-                    if (!success && null != target) {
+                    if (!success && target != null) {
                         //Delete claim to not pollute id space
                         for (int attempt = 0; attempt < ROLLBACK_ATTEMPTS; attempt++) {
                             try {
@@ -448,19 +430,16 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
 
         private static final long serialVersionUID = 1L;
 
-        public UniqueIDExhaustedException(String msg) {
+        UniqueIDExhaustedException(String msg) {
             super(msg);
         }
-
     }
 
     private static class ConsistentKeyIDBlock implements IDBlock {
-
         private final long startIDCount;
         private final long numIds;
         private final int uniqueIDBitWidth;
         private final int uniqueID;
-
 
         private ConsistentKeyIDBlock(long startIDCount, long numIDs, int uniqueIDBitWidth, int uniqueID) {
             this.startIDCount = startIDCount;
@@ -468,7 +447,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
             this.uniqueIDBitWidth = uniqueIDBitWidth;
             this.uniqueID = uniqueID;
         }
-
 
         @Override
         public long numIds() {
@@ -478,7 +456,6 @@ public class ConsistentKeyIDAuthority implements BackendOperation.TransactionalP
         @Override
         public long getId(long index) {
             if (index < 0 || index >= numIds) throw new ArrayIndexOutOfBoundsException((int) index);
-            assert uniqueID < (1 << uniqueIDBitWidth);
             return ((startIDCount + index) << uniqueIDBitWidth) + uniqueID;
         }
 

@@ -20,7 +20,7 @@ package org.janusgraph.graphdb.util;
 
 /** A PriorityQueue maintains a partial ordering of its elements such that the
  * least element can always be found in constant time.  Put()'s and pop()'s
- * require log(size) time.
+ * require LOG(size) time.
  *
  * <p><b>NOTE</b>: This class will pre-allocate a full array of
  * length <code>maxSize+1</code> if instantiated via the
@@ -128,7 +128,7 @@ public abstract class PriorityQueue<T> {
   }
 
   /**
-   * Adds an Object to a PriorityQueue in log(size) time. If one tries to add
+   * Adds an Object to a PriorityQueue in LOG(size) time. If one tries to add
    * more objects than maxSize from initialize an
    * {@link ArrayIndexOutOfBoundsException} is thrown.
    * 
@@ -142,7 +142,7 @@ public abstract class PriorityQueue<T> {
   }
 
   /**
-   * Adds an Object to a PriorityQueue in log(size) time.
+   * Adds an Object to a PriorityQueue in LOG(size) time.
    * It returns the object (if any) that was
    * dropped off the heap because it was full. This can be
    * the given parameter (in case it is smaller than the
@@ -173,7 +173,7 @@ public abstract class PriorityQueue<T> {
     return heap[1];
   }
 
-  /** Removes and returns the least element of the PriorityQueue in log(size)
+  /** Removes and returns the least element of the PriorityQueue in LOG(size)
     time. */
   public final T pop() {
     if (size > 0) {
@@ -188,7 +188,7 @@ public abstract class PriorityQueue<T> {
   }
   
   /**
-   * Should be called when the Object at top changes values. Still log(n) worst
+   * Should be called when the Object at top changes values. Still LOG(n) worst
    * case, but it's at least twice as fast to
    * 
    * <pre class="prettyprint">

@@ -23,9 +23,7 @@ import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.apache.tinkerpop.gremlin.process.traversal.Order;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class RelationTypeIndexWrapper implements RelationTypeIndex {
 
     public static final char RELATION_INDEX_SEPARATOR = ':';

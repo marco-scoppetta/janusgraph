@@ -24,7 +24,7 @@ import java.util.Objects;
  *
  * @see And
  * @see Or
- * @author Matthias Broecheler (me@matthiasb.com)
+
  */
 public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayList<Condition<E>> implements Condition<E> {
 
@@ -39,7 +39,6 @@ public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayL
     MultiCondition(Condition<E>... conditions) {
         super(conditions.length);
         for (Condition<E> condition : conditions) {
-            assert condition != null;
             super.add(condition);
         }
     }
@@ -50,7 +49,6 @@ public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayL
     }
 
     public boolean add(Condition<E> condition) {
-        assert condition != null;
         return super.add(condition);
     }
 
@@ -81,7 +79,7 @@ public abstract class MultiCondition<E extends JanusGraphElement> extends ArrayL
         if (this == other)
             return true;
 
-        if (other == null || !getClass().isInstance(other))
+        if (!getClass().isInstance(other))
             return false;
 
         MultiCondition oth = (MultiCondition)other;

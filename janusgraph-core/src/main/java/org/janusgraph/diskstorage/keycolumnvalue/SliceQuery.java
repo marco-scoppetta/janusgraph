@@ -35,7 +35,6 @@ import java.util.Objects;
  * <p>
  * If a SliceQuery is marked <i>static</i> it is expected that the result set does not change.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 
 public class SliceQuery extends BaseQuery implements BackendQuery<SliceQuery> {
@@ -44,8 +43,6 @@ public class SliceQuery extends BaseQuery implements BackendQuery<SliceQuery> {
     private final StaticBuffer sliceEnd;
 
     public SliceQuery(StaticBuffer sliceStart, StaticBuffer sliceEnd) {
-        assert sliceStart != null && sliceEnd != null;
-
         this.sliceStart = sliceStart;
         this.sliceEnd = sliceEnd;
     }
@@ -104,7 +101,6 @@ public class SliceQuery extends BaseQuery implements BackendQuery<SliceQuery> {
 
     //TODO: make this more efficient by using reuseIterator() on otherResult
     public EntryList getSubset(SliceQuery otherQuery, EntryList otherResult) {
-        assert otherQuery.subsumes(this);
         int pos = Collections.binarySearch(otherResult, sliceStart);
         if (pos < 0) pos = -pos - 1;
 

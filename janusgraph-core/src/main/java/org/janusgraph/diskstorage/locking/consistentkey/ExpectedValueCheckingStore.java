@@ -14,11 +14,6 @@
 
 package org.janusgraph.diskstorage.locking.consistentkey;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
@@ -28,6 +23,10 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.locking.Locker;
 import org.janusgraph.diskstorage.locking.PermanentLockingException;
 import org.janusgraph.diskstorage.util.KeyColumn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * A {@link KeyColumnValueStore} wrapper intended for non-transactional stores
@@ -54,9 +53,9 @@ import org.janusgraph.diskstorage.util.KeyColumn;
  */
 public class ExpectedValueCheckingStore extends KCVSProxy {
 
-    private static final Logger log = LoggerFactory.getLogger(ExpectedValueCheckingStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExpectedValueCheckingStore.class);
 
-    final Locker locker;
+    private final Locker locker;
 
     public ExpectedValueCheckingStore(KeyColumnValueStore store, Locker locker) {
         super(store);
@@ -70,7 +69,7 @@ public class ExpectedValueCheckingStore extends KCVSProxy {
      */
     @Override
     public void mutate(StaticBuffer key, List<Entry> additions, List<StaticBuffer> deletions, StoreTransaction txh) throws BackendException {
-        ExpectedValueCheckingTransaction etx = (ExpectedValueCheckingTransaction)txh;
+        ExpectedValueCheckingTransaction etx = (ExpectedValueCheckingTransaction) txh;
         boolean hasAtLeastOneLock = etx.prepareForMutations();
         if (hasAtLeastOneLock) {
             // Force all mutations on this transaction to use strong consistency
@@ -99,7 +98,7 @@ public class ExpectedValueCheckingStore extends KCVSProxy {
             if (tx.isMutationStarted())
                 throw new PermanentLockingException("Attempted to obtain a lock after mutations had been persisted");
             KeyColumn lockID = new KeyColumn(key, column);
-            log.debug("Attempting to acquireLock on {} ev={}", lockID, expectedValue);
+            LOG.debug("Attempting to acquireLock on {} ev={}", lockID, expectedValue);
             locker.writeLock(lockID, tx.getConsistentTx());
             tx.storeExpectedValue(this, lockID, expectedValue);
         } else {
@@ -120,14 +119,10 @@ public class ExpectedValueCheckingStore extends KCVSProxy {
     }
 
     protected StoreTransaction unwrapTx(StoreTransaction t) {
-        assert null != t;
-        assert t instanceof ExpectedValueCheckingTransaction;
         return ((ExpectedValueCheckingTransaction) t).getInconsistentTx();
     }
 
     private static StoreTransaction getConsistentTx(StoreTransaction t) {
-        assert null != t;
-        assert t instanceof ExpectedValueCheckingTransaction;
         return ((ExpectedValueCheckingTransaction) t).getConsistentTx();
     }
 }

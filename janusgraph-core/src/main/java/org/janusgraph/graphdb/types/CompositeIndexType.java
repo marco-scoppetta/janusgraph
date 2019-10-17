@@ -18,9 +18,7 @@ import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.schema.ConsistencyModifier;
 import org.janusgraph.core.schema.SchemaStatus;
 
-/**
-* @author Matthias Broecheler (me@matthiasb.com)
-*/
+
 public interface CompositeIndexType extends IndexType {
 
     long getID();

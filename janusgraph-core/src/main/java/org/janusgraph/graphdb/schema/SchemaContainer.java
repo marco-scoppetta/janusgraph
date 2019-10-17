@@ -24,9 +24,7 @@ import org.janusgraph.core.schema.JanusGraphManagement;
 
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class SchemaContainer implements SchemaProvider {
 
     private final Map<String,VertexLabelDefinition> vertexLabels;

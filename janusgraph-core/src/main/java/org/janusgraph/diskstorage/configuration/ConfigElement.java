@@ -21,9 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public abstract class ConfigElement {
 
     public static final char SEPARATOR = '.';

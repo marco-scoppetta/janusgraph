@@ -17,28 +17,23 @@ package org.janusgraph.util.datastructures;
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
  * Implementation of {@link IntSet} against {@link IntIntHashMap}.
- *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class IntHashSet extends IntIntHashMap implements IntSet {
 
     private static final long serialVersionUID = -7297353805905443841L;
     private static final int defaultValue = 1;
 
-    public IntHashSet() {
-        super();
-    }
-
     public IntHashSet(int size) {
         super(size);
     }
 
     public boolean add(int value) {
-        return super.put(value, defaultValue)==0;
+        return super.put(value, defaultValue) == 0;
     }
 
     public boolean addAll(int[] values) {
@@ -55,14 +50,14 @@ public class IntHashSet extends IntIntHashMap implements IntSet {
         KeysContainer keys = keys();
         int[] all = new int[keys.size()];
         Iterator<IntCursor> iterator = keys.iterator();
-        int pos=0;
-        while (iterator.hasNext()) all[pos++]=iterator.next().value;
+        int pos = 0;
+        while (iterator.hasNext()) all[pos++] = iterator.next().value;
         return all;
     }
 
     @Override
     public int hashCode() {
-        return ArraysUtil.sum(getAll());
+        return Arrays.stream(getAll()).sum();
     }
 
     @Override

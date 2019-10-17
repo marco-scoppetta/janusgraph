@@ -27,9 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class StandardEdge extends AbstractEdge implements StandardRelation, ReassignableRelation {
 

@@ -20,9 +20,7 @@ import org.janusgraph.diskstorage.WriteBuffer;
 
 import java.time.Duration;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class DurationSerializer implements AttributeSerializer<Duration> {
 
     private final LongSerializer secondsSerializer = new LongSerializer();

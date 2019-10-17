@@ -19,14 +19,11 @@ import org.janusgraph.graphdb.internal.InternalRelation;
 
 import java.util.Iterator;
 
-public class RemovableRelationIterator<O extends JanusGraphRelation>
-        implements Iterator<O> {
-
-
+public class RemovableRelationIterator<O extends JanusGraphRelation> implements Iterator<O> {
     private final Iterator<InternalRelation> iterator;
     private InternalRelation current;
 
-    public RemovableRelationIterator(Iterator<InternalRelation> iterator) {
+    RemovableRelationIterator(Iterator<InternalRelation> iterator) {
         this.iterator = iterator;
         current = null;
     }
@@ -46,10 +43,7 @@ public class RemovableRelationIterator<O extends JanusGraphRelation>
 
     @Override
     public void remove() {
-        assert current != null;
-        //iterator.remove();
         current.remove();
     }
-
 
 }

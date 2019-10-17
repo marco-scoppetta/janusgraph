@@ -22,9 +22,7 @@ import com.google.common.base.Preconditions;
 
 import java.util.Objects;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class IncidenceCondition<E extends JanusGraphRelation> extends Literal<E> {
 

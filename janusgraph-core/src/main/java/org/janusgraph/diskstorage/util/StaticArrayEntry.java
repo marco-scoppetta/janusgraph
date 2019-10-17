@@ -24,9 +24,7 @@ import org.janusgraph.graphdb.relations.RelationCache;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class StaticArrayEntry extends BaseStaticArrayEntry implements Entry, MetaAnnotatable {
 
     public StaticArrayEntry(byte[] array, int offset, int limit, int valuePosition) {

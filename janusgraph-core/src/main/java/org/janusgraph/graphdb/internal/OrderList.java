@@ -23,9 +23,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 
 public class OrderList implements Comparator<JanusGraphElement>, Iterable<OrderList.OrderEntry> {
 
@@ -122,9 +120,7 @@ public class OrderList implements Comparator<JanusGraphElement>, Iterable<OrderL
         return 0;
     }
 
-    /**
-     * @author Matthias Broecheler (me@matthiasb.com)
-     */
+
 
     public static class OrderEntry implements Comparator<JanusGraphElement> {
 

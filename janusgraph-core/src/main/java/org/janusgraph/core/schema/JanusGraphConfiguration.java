@@ -18,7 +18,6 @@ package org.janusgraph.core.schema;
  * Used to read and change the global JanusGraph configuration.
  * The configuration options are read from the graph and affect the entire database.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface JanusGraphConfiguration {
 

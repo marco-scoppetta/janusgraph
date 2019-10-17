@@ -22,7 +22,6 @@ import org.janusgraph.core.PropertyKey;
  * An property key is defined by its name, {@link Cardinality}, its data type, and its signature - all of which
  * can be specified in this builder.
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public interface PropertyKeyMaker extends RelationTypeMaker {
 

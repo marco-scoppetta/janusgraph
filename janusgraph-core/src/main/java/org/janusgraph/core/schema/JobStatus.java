@@ -14,9 +14,7 @@
 
 package org.janusgraph.core.schema;
 
-/**
- * @author Matthias Broecheler (me@matthiasb.com)
- */
+
 public class JobStatus {
 
     public enum State { UNKNOWN, RUNNING, DONE, FAILED }

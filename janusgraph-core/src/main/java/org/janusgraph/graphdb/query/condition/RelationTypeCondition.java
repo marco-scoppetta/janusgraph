@@ -25,7 +25,6 @@ import java.util.Objects;
 /**
  *
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class RelationTypeCondition<E extends JanusGraphElement> extends Literal<E> {
 

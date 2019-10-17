@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests classes, enums and other non-interfaces in the core package
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class TestCoreElements {
 

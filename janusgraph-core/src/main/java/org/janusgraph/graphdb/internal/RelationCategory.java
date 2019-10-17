@@ -19,9 +19,7 @@ import org.janusgraph.core.JanusGraphRelation;
 import org.janusgraph.core.JanusGraphVertexQuery;
 import org.janusgraph.graphdb.query.condition.Condition;
 
-/**
-* @author Matthias Broecheler (me@matthiasb.com)
-*/
+
 public enum RelationCategory implements Condition<JanusGraphRelation> {
 
     EDGE, PROPERTY, RELATION;

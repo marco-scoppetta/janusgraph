@@ -17,7 +17,6 @@ package org.janusgraph.util.datastructures;
 /**
  * Utility class for analyzing exceptions
  *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class ExceptionUtil {
 

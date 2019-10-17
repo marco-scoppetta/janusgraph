@@ -33,8 +33,6 @@ import java.util.*;
  * {@link #execute(org.janusgraph.graphdb.internal.RelationCategory, BasicVertexCentricQueryBuilder.ResultConstructor)}.
  * <p>
  * All other methods just prepare or transform that result set to fit the particular method semantics.
- *
- * @author Matthias Broecheler (me@matthiasb.com)
  */
 public class MultiVertexCentricQueryBuilder extends BasicVertexCentricQueryBuilder<MultiVertexCentricQueryBuilder> implements JanusGraphMultiVertexQuery<MultiVertexCentricQueryBuilder> {
 
@@ -60,8 +58,6 @@ public class MultiVertexCentricQueryBuilder extends BasicVertexCentricQueryBuild
 
     @Override
     public JanusGraphMultiVertexQuery addVertex(Vertex vertex) {
-        assert vertex != null;
-        assert vertex instanceof InternalVertex;
         vertices.add(((InternalVertex)vertex).it());
         return this;
     }
@@ -122,7 +118,7 @@ public class MultiVertexCentricQueryBuilder extends BasicVertexCentricQueryBuild
         return result;
     }
 
-    public Map<JanusGraphVertex, Iterable<? extends JanusGraphRelation>> executeImplicitKeyQuery() {
+    private Map<JanusGraphVertex, Iterable<? extends JanusGraphRelation>> executeImplicitKeyQuery() {
         return new HashMap<JanusGraphVertex, Iterable<? extends JanusGraphRelation>>(vertices.size()){{
             for (InternalVertex v : vertices ) put(v,executeImplicitKeyQuery(v));
         }};
