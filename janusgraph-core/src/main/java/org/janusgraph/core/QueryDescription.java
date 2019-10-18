@@ -22,7 +22,6 @@ public interface QueryDescription {
 
     /**
      * Returns a string representation of the entire query
-     * @return
      */
     @Override
     String toString();
@@ -30,22 +29,17 @@ public interface QueryDescription {
     /**
      * Returns how many individual queries are combined into this query, meaning, how many
      * queries will be executed in one batch.
-     *
-     * @return
      */
     int getNoCombinedQueries();
 
     /**
      * Returns the number of sub-queries this query is comprised of. Each sub-query represents one OR clause, i.e.,
      * the union of each sub-query's result is the overall result.
-     *
-     * @return
      */
     int getNoSubQueries();
 
     /**
      * Returns a list of all sub-queries that comprise this query
-     * @return
      */
     List<? extends SubQuery> getSubQueries();
 
@@ -56,13 +50,11 @@ public interface QueryDescription {
 
         /**
          * Whether this query is fitted, i.e. whether the returned results must be filtered in-memory.
-         * @return
          */
         boolean isFitted();
 
         /**
          * Whether this query respects the sort order of parent query or requires sorting in-memory.
-         * @return
          */
         boolean isSorted();
 

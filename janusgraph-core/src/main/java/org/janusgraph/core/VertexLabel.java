@@ -16,46 +16,23 @@ package org.janusgraph.core;
 
 import org.janusgraph.core.schema.JanusGraphSchemaType;
 
-import java.util.Collection;
-
 /**
  * A vertex label is a label attached to vertices in a JanusGraph graph. This can be used to define the nature of a
  * vertex.
  * <p>
  * Internally, a vertex label is also used to specify certain characteristics of vertices that have a given label.
- *
  */
 public interface VertexLabel extends JanusGraphVertex, JanusGraphSchemaType {
 
     /**
      * Whether vertices with this label are partitioned.
-     *
-     * @return
      */
     boolean isPartitioned();
 
     /**
      * Whether vertices with this label are static, that is, immutable beyond the transaction
      * in which they were created.
-     *
-     * @return
      */
     boolean isStatic();
-
-    //TTL
-
-    /**
-     * Collects all property constraints.
-     *
-     * @return a list of {@link PropertyKey} which represents all property constraints for a {@link VertexLabel}.
-     */
-    Collection<PropertyKey> mappedProperties();
-
-    /**
-     * Collects all connection constraints.
-     *
-     * @return a list of {@link Connection} which represents all connection constraints for a {@link VertexLabel}.
-     */
-    Collection<Connection> mappedConnections();
 
 }

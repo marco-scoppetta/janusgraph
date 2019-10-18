@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * An index entry is a key-value pair (or field-value pair).
- *
  */
 
 public class IndexEntry implements MetaAnnotated, MetaAnnotatable {

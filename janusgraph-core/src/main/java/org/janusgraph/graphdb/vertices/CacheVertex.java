@@ -23,13 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-
 public class CacheVertex extends StandardVertex {
     // We don't try to be smart and match with previous queries
     // because that would waste more cycles on lookup than save actual memory
     // We use a normal map with synchronization since the likelihood of contention
     // is super low in a single transaction
-    protected final Map<SliceQuery, EntryList> queryCache;
+    private final Map<SliceQuery, EntryList> queryCache;
 
     public CacheVertex(StandardJanusGraphTx tx, long id, byte lifecycle) {
         super(tx, id, lifecycle);

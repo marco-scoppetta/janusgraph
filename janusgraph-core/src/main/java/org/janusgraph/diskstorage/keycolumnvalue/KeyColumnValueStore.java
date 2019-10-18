@@ -33,8 +33,6 @@ import java.util.Map;
  * In this generic representation keys, columns and values are represented as ByteBuffers.
  * <p>
  * See <a href="https://en.wikipedia.org/wiki/BigTable">https://en.wikipedia.org/wiki/BigTable</a>
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public interface KeyColumnValueStore {
 
@@ -60,9 +58,8 @@ public interface KeyColumnValueStore {
      * @param query Slicequery specifying matching entries
      * @param txh   Transaction
      * @return The result of the query for each of the given keys as a map from the key to the list of result entries.
-     * @throws org.janusgraph.diskstorage.BackendException
      */
-    Map<StaticBuffer,EntryList> getSlice(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException;
+    Map<StaticBuffer, EntryList> getSlice(List<StaticBuffer> keys, SliceQuery query, StoreTransaction txh) throws BackendException;
 
     /**
      * Verifies acquisition of locks {@code txh} from previous calls to
@@ -86,9 +83,9 @@ public interface KeyColumnValueStore {
      *                  delete no columns
      * @param txh       the transaction to use
      * @throws org.janusgraph.diskstorage.locking.PermanentLockingException if locking is supported by the implementation and at least
-     *                          one lock acquisition attempted by
-     *                          {@link #acquireLock(StaticBuffer, StaticBuffer, StaticBuffer, StoreTransaction)}
-     *                          has failed
+     *                                                                      one lock acquisition attempted by
+     *                                                                      {@link #acquireLock(StaticBuffer, StaticBuffer, StaticBuffer, StoreTransaction)}
+     *                                                                      has failed
      */
     void mutate(StaticBuffer key, List<Entry> additions, List<StaticBuffer> deletions, StoreTransaction txh) throws BackendException;
 
@@ -131,18 +128,13 @@ public interface KeyColumnValueStore {
      * Implementations which don't support locking should throw
      * {@link UnsupportedOperationException}.
      *
-     * @param key
-     *            the key on which to lock
-     * @param column
-     *            the column on which to lock
-     * @param expectedValue
-     *            the expected value for the specified key-column pair on which
-     *            to lock (null means the pair must have no value)
-     * @param txh
-     *            the transaction to use
-     * @throws org.janusgraph.diskstorage.locking.PermanentLockingException
-     *             the lock could not be acquired due to contention with other
-     *             transactions or a locking-specific storage problem
+     * @param key           the key on which to lock
+     * @param column        the column on which to lock
+     * @param expectedValue the expected value for the specified key-column pair on which
+     *                      to lock (null means the pair must have no value)
+     * @param txh           the transaction to use
+     * @throws org.janusgraph.diskstorage.locking.PermanentLockingException the lock could not be acquired due to contention with other
+     *                                                                      transactions or a locking-specific storage problem
      */
     void acquireLock(StaticBuffer key, StaticBuffer column, StaticBuffer expectedValue, StoreTransaction txh) throws BackendException;
 
@@ -151,11 +143,6 @@ public interface KeyColumnValueStore {
      * Calling {@link KeyIterator#getEntries()} returns the list of all entries that match the column-range specified by the given query.
      * <p>
      * This method is only supported by stores which keep keys in byte-order.
-     *
-     * @param query
-     * @param txh
-     * @return
-     * @throws org.janusgraph.diskstorage.BackendException
      */
     KeyIterator getKeys(KeyRangeQuery query, StoreTransaction txh) throws BackendException;
 
@@ -164,11 +151,6 @@ public interface KeyColumnValueStore {
      * returns the list of all entries that match the column-range specified by the given query.
      * <p>
      * This method is only supported by stores which do not keep keys in byte-order.
-     *
-     * @param query
-     * @param txh
-     * @return
-     * @throws org.janusgraph.diskstorage.BackendException
      */
     KeyIterator getKeys(SliceQuery query, StoreTransaction txh) throws BackendException;
     // like current getKeys if column-slice is such that it queries for vertex state property
@@ -183,8 +165,6 @@ public interface KeyColumnValueStore {
 
     /**
      * Closes this store
-     *
-     * @throws org.janusgraph.diskstorage.BackendException
      */
     void close() throws BackendException;
 

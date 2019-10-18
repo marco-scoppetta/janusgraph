@@ -143,12 +143,12 @@ public class CacheTransaction implements StoreTransaction, LoggableTransaction {
                         cache.invalidate(mutationsForKey.getKey(), Collections.EMPTY_LIST);
                     } else {
                         KCVEntryMutation m = mutationsForKey.getValue();
-                        List<CachableStaticBuffer> entries = new ArrayList<>(m.getTotalMutations());
+                        List<StaticBuffer> entries = new ArrayList<>(m.getTotalMutations());
                         for (Entry e : m.getAdditions()) {
-                            entries.add((CachableStaticBuffer) e);
+                            entries.add(e);
                         }
                         for (StaticBuffer e : m.getDeletions()) {
-                            entries.add((CachableStaticBuffer) e);
+                            entries.add(e);
                         }
                         cache.invalidate(mutationsForKey.getKey(), entries);
                     }

@@ -27,8 +27,6 @@ import org.janusgraph.core.RelationType;
  * common to both of them.
  * <p>
  *
- *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  * @see org.janusgraph.core.RelationType
  */
 public interface RelationTypeMaker {
@@ -36,7 +34,6 @@ public interface RelationTypeMaker {
     /**
      * Returns the name of this configured relation type.
      *
-     * @return
      */
     String getName();
 

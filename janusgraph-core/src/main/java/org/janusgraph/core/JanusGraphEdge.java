@@ -27,7 +27,6 @@ import java.util.List;
  * A JanusGraphEdge connects two {@link JanusGraphVertex}. It extends the functionality provided by Blueprint's {@link Edge} and
  * is a special case of a {@link JanusGraphRelation}.
  *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  * @see Edge
  * @see JanusGraphRelation
  * @see EdgeLabel

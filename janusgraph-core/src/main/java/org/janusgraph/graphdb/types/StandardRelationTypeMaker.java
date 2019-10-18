@@ -16,25 +16,31 @@ package org.janusgraph.graphdb.types;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import org.janusgraph.core.*;
+import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.RelationTypeMaker;
 import org.janusgraph.core.schema.SchemaStatus;
-import org.janusgraph.graphdb.database.IndexSerializer;
 import org.janusgraph.graphdb.database.serialize.AttributeHandler;
-import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.internal.JanusGraphSchemaCategory;
+import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.system.SystemTypeManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.janusgraph.graphdb.types.TypeDefinitionCategory.*;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.INVISIBLE;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.MULTIPLICITY;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.SIGNATURE;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.SORT_KEY;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.SORT_ORDER;
+import static org.janusgraph.graphdb.types.TypeDefinitionCategory.STATUS;
 
 public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
 
     protected final StandardJanusGraphTx tx;
-    protected final IndexSerializer indexSerializer;
-    protected final AttributeHandler attributeHandler;
+    private final AttributeHandler attributeHandler;
 
     private String name;
     private boolean isInvisible;
@@ -44,11 +50,8 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
     private Multiplicity multiplicity;
     private SchemaStatus status = SchemaStatus.ENABLED;
 
-    public StandardRelationTypeMaker(StandardJanusGraphTx tx, String name,
-                                     final IndexSerializer indexSerializer,
-                                     final AttributeHandler attributeHandler) {
+    StandardRelationTypeMaker(StandardJanusGraphTx tx, String name, AttributeHandler attributeHandler) {
         this.tx = Preconditions.checkNotNull(tx);
-        this.indexSerializer = Preconditions.checkNotNull(indexSerializer);
         this.attributeHandler = Preconditions.checkNotNull(attributeHandler);
         name(name);
 
@@ -77,11 +80,11 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
 
     private void checkGeneralArguments() {
         checkSortKey(sortKey);
-        Preconditions.checkArgument(sortOrder==Order.ASC || hasSortKey(),"Must define a sort key to use ordering");
+        Preconditions.checkArgument(sortOrder == Order.ASC || hasSortKey(), "Must define a sort key to use ordering");
         checkSignature(signature);
         Preconditions.checkArgument(Sets.intersection(Sets.newHashSet(sortKey), Sets.newHashSet(signature)).isEmpty(),
                 "Signature and sort key must be disjoined");
-        Preconditions.checkArgument(!hasSortKey() || !multiplicity.isConstrained(),"Cannot define a sort-key on constrained edge labels");
+        Preconditions.checkArgument(!hasSortKey() || !multiplicity.isConstrained(), "Cannot define a sort-key on constrained edge labels");
     }
 
     private long[] checkSortKey(List<PropertyKey> sig) {
@@ -113,8 +116,8 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
         def.setValue(SORT_KEY, checkSortKey(sortKey));
         def.setValue(SORT_ORDER, sortOrder);
         def.setValue(SIGNATURE, checkSignature(signature));
-        def.setValue(MULTIPLICITY,multiplicity);
-        def.setValue(STATUS,status);
+        def.setValue(MULTIPLICITY, multiplicity);
+        def.setValue(STATUS, status);
         return def;
     }
 
@@ -125,7 +128,7 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
 
     @Override
     public StandardRelationTypeMaker signature(PropertyKey... types) {
-        Preconditions.checkArgument(types!=null && types.length>0);
+        Preconditions.checkArgument(types != null && types.length > 0);
         signature.addAll(Arrays.asList(types));
         return this;
     }
@@ -157,7 +160,7 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
      * @return this LabelMaker
      */
     public StandardRelationTypeMaker sortKey(PropertyKey... keys) {
-        Preconditions.checkArgument(keys!=null && keys.length>0);
+        Preconditions.checkArgument(keys != null && keys.length > 0);
         sortKey.addAll(Arrays.asList(keys));
         return this;
     }
@@ -165,11 +168,9 @@ public abstract class StandardRelationTypeMaker implements RelationTypeMaker {
     /**
      * Defines in which order to sort the relations for efficient retrieval, i.e. either increasing ({@link org.janusgraph.graphdb.internal.Order#ASC}) or
      * decreasing ({@link org.janusgraph.graphdb.internal.Order#DESC}).
-     *
+     * <p>
      * Note, that only one sort order can be specified and that a sort key must be defined to use a sort order.
      *
-     * @param order
-     * @return
      * @see #sortKey(PropertyKey... keys)
      */
     public StandardRelationTypeMaker sortOrder(Order order) {

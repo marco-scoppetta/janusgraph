@@ -20,9 +20,6 @@ package org.janusgraph.graphdb.util;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-/**
- * @author davidclement90@laposte.net
- */
 public class StreamIterable<E> implements Iterable<E>{
 
     private final Stream<E> stream;

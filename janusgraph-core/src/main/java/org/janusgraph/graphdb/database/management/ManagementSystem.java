@@ -44,7 +44,6 @@ import org.janusgraph.core.schema.JanusGraphIndex;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.core.schema.JanusGraphSchemaElement;
 import org.janusgraph.core.schema.JanusGraphSchemaType;
-import org.janusgraph.core.schema.JobStatus;
 import org.janusgraph.core.schema.Parameter;
 import org.janusgraph.core.schema.PropertyKeyMaker;
 import org.janusgraph.core.schema.RelationTypeIndex;
@@ -126,8 +125,7 @@ import static org.janusgraph.graphdb.database.management.RelationTypeIndexWrappe
 
 public class ManagementSystem implements JanusGraphManagement {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManagementSystem.class);
-
+    private static final Logger LOG = LoggerFactory.getLogger(ManagementSystem.class);
     private static final String CURRENT_INSTANCE_SUFFIX = "(current)";
 
     private final StandardJanusGraph graph;
@@ -192,7 +190,7 @@ public class ManagementSystem implements JanusGraphManagement {
 
     public Set<String> getOpenInstancesInternal() {
         Set<String> openInstances = Sets.newHashSet(modifyConfig.getContainedNamespaces(REGISTRATION_NS));
-        LOGGER.debug("Open instances: {}", openInstances);
+        LOG.debug("Open instances: {}", openInstances);
         return openInstances;
     }
 
@@ -967,13 +965,7 @@ public class ManagementSystem implements JanusGraphManagement {
             this.graph = graph;
             this.schemaVertexId = vertex.longId();
             this.newStatus = newStatus;
-            this.propertyKeys = Sets.newHashSet(Iterables.transform(keys, new Function<PropertyKey, Long>() {
-                @Nullable
-                @Override
-                public Long apply(@Nullable PropertyKey propertyKey) {
-                    return propertyKey.longId();
-                }
-            }));
+            this.propertyKeys = Sets.newHashSet(Iterables.transform(keys, (Function<PropertyKey, Long>) propertyKey -> propertyKey.longId()));
         }
 
         @Override
@@ -1023,7 +1015,7 @@ public class ManagementSystem implements JanusGraphManagement {
         @Override
         public boolean equals(Object oth) {
             if (this == oth) return true;
-            else if (oth == null || !getClass().isInstance(oth)) return false;
+            else if (!getClass().isInstance(oth)) return false;
             return schemaVertexId == ((UpdateStatusTrigger) oth).schemaVertexId;
         }
 
@@ -1079,29 +1071,6 @@ public class ManagementSystem implements JanusGraphManagement {
         return graph.getBackend().getScanJobStatus(indexId);
     }
 
-    public static class IndexJobStatus extends JobStatus {
-
-        private final ScanMetrics metrics;
-
-        public IndexJobStatus(State state, ScanMetrics metrics) {
-            super(state, metrics == null ? 0 : metrics.get(ScanMetrics.Metric.SUCCESS));
-            this.metrics = metrics;
-        }
-
-        public ScanMetrics getMetrics() {
-            return metrics;
-        }
-
-        @Override
-        public String toString() {
-            String msg = "Job status: " + getState().toString() + ". ";
-            if (metrics != null) msg += String.format("Processed %s records successfully and failed on %s records.",
-                    metrics.get(ScanMetrics.Metric.SUCCESS), metrics.get(ScanMetrics.Metric.FAILURE));
-            return msg;
-        }
-
-    }
-
     private static class IndexIdentifier {
 
         private final String indexName;
@@ -1139,8 +1108,7 @@ public class ManagementSystem implements JanusGraphManagement {
             if (this == other) return true;
             else if (other == null || !getClass().isInstance(other)) return false;
             IndexIdentifier oth = (IndexIdentifier) other;
-            return indexName.equals(oth.indexName) &&
-                    (relationTypeName == oth.relationTypeName || (relationTypeName != null && relationTypeName.equals(oth.relationTypeName)));
+            return indexName.equals(oth.indexName) && (relationTypeName == oth.relationTypeName || (relationTypeName != null && relationTypeName.equals(oth.relationTypeName)));
         }
 
         public Consumer<ScanMetrics> getIndexJobFinisher() {
@@ -1161,12 +1129,12 @@ public class ManagementSystem implements JanusGraphManagement {
                                 management.commit();
                             }
                         }
-                        LOGGER.debug("Index update job successful for [{}]", IndexIdentifier.this.toString());
+                        LOG.debug("Index update job successful for [{}]", IndexIdentifier.this.toString());
                     } else {
-                        LOGGER.error("Index update job unsuccessful for [{}]. Check logs", IndexIdentifier.this.toString());
+                        LOG.error("Index update job unsuccessful for [{}]. Check logs", IndexIdentifier.this.toString());
                     }
                 } catch (Throwable e) {
-                    LOGGER.error("Error encountered when updating index after job finished [" + IndexIdentifier.this.toString() + "]: ", e);
+                    LOG.error("Error encountered when updating index after job finished [" + IndexIdentifier.this.toString() + "]: ", e);
                 }
             };
         }
@@ -1299,8 +1267,7 @@ public class ManagementSystem implements JanusGraphManagement {
      * @param duration Note that only 'seconds' granularity is supported
      */
     @Override
-    public void setTTL(JanusGraphSchemaType type,
-                       final Duration duration) {
+    public void setTTL(JanusGraphSchemaType type, Duration duration) {
         if (!graph.getBackend().getStoreFeatures().hasCellTTL())
             throw new UnsupportedOperationException("The storage engine does not support TTL");
         if (type instanceof VertexLabelVertex) {

@@ -20,7 +20,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreManager;
 /**
  * {@link StoreManager} for {@link KeyValueStore}.
  *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public interface KeyValueStoreManager extends StoreManager {
 
@@ -31,7 +30,6 @@ public interface KeyValueStoreManager extends StoreManager {
      *
      * @param name Name of database
      * @return Database Handle
-     * @throws org.janusgraph.diskstorage.BackendException
      *
      */
     KeyValueStore openDatabase(String name) throws BackendException;

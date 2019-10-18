@@ -31,7 +31,6 @@ import org.janusgraph.core.schema.JanusGraphSchemaType;
  * RelationType names must be unique in a graph database. Many methods allow the name of the type as an argument
  * instead of the actual type reference. That also means, that edge labels and property keys may not have the same name.
  *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  * @see JanusGraphRelation
  * @see org.janusgraph.core.schema.RelationTypeMaker
  * @see <a href="https://docs.janusgraph.org/latest/schema.html">"Schema and Data Modeling" manual chapter</a>

@@ -29,7 +29,6 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
  *
  *
  * @see BaseVertexQuery
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  */
 public interface JanusGraphVertexQuery<Q extends JanusGraphVertexQuery<Q>> extends BaseVertexQuery<Q> {
 

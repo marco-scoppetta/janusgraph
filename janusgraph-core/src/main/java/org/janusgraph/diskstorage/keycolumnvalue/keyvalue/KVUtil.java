@@ -25,31 +25,8 @@ import java.util.NoSuchElementException;
 
 /**
  * Utility methods for interacting with {@link KeyValueStore}.
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public class KVUtil {
-    public static final RecordIterator<KeyValueEntry> EMPTY_ITERATOR = new RecordIterator<KeyValueEntry>() {
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public KeyValueEntry next() {
-            throw new NoSuchElementException();
-        }
-
-        @Override
-        public void close() {
-            
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    };
 
     public static EntryList getSlice(OrderedKeyValueStore store, StaticBuffer keyStart, StaticBuffer keyEnd, StoreTransaction txh) throws BackendException {
         return convert(store.getSlice(new KVQuery(keyStart,keyEnd), txh));

@@ -73,7 +73,6 @@ import static org.janusgraph.util.system.LoggerUtil.sanitizeAndLaunder;
 /**
  * JanusGraphFactory is used to open or instantiate a JanusGraph graph database.
  *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  * @see JanusGraph
  */
 

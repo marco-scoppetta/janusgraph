@@ -15,12 +15,13 @@
 package org.janusgraph.graphdb.types;
 
 import com.google.common.base.Preconditions;
-import org.janusgraph.core.*;
+import org.janusgraph.core.Cardinality;
+import org.janusgraph.core.Multiplicity;
+import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.schema.PropertyKeyMaker;
-import org.janusgraph.graphdb.database.IndexSerializer;
 import org.janusgraph.graphdb.database.serialize.AttributeHandler;
-import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.internal.JanusGraphSchemaCategory;
+import org.janusgraph.graphdb.internal.Order;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 
 import java.lang.reflect.Modifier;
@@ -28,14 +29,12 @@ import java.lang.reflect.Modifier;
 import static org.janusgraph.graphdb.types.TypeDefinitionCategory.DATATYPE;
 
 
-
 public class StandardPropertyKeyMaker extends StandardRelationTypeMaker implements PropertyKeyMaker {
 
     private Class<?> dataType;
 
-    public StandardPropertyKeyMaker(StandardJanusGraphTx tx, String name, IndexSerializer indexSerializer,
-                                    final AttributeHandler attributeHandler) {
-        super(tx, name, indexSerializer, attributeHandler);
+    public StandardPropertyKeyMaker(StandardJanusGraphTx tx, String name, AttributeHandler attributeHandler) {
+        super(tx, name, attributeHandler);
         dataType = null;
         cardinality(Cardinality.SINGLE);
     }
@@ -86,7 +85,7 @@ public class StandardPropertyKeyMaker extends StandardRelationTypeMaker implemen
     @Override
     public PropertyKey make() {
         Preconditions.checkArgument(dataType != null, "Need to specify a datatype");
-        Preconditions.checkArgument(tx.validDataType(dataType), "Not a supported data type: %s",dataType);
+        Preconditions.checkArgument(tx.validDataType(dataType), "Not a supported data type: %s", dataType);
         Preconditions.checkArgument(!dataType.isPrimitive(), "Primitive types are not supported. Use the corresponding object type, e.g. Integer.class instead of int.class [%s]", dataType);
         Preconditions.checkArgument(!dataType.isInterface(), "Datatype must be a class and not an interface: %s", dataType);
         Preconditions.checkArgument(dataType.isArray() || !Modifier.isAbstract(dataType.getModifiers()), "Datatype cannot be an abstract class: %s", dataType);

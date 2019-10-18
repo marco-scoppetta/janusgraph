@@ -24,8 +24,6 @@ import com.carrotsearch.hppc.LongArrayList;
  * <p>
  * VertexList is returned by {@link JanusGraphVertexQuery}. Depending on how the query was executed that returned this VertexList,
  * getting vertex ids might be significantly faster than retrieving vertex objects.
- *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  */
 public interface VertexList extends Iterable<JanusGraphVertex> {
 
@@ -55,17 +53,11 @@ public interface VertexList extends Iterable<JanusGraphVertex> {
 
     /**
      * Whether this list of vertices is sorted by id in increasing order.
-     *
-     * @return
      */
     boolean isSorted();
 
     /**
      * Returns a sub list of this list of vertices from the given position with the given number of vertices.
-     *
-     * @param fromPosition
-     * @param length
-     * @return
      */
     VertexList subList(int fromPosition, int length);
 
