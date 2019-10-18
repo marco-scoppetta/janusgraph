@@ -26,12 +26,8 @@ import java.util.Collection;
 
 public class BaseLabel extends BaseRelationType implements EdgeLabel {
 
-    public static final BaseLabel SchemaDefinitionEdge =
-            new BaseLabel("SchemaRelated", 36, Direction.BOTH, Multiplicity.MULTI);
-
-    public static final BaseLabel VertexLabelEdge =
-            new BaseLabel("vertexlabel", 2, Direction.OUT, Multiplicity.MANY2ONE);
-
+    public static final BaseLabel SchemaDefinitionEdge = new BaseLabel("SchemaRelated", 36, Direction.BOTH, Multiplicity.MULTI);
+    public static final BaseLabel VertexLabelEdge = new BaseLabel("vertexlabel", 2, Direction.OUT, Multiplicity.MANY2ONE);
 
     private final Direction directionality;
     private final Multiplicity multiplicity;

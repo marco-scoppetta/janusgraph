@@ -62,14 +62,4 @@ public class BaseVertexLabel extends EmptyVertex implements InternalVertexLabel 
     public String toString() {
         return name();
     }
-
-    @Override
-    public Collection<PropertyKey> mappedProperties() {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public Collection<Connection> mappedConnections() {
-        return new ArrayList<>();
-    }
 }

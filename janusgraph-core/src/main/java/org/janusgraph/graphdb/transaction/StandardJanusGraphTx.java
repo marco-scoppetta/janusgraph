@@ -379,7 +379,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
         Long id = ElementHelper.getIdValue(keyValues).map(Number.class::cast).map(Number::longValue).orElse(null);
         JanusGraphVertex vertex = addVertex(id, label);
-        org.janusgraph.graphdb.util.ElementHelper.attachProperties(vertex, keyValues);
+        ElementHelper.attachProperties(vertex, keyValues);
         return vertex;
     }
 
@@ -1054,12 +1054,12 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
     @Override
     public PropertyKeyMaker makePropertyKey(String name) {
-        return new StandardPropertyKeyMaker(this, name, indexSerializer, attributeHandler);
+        return new StandardPropertyKeyMaker(this, name, attributeHandler);
     }
 
     @Override
     public EdgeLabelMaker makeEdgeLabel(String name) {
-        return new StandardEdgeLabelMaker(this, name, indexSerializer, attributeHandler);
+        return new StandardEdgeLabelMaker(this, name, attributeHandler);
     }
 
     //-------- Vertex Labels -----------------

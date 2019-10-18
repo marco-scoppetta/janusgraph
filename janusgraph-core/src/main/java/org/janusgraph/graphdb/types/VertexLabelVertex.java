@@ -29,7 +29,6 @@ import java.util.stream.StreamSupport;
 
 public class VertexLabelVertex extends JanusGraphSchemaVertex implements InternalVertexLabel {
 
-
     public VertexLabelVertex(StandardJanusGraphTx tx, long id, byte lifecycle) {
         super(tx, id, lifecycle);
     }
@@ -42,20 +41,6 @@ public class VertexLabelVertex extends JanusGraphSchemaVertex implements Interna
     @Override
     public boolean isStatic() {
         return getDefinition().getValue(TypeDefinitionCategory.STATIC, Boolean.class);
-    }
-
-    @Override
-    public Collection<PropertyKey> mappedProperties() {
-        return StreamSupport.stream( getRelated(TypeDefinitionCategory.PROPERTY_KEY_EDGE, Direction.OUT).spliterator(), false)
-            .map(entry -> (PropertyKey) entry.getSchemaType())
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<Connection> mappedConnections() {
-        return StreamSupport.stream(getRelated(TypeDefinitionCategory.CONNECTION_EDGE, Direction.OUT).spliterator(), false)
-            .map(entry -> new Connection((String) entry.getModifier(), this, (VertexLabel) entry.getSchemaType()))
-            .collect(Collectors.toList());
     }
 
     @Override

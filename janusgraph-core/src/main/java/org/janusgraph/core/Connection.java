@@ -20,7 +20,6 @@ import org.janusgraph.graphdb.types.system.BaseKey;
 /**
  * Connection contains schema constraints from outgoing vertex to incoming vertex through an edge.
  *
- * @author Jan Jansen (jan.jansen@gdata.de)
  */
 public class Connection {
     private final VertexLabel incomingVertexLabel;

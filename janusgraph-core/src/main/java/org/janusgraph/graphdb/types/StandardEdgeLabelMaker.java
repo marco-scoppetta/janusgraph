@@ -28,15 +28,12 @@ import static org.janusgraph.graphdb.types.TypeDefinitionCategory.INVISIBLE;
 import static org.janusgraph.graphdb.types.TypeDefinitionCategory.UNIDIRECTIONAL;
 
 
-
 public class StandardEdgeLabelMaker extends StandardRelationTypeMaker implements EdgeLabelMaker {
 
     private Direction unidirectionality;
 
-    public StandardEdgeLabelMaker(StandardJanusGraphTx tx,
-                                  final String name, IndexSerializer indexSerializer,
-                                  final AttributeHandler attributeHandler) {
-        super(tx, name, indexSerializer, attributeHandler);
+    public StandardEdgeLabelMaker(StandardJanusGraphTx tx, String name, AttributeHandler attributeHandler) {
+        super(tx, name, attributeHandler);
         unidirectionality = Direction.BOTH;
     }
 
