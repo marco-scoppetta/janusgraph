@@ -54,7 +54,7 @@ public abstract class KCVSCache extends KCVSProxy {
 
     public abstract void clearCache();
 
-    protected abstract void invalidate(StaticBuffer key, List<CachableStaticBuffer> entries);
+    protected abstract void invalidate(StaticBuffer key, List<StaticBuffer> entries);
 
     @Override
     public void mutate(StaticBuffer key, List<Entry> additions, List<StaticBuffer> deletions, StoreTransaction txh) throws BackendException {

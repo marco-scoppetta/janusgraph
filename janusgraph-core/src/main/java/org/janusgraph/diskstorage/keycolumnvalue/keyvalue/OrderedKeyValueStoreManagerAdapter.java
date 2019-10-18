@@ -17,11 +17,16 @@ package org.janusgraph.diskstorage.keycolumnvalue.keyvalue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
-import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.StoreMetaData;
-import org.janusgraph.diskstorage.keycolumnvalue.*;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyRange;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,11 +37,8 @@ import java.util.Map;
  * <p>
  * An optional mapping of key-length can be defined if it is known that the {@link KeyColumnValueStore} of a given
  * name has a static key length. See {@link OrderedKeyValueStoreAdapter} for more information.
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public class OrderedKeyValueStoreManagerAdapter implements KeyColumnValueStoreManager {
-
 
     private final OrderedKeyValueStoreManager manager;
 
@@ -110,7 +112,7 @@ public class OrderedKeyValueStoreManagerAdapter implements KeyColumnValueStoreMa
                 KCVMutation mutation = entry.getValue();
                 if (mutation.hasAdditions()) {
                     for (Entry addition : mutation.getAdditions()) {
-                        mut.addition(store.concatenate(key,addition));
+                        mut.addition(store.concatenate(key, addition));
                     }
                 }
 

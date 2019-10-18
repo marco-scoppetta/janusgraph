@@ -20,7 +20,6 @@ import org.janusgraph.util.datastructures.ExceptionUtil;
 /**
  * Most general type of exception thrown by the JanusGraph graph database.
  *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  */
 public class JanusGraphException extends RuntimeException {
 

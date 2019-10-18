@@ -22,8 +22,6 @@ import java.util.List;
 
 /**
  * Wraps a {@link KeyColumnValueStore} and throws exceptions when a mutation is attempted.
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public class ReadOnlyKeyColumnValueStore extends KCVSProxy {
 
@@ -32,8 +30,7 @@ public class ReadOnlyKeyColumnValueStore extends KCVSProxy {
     }
 
     @Override
-    public void acquireLock(StaticBuffer key, StaticBuffer column, StaticBuffer expectedValue,
-                            StoreTransaction txh) throws BackendException {
+    public void acquireLock(StaticBuffer key, StaticBuffer column, StaticBuffer expectedValue, StoreTransaction txh) throws BackendException {
         throw new UnsupportedOperationException("Cannot lock on a read-only store");
     }
 

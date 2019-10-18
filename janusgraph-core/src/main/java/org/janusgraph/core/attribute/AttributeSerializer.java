@@ -33,7 +33,6 @@ import org.janusgraph.diskstorage.WriteBuffer;
  * is configured, then it will use this custom serializer for persistence operations.
  *
  * @param <V> Type of the attribute associated with the AttributeSerializer
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  * @see org.janusgraph.core.schema.RelationTypeMaker
  * @see <a href="https://docs.janusgraph.org/latest/serializer.html">
  *      "Datatype and Attribute Serializer Configuration" manual chapter</a>

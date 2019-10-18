@@ -16,11 +16,11 @@ package org.janusgraph.diskstorage.keycolumnvalue.cache;
 
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
+
 import java.util.List;
 
 
 public class NoKCVSCache extends KCVSCache {
-
 
     public NoKCVSCache(KeyColumnValueStore store) {
         super(store, null);
@@ -31,7 +31,7 @@ public class NoKCVSCache extends KCVSCache {
     }
 
     @Override
-    protected void invalidate(StaticBuffer key, List<CachableStaticBuffer> entries) {
+    protected void invalidate(StaticBuffer key, List<StaticBuffer> entries) {
     }
 
 }

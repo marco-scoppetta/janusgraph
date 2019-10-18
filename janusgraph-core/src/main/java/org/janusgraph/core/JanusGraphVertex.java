@@ -28,7 +28,6 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty;
  * <p>
  * Like {@link JanusGraphRelation} a vertex has a vertex label.
  *
- * @author Matthias Br&ouml;cheler (http://www.matthiasb.com)
  */
 public interface JanusGraphVertex extends JanusGraphElement, Vertex {
 

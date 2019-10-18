@@ -29,8 +29,6 @@ import java.util.Set;
  * <p>
  * Given a set of vertices, one may be interested in all edges that are contained in the subgraph spanned
  * by those vertices. This iterator will return these edges.
- *
- * @author Matthias Br&ouml;cheler (me@matthiasb.com);
  */
 public class AllEdgesIterator implements Iterator<Edge> {
 

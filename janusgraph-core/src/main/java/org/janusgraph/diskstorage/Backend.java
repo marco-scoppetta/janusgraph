@@ -209,7 +209,7 @@ public class Backend implements LockerProvider, AutoCloseable {
             threadPool = null;
         }
 
-        final String lockBackendName = configuration.get(LOCK_BACKEND);
+        String lockBackendName = configuration.get(LOCK_BACKEND);
         if (REGISTERED_LOCKERS.containsKey(lockBackendName)) {
             lockerCreator = REGISTERED_LOCKERS.get(lockBackendName);
         } else {
