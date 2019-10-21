@@ -320,7 +320,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
     @Override
     public Variables variables() {
-        return getGraph().variables();
+        return null; //getGraph().variables();
     }
 
     @Override

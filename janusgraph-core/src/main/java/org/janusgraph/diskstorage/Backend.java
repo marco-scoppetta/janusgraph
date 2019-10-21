@@ -169,11 +169,8 @@ public class Backend implements LockerProvider, AutoCloseable {
     public Backend(Configuration configuration, KeyColumnValueStoreManager manager) {
         this.configuration = configuration;
 
-        if (configuration.get(BASIC_METRICS)) {
-            storeManager = new MetricInstrumentedStoreManager(manager, METRICS_STOREMANAGER_NAME, configuration.get(METRICS_MERGE_STORES), METRICS_MERGED_STORE);
-        } else {
-            storeManager = manager;
-        }
+        storeManager = configuration.get(BASIC_METRICS) ? new MetricInstrumentedStoreManager(manager, METRICS_STOREMANAGER_NAME, configuration.get(METRICS_MERGE_STORES), METRICS_MERGED_STORE) : manager;
+
         indexes = getIndexes(configuration);
         storeFeatures = storeManager.getFeatures();
 
@@ -232,7 +229,7 @@ public class Backend implements LockerProvider, AutoCloseable {
 
         if (null == l) {
             l = lockerCreator.apply(lockerName);
-            final Locker x = lockers.putIfAbsent(lockerName, l);
+            Locker x = lockers.putIfAbsent(lockerName, l);
             if (null != x) {
                 l = x;
             }

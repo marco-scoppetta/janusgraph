@@ -15,10 +15,10 @@
 package org.janusgraph.graphdb.tinkerpop;
 
 import com.google.common.collect.Sets;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-import org.apache.commons.lang3.StringUtils;
+import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 
 import java.util.Optional;
 import java.util.Set;
@@ -39,24 +39,24 @@ public class JanusGraphVariables implements Graph.Variables {
 
     @Override
     public <R> Optional<R> get(String s) {
-        if (s==null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
+        if (s == null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
         if (StringUtils.isEmpty(s)) throw Graph.Variables.Exceptions.variableKeyCanNotBeEmpty();
-        Object value = config.get(s,Object.class);
-        if (value==null) return Optional.empty();
-        else return Optional.of((R)value);
+        Object value = config.get(s, Object.class);
+        if (value == null) return Optional.empty();
+        else return Optional.of((R) value);
     }
 
     @Override
     public void set(String s, Object o) {
-        if (s==null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
+        if (s == null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
         if (StringUtils.isEmpty(s)) throw Graph.Variables.Exceptions.variableKeyCanNotBeEmpty();
-        if (o==null) throw Graph.Variables.Exceptions.variableValueCanNotBeNull();
-        config.set(s,o);
+        if (o == null) throw Graph.Variables.Exceptions.variableValueCanNotBeNull();
+        config.set(s, o);
     }
 
     @Override
     public void remove(String s) {
-        if (s==null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
+        if (s == null) throw Graph.Variables.Exceptions.variableKeyCanNotBeNull();
         if (StringUtils.isEmpty(s)) throw Graph.Variables.Exceptions.variableKeyCanNotBeEmpty();
         config.remove(s);
     }
