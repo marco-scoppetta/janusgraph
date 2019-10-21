@@ -230,7 +230,6 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
     /**
      * Ensure clearing storage actually removes underlying database.
      *
-     * @throws Exception
      */
     @Disabled("Re-enable when redefined clearStorage behaviour")
     @Test

@@ -84,7 +84,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IN
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_START_TIME;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOCK_BACKEND;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOG_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.MANAGEMENT_LOG;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_MERGE_STORES;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.PARALLEL_BACKEND_OPS;
@@ -100,7 +99,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.US
 /**
  * Orchestrates and configures all backend systems:
  * The primary backend storage ({@link KeyColumnValueStore}) and all external indexing providers ({@link IndexProvider}).
- *
  */
 
 public class Backend implements LockerProvider, AutoCloseable {
@@ -179,9 +177,9 @@ public class Backend implements LockerProvider, AutoCloseable {
         indexes = getIndexes(configuration);
         storeFeatures = storeManager.getFeatures();
 
-        managementLogManager = getKCVSLogManager(MANAGEMENT_LOG);
-        txLogManager = getKCVSLogManager(TRANSACTION_LOG);
-        userLogManager = getLogManager(USER_LOG);
+        managementLogManager = new KCVSLogManager(storeManager, configuration.restrictTo(MANAGEMENT_LOG));
+        txLogManager = new KCVSLogManager(storeManager, configuration.restrictTo(TRANSACTION_LOG));
+        userLogManager = new KCVSLogManager(storeManager, configuration.restrictTo(USER_LOG));
 
         cacheEnabled = !configuration.get(STORAGE_BATCH) && configuration.get(DB_CACHE);
 
@@ -324,8 +322,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     /**
      * Get information about all registered {@link IndexProvider}s.
-     *
-     * @return
      */
     public Map<String, IndexInformation> getIndexInformation() {
         ImmutableMap.Builder<String, IndexInformation> copy = ImmutableMap.builder();
@@ -396,21 +392,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         return configuration.get(METRICS_MERGE_STORES) ? METRICS_MERGED_CACHE : storeName + METRICS_CACHE_SUFFIX;
     }
 
-    private KCVSLogManager getKCVSLogManager(String logName) {
-        Preconditions.checkArgument(configuration.restrictTo(logName).get(LOG_BACKEND).equalsIgnoreCase(LOG_BACKEND.getDefaultValue()));
-        return (KCVSLogManager) getLogManager(logName);
-    }
-
-    private LogManager getLogManager(String logName) {
-        Configuration logConfig = configuration.restrictTo(logName);
-        String backend = logConfig.get(LOG_BACKEND);
-        if (backend.equalsIgnoreCase(LOG_BACKEND.getDefaultValue())) {
-            return new KCVSLogManager(storeManager, logConfig);
-        } else {
-            return getImplementationClass(logConfig, logConfig.get(LOG_BACKEND), REGISTERED_LOG_MANAGERS);
-        }
-    }
-
     private static Map<String, IndexProvider> getIndexes(Configuration config) {
         ImmutableMap.Builder<String, IndexProvider> builder = ImmutableMap.builder();
         for (String index : config.getContainedNamespaces(INDEX_NS)) {
@@ -459,9 +440,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     /**
      * Opens a new transaction against all registered backend system wrapped in one {@link BackendTransaction}.
-     *
-     * @return
-     * @throws BackendException
      */
     public BackendTransaction beginTransaction(TransactionConfiguration configuration, KeyInformation.Retriever indexKeyRetriever) throws BackendException {
 
@@ -476,8 +454,7 @@ public class Backend implements LockerProvider, AutoCloseable {
             indexTx.put(entry.getKey(), new IndexTransaction(entry.getValue(), indexKeyRetriever.get(entry.getKey()), configuration, maxWriteTime));
         }
 
-        return new BackendTransaction(cacheTx, configuration, storeFeatures,
-                edgeStore, indexStore, txLogStore,
+        return new BackendTransaction(cacheTx, configuration, storeFeatures, edgeStore, indexStore, txLogStore,
                 maxReadTime, indexTx, threadPool);
     }
 
@@ -511,8 +488,6 @@ public class Backend implements LockerProvider, AutoCloseable {
      * Clears the storage of all registered backend data providers. This includes backend storage engines and index providers.
      * <p>
      * IMPORTANT: Clearing storage means that ALL data will be lost and cannot be recovered.
-     *
-     * @throws BackendException
      */
     public synchronized void clearStorage() throws BackendException {
         if (!hasAttemptedClose) {
@@ -539,7 +514,6 @@ public class Backend implements LockerProvider, AutoCloseable {
     }
 
     private ModifiableConfiguration buildJobConfiguration() {
-
         return new ModifiableConfiguration(JOB_NS,
                 new CommonsConfiguration(new BaseConfiguration()),
                 BasicConfiguration.Restriction.NONE);
@@ -567,10 +541,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
         return null;
     }
-
-    public static final Map<String, String> REGISTERED_LOG_MANAGERS = new HashMap<String, String>() {{
-        put("default", "org.janusgraph.diskstorage.LOG.kcvs.KCVSLogManager");
-    }};
 
     private final Function<String, Locker> CONSISTENT_KEY_LOCKER_CREATOR = new Function<String, Locker>() {
         @Override

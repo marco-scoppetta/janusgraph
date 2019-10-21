@@ -122,12 +122,10 @@ public class StandardIDPool implements IDPool {
             try {
                 nextBlock = idBlockFuture.get(renewTimeout.toMillis(), TimeUnit.MILLISECONDS);
             } catch (ExecutionException e) {
-                String msg = String.format("ID block allocation on partition(%d)-namespace(%d) failed with an exception in %s",
-                        partition, idNamespace, sw.stop());
+                String msg = String.format("ID block allocation on partition(%d)-namespace(%d) failed with an exception in %s", partition, idNamespace, sw.stop());
                 throw new JanusGraphException(msg, e);
             } catch (TimeoutException e) {
-                String msg = String.format("ID block allocation on partition(%d)-namespace(%d) timed out in %s",
-                        partition, idNamespace, sw.stop());
+                String msg = String.format("ID block allocation on partition(%d)-namespace(%d) timed out in %s", partition, idNamespace, sw.stop());
                 // Attempt to cancel the renewer
                 idBlockGetter.stopRequested();
                 if (idAuthority.supportsInterruption()) {
@@ -153,8 +151,7 @@ public class StandardIDPool implements IDPool {
     }
 
     private synchronized void nextBlock() throws InterruptedException {
-        Preconditions.checkState(!closed, "ID Pool has been closed for partition(%s)-namespace(%s) - cannot apply for new id block",
-                partition, idNamespace);
+        Preconditions.checkState(!closed, "ID Pool has been closed for partition(%s)-namespace(%s) - cannot apply for new id block", partition, idNamespace);
 
         if (null == nextBlock && null == idBlockFuture) {
             startIDBlockGetter();

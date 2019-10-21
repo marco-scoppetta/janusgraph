@@ -199,7 +199,7 @@ public class StandardJanusGraph implements JanusGraph {
         this.schemaCache = configuration.getTypeCache(typeCacheRetrieval);
 
 
-        // Transaction(?) Log Manager
+        // Log Manager
         Log managementLog = backend.getSystemMgmtLog();
         this.managementLogger = new ManagementLogger(this, managementLog, schemaCache, this.timestampProvider);
         managementLog.registerReader(ReadMarker.fromNow(), this.managementLogger);

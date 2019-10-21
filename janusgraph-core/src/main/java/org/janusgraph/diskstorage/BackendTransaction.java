@@ -42,7 +42,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyRangeQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
-import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.keycolumnvalue.cache.CacheTransaction;
 import org.janusgraph.diskstorage.util.BackendOperation;
 import org.janusgraph.diskstorage.util.BufferUtil;
@@ -52,15 +51,12 @@ import org.janusgraph.graphdb.database.serialize.DataOutput;
  * Bundles all storage/index transactions and provides a proxy for some of their
  * methods for convenience. Also increases robustness of read call by attempting
  * read calls multiple times on failure.
- *
  */
 
 public class BackendTransaction implements LoggableTransaction {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(BackendTransaction.class);
-
-    public static final int MIN_TASKS_TO_PARALLELIZE = 2;
+    private static final Logger LOG = LoggerFactory.getLogger(BackendTransaction.class);
+    private static final int MIN_TASKS_TO_PARALLELIZE = 2;
 
     //Assumes 64 bit key length as specified in IDManager
     public static final StaticBuffer EDGESTORE_MIN_KEY = BufferUtil.zeroBuffer(8);
@@ -145,8 +141,6 @@ public class BackendTransaction implements LoggableTransaction {
     /**
      * Rolls back all transactions and makes sure that this does not get cut short
      * by exceptions. If exceptions occur, the storage exception takes priority on re-throw.
-     *
-     * @throws BackendException
      */
     @Override
     public void rollback() throws BackendException {
@@ -284,18 +278,17 @@ public class BackendTransaction implements LoggableTransaction {
                 }
             });
         } else {
-            final Map<StaticBuffer, EntryList> results = new HashMap<>(keys.size());
+            Map<StaticBuffer, EntryList> results = new HashMap<>(keys.size());
             if (threadPool == null || keys.size() < MIN_TASKS_TO_PARALLELIZE) {
                 for (StaticBuffer key : keys) {
                     results.put(key, edgeStoreQuery(new KeySliceQuery(key, query)));
                 }
             } else {
-                final CountDownLatch doneSignal = new CountDownLatch(keys.size());
-                final AtomicInteger failureCount = new AtomicInteger(0);
+                CountDownLatch doneSignal = new CountDownLatch(keys.size());
+                AtomicInteger failureCount = new AtomicInteger(0);
                 EntryList[] resultArray = new EntryList[keys.size()];
                 for (int i = 0; i < keys.size(); i++) {
-                    threadPool.execute(new SliceQueryRunner(new KeySliceQuery(keys.get(i), query),
-                            doneSignal, failureCount, resultArray, i));
+                    threadPool.execute(new SliceQueryRunner(new KeySliceQuery(keys.get(i), query), doneSignal, failureCount, resultArray, i));
                 }
                 try {
                     doneSignal.await();
@@ -338,7 +331,7 @@ public class BackendTransaction implements LoggableTransaction {
                 resultArray[resultPosition] = result;
             } catch (Exception e) {
                 failureCount.incrementAndGet();
-                log.warn("Individual query in multi-transaction failed: ", e);
+                LOG.warn("Individual query in multi-transaction failed: ", e);
             } finally {
                 doneSignal.countDown();
             }
@@ -346,8 +339,9 @@ public class BackendTransaction implements LoggableTransaction {
     }
 
     public KeyIterator edgeStoreKeys(SliceQuery sliceQuery) {
-        if (!storeFeatures.hasScan())
+        if (!storeFeatures.hasScan()) {
             throw new UnsupportedOperationException("The configured storage backend does not support global graph operations - use Faunus instead");
+        }
 
         return executeRead(new Callable<KeyIterator>() {
             @Override
@@ -384,8 +378,7 @@ public class BackendTransaction implements LoggableTransaction {
         return executeRead(new Callable<EntryList>() {
             @Override
             public EntryList call() throws Exception {
-                return cacheEnabled ? indexStore.getSlice(query, storeTx) :
-                        indexStore.getSliceNoCache(query, storeTx);
+                return cacheEnabled ? indexStore.getSlice(query, storeTx) : indexStore.getSliceNoCache(query, storeTx);
             }
 
             @Override
@@ -398,7 +391,7 @@ public class BackendTransaction implements LoggableTransaction {
 
 
     public Stream<String> indexQuery(String index, IndexQuery query) {
-        final IndexTransaction indexTx = getIndexTransaction(index);
+        IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new Callable<Stream<String>>() {
             @Override
             public Stream<String> call() throws Exception {
@@ -431,7 +424,7 @@ public class BackendTransaction implements LoggableTransaction {
         final private RawQuery query;
         final private IndexTransaction indexTx;
 
-        public TotalsCallable(RawQuery query, IndexTransaction indexTx) {
+        TotalsCallable(RawQuery query, IndexTransaction indexTx) {
             this.query = query;
             this.indexTx = indexTx;
         }
@@ -448,7 +441,7 @@ public class BackendTransaction implements LoggableTransaction {
     }
 
     public Long totals(String index, RawQuery query) {
-        final IndexTransaction indexTx = getIndexTransaction(index);
+        IndexTransaction indexTx = getIndexTransaction(index);
         return executeRead(new TotalsCallable(query, indexTx));
     }
 
