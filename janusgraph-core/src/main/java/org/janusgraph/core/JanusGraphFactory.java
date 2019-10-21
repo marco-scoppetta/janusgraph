@@ -320,10 +320,6 @@ public class JanusGraphFactory {
     /**
      * Returns a {@link TransactionRecovery} process for recovering partially failed transactions. The recovery process
      * will start processing the write-ahead transaction LOG at the specified transaction time.
-     *
-     * @param graph
-     * @param start
-     * @return
      */
     public static TransactionRecovery startTransactionRecovery(JanusGraph graph, Instant start) {
         return new StandardTransactionLogProcessor((StandardJanusGraph) graph, start);

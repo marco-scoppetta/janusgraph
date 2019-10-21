@@ -3196,7 +3196,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
         simpleLogTest(true);
     }
 
-    public void simpleLogTest(boolean withLogFailure) throws InterruptedException {
+    private void simpleLogTest(boolean withLogFailure) throws InterruptedException {
         String userLogName = "test";
         Serializer serializer = graph.getDataSerializer();
         TimestampProvider times = graph.getConfiguration().getTimestampProvider();
@@ -3395,8 +3395,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
                         JanusGraphVertex v = Iterables.getOnlyElement(changes.getVertices(Change.ADDED));
                         assertEquals(v1id, getId(v));
-                        VertexProperty<Float> p
-                                = Iterables.getOnlyElement(changes.getProperties(v, Change.ADDED, "weight"));
+                        VertexProperty<Float> p = Iterables.getOnlyElement(changes.getProperties(v, Change.ADDED, "weight"));
                         assertEquals(111.1, p.value().doubleValue(), 0.01);
                         assertEquals(1, Iterables.size(changes.getEdges(v, Change.ADDED, OUT)));
                         assertEquals(1, Iterables.size(changes.getEdges(v, Change.ADDED, BOTH)));
@@ -3414,8 +3413,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
                         JanusGraphVertex v = Iterables.getOnlyElement(changes.getVertices(Change.ADDED));
                         assertEquals(v2id, getId(v));
-                        VertexProperty<Float> p
-                                = Iterables.getOnlyElement(changes.getProperties(v, Change.ADDED, "weight"));
+                        VertexProperty<Float> p = Iterables.getOnlyElement(changes.getProperties(v, Change.ADDED, "weight"));
                         assertEquals(222.2, p.value().doubleValue(), 0.01);
                         assertEquals(1, Iterables.size(changes.getEdges(v, Change.ADDED, OUT)));
                         assertEquals(1, Iterables.size(changes.getEdges(v, Change.ADDED, BOTH)));
@@ -3433,8 +3431,7 @@ public abstract class JanusGraphTest extends JanusGraphBaseTest {
 
                         JanusGraphVertex v = Iterables.getOnlyElement(changes.getVertices(Change.REMOVED));
                         assertEquals(v2id, getId(v));
-                        VertexProperty<Float> p
-                                = Iterables.getOnlyElement(changes.getProperties(v, Change.REMOVED, "weight"));
+                        VertexProperty<Float> p = Iterables.getOnlyElement(changes.getProperties(v, Change.REMOVED, "weight"));
                         assertEquals(222.2, p.value().doubleValue(), 0.01);
                         assertEquals(1, Iterables.size(changes.getEdges(v, Change.REMOVED, OUT)));
                         assertEquals(0, Iterables.size(changes.getEdges(v, Change.ADDED, BOTH)));

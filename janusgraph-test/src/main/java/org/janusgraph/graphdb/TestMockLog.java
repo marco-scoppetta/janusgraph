@@ -39,7 +39,7 @@ import java.util.concurrent.Future;
 
 public class TestMockLog implements LogManager {
 
-    public static final ConfigOption<Boolean> LOG_MOCK_FAILADD = new ConfigOption<>(LOG_NS, "fail-adds",
+    static final ConfigOption<Boolean> LOG_MOCK_FAILADD = new ConfigOption<>(LOG_NS, "fail-adds",
             "Sets the LOG to reject adding messages. FOR TESTING ONLY",
             ConfigOption.Type.LOCAL, false).hide();
 

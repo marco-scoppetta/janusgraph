@@ -285,7 +285,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             managementLogManager.openLog(SYSTEM_MGMT_LOG_NAME);
             txLogStore = new NoKCVSCache(storeManager.openDatabase(SYSTEM_TX_LOG_NAME));
 
-
             //Open global configuration
             KeyColumnValueStore systemConfigStore = storeManagerLocking.openDatabase(SYSTEM_PROPERTIES_STORE_NAME);
             KCVSConfigurationBuilder kcvsConfigurationBuilder = new KCVSConfigurationBuilder();
