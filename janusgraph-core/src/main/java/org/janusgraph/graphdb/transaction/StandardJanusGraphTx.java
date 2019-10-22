@@ -1210,7 +1210,7 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
         private PredicateCondition<PropertyKey, JanusGraphElement> getEqualityCondition(Condition<JanusGraphElement> condition) {
             if (condition instanceof PredicateCondition) {
-                final PredicateCondition<PropertyKey, JanusGraphElement> pc = (PredicateCondition) condition;
+                PredicateCondition<PropertyKey, JanusGraphElement> pc = (PredicateCondition) condition;
                 if (pc.getPredicate() == Cmp.EQUAL && TypeUtil.hasSimpleInternalVertexKeyIndex(pc.getKey())) return pc;
             } else if (condition instanceof And) {
                 for (Condition<JanusGraphElement> child : condition.getChildren()) {

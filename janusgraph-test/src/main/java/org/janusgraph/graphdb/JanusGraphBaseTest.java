@@ -387,16 +387,8 @@ public abstract class JanusGraphBaseTest {
         return getVertex(tx, key, value);
     }
 
-    public JanusGraphVertex getVertex(PropertyKey key, Object value) {
-        return getVertex(tx, key, value);
-    }
-
     public static JanusGraphVertex getVertex(JanusGraphTransaction tx, String key, Object value) {
         return getOnlyElement(tx.query().has(key, value).vertices(), null);
-    }
-
-    public static JanusGraphVertex getVertex(JanusGraphTransaction tx, PropertyKey key, Object value) {
-        return getVertex(tx, key.name(), value);
     }
 
     public static double round(double d) {
@@ -481,7 +473,7 @@ public abstract class JanusGraphBaseTest {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-    public JanusGraph getForceIndexGraph() throws BackendException {
+    public JanusGraph getForceIndexGraph() {
         final ModifiableConfiguration adjustedConfig = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, config, BasicConfiguration.Restriction.NONE);
         adjustedConfig.set(GraphDatabaseConfiguration.FORCE_INDEX_USAGE, true);
         final WriteConfiguration writeConfig = adjustedConfig.getConfiguration();

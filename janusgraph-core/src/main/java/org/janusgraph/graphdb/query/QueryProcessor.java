@@ -39,8 +39,6 @@ import java.util.*;
  * The semantics of the queries is OR, meaning the result sets are combined.
  * However, when {@link org.janusgraph.graphdb.query.ElementQuery#hasDuplicateResults()} is true (which assumes that the result set is sorted) then the merge sort iterator
  * filters out immediate duplicates.
- *
- *
  */
 public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphElement, B extends BackendQuery<B>> implements Iterable<R> {
 
@@ -62,7 +60,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
         if (query.isEmpty())
             return Collections.emptyIterator();
 
-        return new ResultSetIterator(getUnfoldedIterator(),(query.hasLimit()) ? query.getLimit() : Query.NO_LIMIT);
+        return new ResultSetIterator(getUnfoldedIterator(), (query.hasLimit()) ? query.getLimit() : Query.NO_LIMIT);
     }
 
     private Iterator<R> getUnfoldedIterator() {
@@ -73,10 +71,10 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
             for (int i = query.numSubQueries() - 1; i >= 0; i--) {
                 BackendQueryHolder<B> subquery = query.getSubQuery(i);
                 Iterator<R> subqueryIterator = getFilterIterator((subquery.isSorted())
-                                                            ? new LimitAdjustingIterator(subquery)
-                                                            : new PreSortingIterator(subquery),
-                                                         hasDeletions,
-                                                         !subquery.isFitted());
+                                ? new LimitAdjustingIterator(subquery)
+                                : new PreSortingIterator(subquery),
+                        hasDeletions,
+                        !subquery.isFitted());
 
                 iterator = (iterator == null)
                         ? subqueryIterator
@@ -142,7 +140,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
         private PreSortingIterator(BackendQueryHolder<B> backendQueryHolder) {
             List<R> all = Lists.newArrayList(executor.execute(query,
                     backendQueryHolder.getBackendQuery().updateLimit(MAX_SORT_ITERATION),
-                    backendQueryHolder.getExecutionInfo(),backendQueryHolder.getProfiler()));
+                    backendQueryHolder.getExecutionInfo(), backendQueryHolder.getProfiler()));
             if (all.size() >= MAX_SORT_ITERATION)
                 throw new QueryException("Could not execute query since pre-sorting requires fetching more than " +
                         MAX_SORT_ITERATION + " elements. Consider rewriting the query to exploit sort orders");
@@ -180,7 +178,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
         private final Object executionInfo;
 
         private LimitAdjustingIterator(BackendQueryHolder<B> backendQueryHolder) {
-            super(Integer.MAX_VALUE-1,backendQueryHolder.getBackendQuery().getLimit());
+            super(Integer.MAX_VALUE - 1, backendQueryHolder.getBackendQuery().getLimit());
             this.backendQuery = backendQueryHolder.getBackendQuery();
             this.executionInfo = backendQueryHolder.getExecutionInfo();
             this.profiler = backendQueryHolder.getProfiler();
@@ -188,7 +186,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
 
         @Override
         public Iterator<R> getNewIterator(int newLimit) {
-            if (!backendQuery.hasLimit() || newLimit>backendQuery.getLimit())
+            if (!backendQuery.hasLimit() || newLimit > backendQuery.getLimit())
                 backendQuery = backendQuery.updateLimit(newLimit);
             return executor.execute(query, backendQuery, executionInfo, profiler);
         }

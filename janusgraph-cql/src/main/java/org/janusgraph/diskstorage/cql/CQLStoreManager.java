@@ -147,6 +147,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
         this.semaphore = new Semaphore(configuration.get(MAX_REQUESTS_PER_CONNECTION));
 
         this.session = initialiseSession();
+
         initialiseKeyspace();
 
         Configuration global = buildGraphConfiguration()
@@ -282,25 +283,32 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     ResultSet executeOnSession(Statement statement) {
         try {
             this.semaphore.acquire();
-            return this.session.execute(statement);
+            ResultSet resultSet = this.session.execute(statement);
+            this.semaphore.release();
+            return resultSet;
         } catch (InterruptedException e) {
+            this.semaphore.release();
             Thread.currentThread().interrupt();
             throw new JanusGraphException("Interrupted while acquiring resource to execute query on Session.");
-        } finally {
-            this.semaphore.release();
         }
     }
 
-    private CompletionStage<AsyncResultSet> executeAsyncOnSession(Statement statement){
+    private CompletionStage<AsyncResultSet> executeAsyncOnSession(Statement statement) {
         try {
             this.semaphore.acquire();
             CompletionStage<AsyncResultSet> async = this.session.executeAsync(statement);
-//            async.thenApply((asyncResultSet) -> { this.semaphore.release(); return asyncResultSet;});
-            async.thenRun(this.semaphore::release);
+            async.handle((result, exception) -> {
+                this.semaphore.release();
+                if (exception != null) {
+                    return exception;
+                } else {
+                    return result;
+                }
+            });
             return async;
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             this.semaphore.release();
+            Thread.currentThread().interrupt();
             throw new JanusGraphException("Interrupted while acquiring resource to execute query on Session.");
         }
     }
