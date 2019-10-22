@@ -44,11 +44,6 @@ public class ManagementUtil {
      *
      * This is a utility method to be invoked between two {@link org.janusgraph.core.schema.JanusGraphManagement#updateIndex(Index, org.janusgraph.core.schema.SchemaAction)} calls
      * to ensure that the previous update has successfully persisted.
-     *
-     * @param g
-     * @param indexName
-     * @param time
-     * @param unit
      */
     public static void awaitGraphIndexUpdate(JanusGraph g, String indexName, long time, TemporalUnit unit) {
         awaitIndexUpdate(g,indexName,null,time,unit);

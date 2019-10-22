@@ -15,8 +15,6 @@
 package org.janusgraph.core;
 
 
-import org.janusgraph.util.datastructures.ExceptionUtil;
-
 /**
  * Most general type of exception thrown by the JanusGraph graph database.
  *
@@ -47,16 +45,6 @@ public class JanusGraphException extends RuntimeException {
      */
     public JanusGraphException(Throwable cause) {
         this("Exception in JanusGraph", cause);
-    }
-
-    /**
-     * Checks whether this exception is cause by an exception of the given type.
-     *
-     * @param causeExceptionType exception type
-     * @return true, if this exception is caused by the given type
-     */
-    public boolean isCausedBy(Class<?> causeExceptionType) {
-        return ExceptionUtil.isCausedBy(this, causeExceptionType);
     }
 
 }

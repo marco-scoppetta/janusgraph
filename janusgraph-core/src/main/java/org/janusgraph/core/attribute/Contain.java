@@ -21,7 +21,6 @@ import java.util.Collection;
 
 /**
  * Comparison relations for text objects.
- *
  */
 
 public enum Contain implements JanusGraphPredicate {
@@ -68,7 +67,7 @@ public enum Contain implements JanusGraphPredicate {
 
     @Override
     public boolean isValidCondition(Object condition) {
-        return condition != null && (condition instanceof Collection);
+        return (condition instanceof Collection);
     }
 
     @Override
