@@ -43,7 +43,6 @@ import org.janusgraph.graphdb.relations.CacheVertexProperty;
 import org.janusgraph.graphdb.relations.SimpleJanusGraphProperty;
 import org.janusgraph.graphdb.relations.StandardEdge;
 import org.janusgraph.graphdb.relations.StandardVertexProperty;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphVariables;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.VertexLabelVertex;
 import org.janusgraph.graphdb.types.system.EmptyVertex;
@@ -85,9 +84,7 @@ public abstract class AbstractJanusGraphProvider extends AbstractGraphProvider {
         StandardVertexProperty.class,
         CacheVertexProperty.class,
         SimpleJanusGraphProperty.class,
-        CacheVertexProperty.class,
-
-        JanusGraphVariables.class);
+        CacheVertexProperty.class);
 
 
     @Override

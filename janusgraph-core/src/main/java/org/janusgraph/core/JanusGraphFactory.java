@@ -220,7 +220,7 @@ public class JanusGraphFactory {
      * @param graph Graph
      */
     public static void close(Graph graph) throws Exception {
-        final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
+        JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
         if (jgm != null) {
             jgm.removeGraph(((StandardJanusGraph) graph).getGraphName());
         }
@@ -264,7 +264,6 @@ public class JanusGraphFactory {
      * In the builder, the configuration options for the graph can be set individually. Once all options are configured,
      * the graph can be opened with {@link org.janusgraph.core.JanusGraphFactory.Builder#open()}.
      *
-     * @return
      */
     public static Builder build() {
         return new Builder();
@@ -282,10 +281,6 @@ public class JanusGraphFactory {
 
         /**
          * Configures the provided configuration path to the given value.
-         *
-         * @param path
-         * @param value
-         * @return
          */
         public Builder set(String path, Object value) {
             writeConfiguration.set(path, value);
@@ -294,8 +289,6 @@ public class JanusGraphFactory {
 
         /**
          * Opens a JanusGraph graph with the previously configured options.
-         *
-         * @return
          */
         public StandardJanusGraph open() {
             ModifiableConfiguration mc = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS,
@@ -309,9 +302,6 @@ public class JanusGraphFactory {
     /**
      * Returns a {@link org.janusgraph.core.log.LogProcessorFramework} for processing transaction LOG entries
      * against the provided graph instance.
-     *
-     * @param graph
-     * @return
      */
     public static LogProcessorFramework openTransactionLog(JanusGraph graph) {
         return new StandardLogProcessorFramework((StandardJanusGraph) graph);

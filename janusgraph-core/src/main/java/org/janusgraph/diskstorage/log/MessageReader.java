@@ -22,7 +22,6 @@ public interface MessageReader {
 
     /**
      * Processes the given message. The message object may not be mutated!
-     * @param message
      */
     void read(Message message);
 
@@ -36,7 +35,6 @@ public interface MessageReader {
      * when un-registering readers
      *
      * @param other other reader to compare against
-     * @return
      */
     @Override
     boolean equals(Object other);

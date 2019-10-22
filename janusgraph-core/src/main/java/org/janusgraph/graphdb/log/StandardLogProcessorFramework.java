@@ -174,12 +174,10 @@ public class StandardLogProcessorFramework implements LogProcessorFramework {
                 readMarker = ReadMarker.fromIdentifierOrTime(readMarkerName, startTime);
             }
             synchronized (StandardLogProcessorFramework.this) {
-                Preconditions.checkArgument(!processorLogs.containsKey(userLogName),
-                        "Processors have already been registered for user LOG: %s", userLogName);
+                Preconditions.checkArgument(!processorLogs.containsKey(userLogName), "Processors have already been registered for user LOG: %s", userLogName);
                 try {
                     Log log = graph.getBackend().getUserLog(userLogName);
                     log.registerReaders(readMarker, Iterables.transform(processors, new Function<ChangeProcessor, MessageReader>() {
-                        @Nullable
                         @Override
                         public MessageReader apply(@Nullable ChangeProcessor changeProcessor) {
                             return new MsgReaderConverter(userLogName, changeProcessor, retryAttempts);

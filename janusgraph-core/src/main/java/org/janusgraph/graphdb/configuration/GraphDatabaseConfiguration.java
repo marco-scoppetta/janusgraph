@@ -565,19 +565,10 @@ public class GraphDatabaseConfiguration {
      * will attempt to delete expired locks in a background daemon thread. False
      * will never attempt to delete expired locks. This option is only
      * meaningful for the default lock backend.
-     *
-     * @see #LOCK_BACKEND
      */
     public static final ConfigOption<Boolean> LOCK_CLEAN_EXPIRED = new ConfigOption<>(LOCK_NS, "clean-expired",
             "Whether to delete expired locks from the storage backend",
             ConfigOption.Type.MASKABLE, false);
-
-    /**
-     * Locker type to use.  The supported types are in {@link org.janusgraph.diskstorage.Backend}.
-     */
-    public static final ConfigOption<String> LOCK_BACKEND = new ConfigOption<>(LOCK_NS, "backend",
-            "Locker type to use",
-            ConfigOption.Type.GLOBAL_OFFLINE, "consistentkey");
 
     /**
      * Configuration setting key for the local lock mediator prefix
@@ -1333,8 +1324,7 @@ public class GraphDatabaseConfiguration {
         if (configuration.has(TX_DIRTY_SIZE)) {
             txDirtyVertexSize = configuration.get(TX_DIRTY_SIZE);
         } else {
-            txDirtyVertexSize = batchLoading ?
-                    TX_DIRTY_SIZE_DEFAULT_WITH_BATCH :
+            txDirtyVertexSize = batchLoading ? TX_DIRTY_SIZE_DEFAULT_WITH_BATCH :
                     TX_DIRTY_SIZE_DEFAULT_WITHOUT_BATCH;
         }
 

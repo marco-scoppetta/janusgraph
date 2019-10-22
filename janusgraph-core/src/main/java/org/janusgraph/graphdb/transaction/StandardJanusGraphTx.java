@@ -320,7 +320,10 @@ public class StandardJanusGraphTx implements JanusGraphTransaction, TypeInspecto
 
     @Override
     public Variables variables() {
-        return null; //getGraph().variables();
+        // This is not used in Grakn, therefore deleted.
+        // This is just a way to save some user configurations inside a specific keyspace
+        // If ever needed, implement using a dedicated KCVStore
+        return null;
     }
 
     @Override

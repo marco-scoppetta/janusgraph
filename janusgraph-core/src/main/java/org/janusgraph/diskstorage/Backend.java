@@ -15,7 +15,6 @@
 package org.janusgraph.diskstorage;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -63,9 +62,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +79,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IN
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.JOB_START_TIME;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.LOCK_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.MANAGEMENT_LOG;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.METRICS_MERGE_STORES;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.PARALLEL_BACKEND_OPS;
@@ -143,7 +138,6 @@ public class Backend implements LockerProvider, AutoCloseable {
     private KCVSCache indexStore;
     private KCVSCache txLogStore;
     private KCVSConfiguration systemConfig;
-    private KCVSConfiguration userConfig;
     private boolean hasAttemptedClose;
 
     private final StandardScanner scanner;
@@ -161,9 +155,7 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final boolean cacheEnabled;
     private final ExecutorService threadPool;
 
-    private final Function<String, Locker> lockerCreator;
     private final ConcurrentHashMap<String, Locker> lockers = new ConcurrentHashMap<>();
-
     private final Configuration configuration;
 
     public Backend(Configuration configuration, KeyColumnValueStoreManager manager) {
@@ -204,37 +196,18 @@ public class Backend implements LockerProvider, AutoCloseable {
             threadPool = null;
         }
 
-        String lockBackendName = configuration.get(LOCK_BACKEND);
-        if (REGISTERED_LOCKERS.containsKey(lockBackendName)) {
-            lockerCreator = REGISTERED_LOCKERS.get(lockBackendName);
-        } else {
-            throw new JanusGraphConfigurationException("Unknown lock backend \"" +
-                    lockBackendName + "\".  Known lock backends: " +
-                    Joiner.on(", ").join(REGISTERED_LOCKERS.keySet()) + ".");
-        }
-        // Never used for backends that have innate transaction support, but we
-        // want to maintain the non-null invariant regardless; it will default
-        // to consistent-key implementation if none is specified
-        Preconditions.checkNotNull(lockerCreator);
-
         scanner = new StandardScanner(storeManager);
         initialize();
     }
 
 
+    //Method invoked by ExpectedValueCheckingStoreManager, which is only used when Backend does not support native locking.
     @Override
     public Locker getLocker(String lockerName) {
-        Preconditions.checkNotNull(lockerName);
         Locker l = lockers.get(lockerName);
-
         if (null == l) {
-            l = lockerCreator.apply(lockerName);
-            Locker x = lockers.putIfAbsent(lockerName, l);
-            if (null != x) {
-                l = x;
-            }
+            return lockers.put(lockerName, createLocker(lockerName));
         }
-
         return l;
     }
 
@@ -288,21 +261,7 @@ public class Backend implements LockerProvider, AutoCloseable {
             systemConfig = kcvsConfigurationBuilder.buildGlobalConfiguration(new BackendOperation.TransactionalProvider() {
                 @Override
                 public StoreTransaction openTx() throws BackendException {
-                    return storeManagerLocking.beginTransaction(StandardBaseTransactionConfig.of(
-                            configuration.get(TIMESTAMP_PROVIDER),
-                            storeFeatures.getKeyConsistentTxConfig()));
-                }
-
-                @Override
-                public void close() {
-                    //Do nothing, storeManager is closed explicitly by Backend
-                }
-            }, systemConfigStore, configuration);
-
-            userConfig = kcvsConfigurationBuilder.buildUserConfiguration(new BackendOperation.TransactionalProvider() {
-                @Override
-                public StoreTransaction openTx() throws BackendException {
-                    return storeManagerLocking.beginTransaction(StandardBaseTransactionConfig.of(configuration.get(TIMESTAMP_PROVIDER)));
+                    return storeManagerLocking.beginTransaction(StandardBaseTransactionConfig.of(configuration.get(TIMESTAMP_PROVIDER), storeFeatures.getKeyConsistentTxConfig()));
                 }
 
                 @Override
@@ -377,10 +336,6 @@ public class Backend implements LockerProvider, AutoCloseable {
 
     public KCVSConfiguration getGlobalSystemConfig() {
         return systemConfig;
-    }
-
-    public KCVSConfiguration getUserConfiguration() {
-        return userConfig;
     }
 
     private String getMetricsCacheName(String storeName) {
@@ -466,7 +421,6 @@ public class Backend implements LockerProvider, AutoCloseable {
                 if (edgeStore != null) edgeStore.close();
                 if (indexStore != null) indexStore.close();
                 if (systemConfig != null) systemConfig.close();
-                if (userConfig != null) userConfig.close();
                 //Indexes
                 for (IndexProvider index : indexes.values()) index.close();
             } finally {
@@ -496,7 +450,6 @@ public class Backend implements LockerProvider, AutoCloseable {
             edgeStore.close();
             indexStore.close();
             systemConfig.close();
-            userConfig.close();
             storeManager.clearStorage();
             storeManager.close();
             //Indexes
@@ -510,8 +463,7 @@ public class Backend implements LockerProvider, AutoCloseable {
     }
 
     private ModifiableConfiguration buildJobConfiguration() {
-        return new ModifiableConfiguration(JOB_NS,
-                new CommonsConfiguration(new BaseConfiguration()),
+        return new ModifiableConfiguration(JOB_NS, new CommonsConfiguration(new BaseConfiguration()),
                 BasicConfiguration.Restriction.NONE);
     }
 
@@ -520,7 +472,7 @@ public class Backend implements LockerProvider, AutoCloseable {
     private static final ImmutableMap<StandardStoreManager, ConfigOption<?>> STORE_SHORTHAND_OPTIONS;
 
     static {
-        final Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
+        Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
         STORE_SHORTHAND_OPTIONS = ImmutableMap.copyOf(m);
     }
 
@@ -538,72 +490,14 @@ public class Backend implements LockerProvider, AutoCloseable {
         return null;
     }
 
-    private final Function<String, Locker> CONSISTENT_KEY_LOCKER_CREATOR = new Function<String, Locker>() {
-        @Override
-        public Locker apply(String lockerName) {
-            KeyColumnValueStore lockerStore;
-            try {
-                lockerStore = storeManager.openDatabase(lockerName);
-            } catch (BackendException e) {
-                throw new JanusGraphConfigurationException("Could not retrieve store named " + lockerName + " for locker configuration", e);
-            }
-            return new ConsistentKeyLocker.Builder(lockerStore, storeManager).fromConfig(configuration).build();
-        }
-    };
 
-    private final Function<String, Locker> ASTYANAX_RECIPE_LOCKER_CREATOR = new Function<String, Locker>() {
-
-        @Override
-        public Locker apply(String lockerName) {
-
-            String expectedManagerName = "org.janusgraph.diskstorage.cassandra.astyanax.AstyanaxStoreManager";
-            String actualManagerName = storeManager.getClass().getCanonicalName();
-            // Require AstyanaxStoreManager
-            Preconditions.checkArgument(expectedManagerName.equals(actualManagerName),
-                    "Astyanax Recipe locker is only supported with the Astyanax storage backend (configured:"
-                            + actualManagerName + " != required:" + expectedManagerName + ")");
-
-            try {
-                Class<?> c = storeManager.getClass();
-                Method method = c.getMethod("openLocker", String.class);
-                Object o = method.invoke(storeManager, lockerName);
-                return (Locker) o;
-            } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("Could not find method when configuring locking with Astyanax Recipes");
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException("Could not access method when configuring locking with Astyanax Recipes", e);
-            } catch (InvocationTargetException e) {
-                throw new IllegalArgumentException("Could not invoke method when configuring locking with Astyanax Recipes", e);
-            }
-        }
-    };
-
-    private static final Function<String, Locker> TEST_LOCKER_CREATOR = lockerName -> openManagedLocker("org.janusgraph.diskstorage.util.TestLockerManager", lockerName);
-
-    private final Map<String, Function<String, Locker>> REGISTERED_LOCKERS = ImmutableMap.of(
-            "consistentkey", CONSISTENT_KEY_LOCKER_CREATOR,
-            "astyanaxrecipe", ASTYANAX_RECIPE_LOCKER_CREATOR,
-            "test", TEST_LOCKER_CREATOR
-    );
-
-    private static Locker openManagedLocker(String classname, String lockerName) {
+    private Locker createLocker(String lockerName) {
+        KeyColumnValueStore lockerStore;
         try {
-            Class c = Class.forName(classname);
-            Constructor constructor = c.getConstructor();
-            Object instance = constructor.newInstance();
-            Method method = c.getMethod("openLocker", String.class);
-            Object o = method.invoke(instance, lockerName);
-            return (Locker) o;
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Could not find implementation class: " + classname);
-        } catch (InstantiationException | ClassCastException e) {
-            throw new IllegalArgumentException("Could not instantiate implementation: " + classname, e);
-        } catch (NoSuchMethodException e) {
-            throw new IllegalArgumentException("Could not find method when configuring locking for: " + classname, e);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException("Could not access method when configuring locking for: " + classname, e);
-        } catch (InvocationTargetException e) {
-            throw new IllegalArgumentException("Could not invoke method when configuring locking for: " + classname, e);
+            lockerStore = storeManager.openDatabase(lockerName);
+        } catch (BackendException e) {
+            throw new JanusGraphConfigurationException("Could not retrieve store named " + lockerName + " for locker configuration", e);
         }
+        return new ConsistentKeyLocker.Builder(lockerStore, storeManager).fromConfig(configuration).build();
     }
 }

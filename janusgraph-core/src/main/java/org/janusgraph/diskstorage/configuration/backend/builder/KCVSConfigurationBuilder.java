@@ -31,7 +31,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.US
 /**
  * Builder to build {@link KCVSConfiguration} instances:
  *
- * All KCVSConfigurations read from 'system_properties' Store, the difference is that one reads key: 'configuration' whereas the other reads key: 'userconfig'
+ * All KCVSConfigurations read from 'system_properties' Store
  */
 public class KCVSConfigurationBuilder {
 
@@ -40,13 +40,6 @@ public class KCVSConfigurationBuilder {
      */
     public KCVSConfiguration buildGlobalConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, Configuration config) {
         return buildConfiguration(txProvider, store, SYSTEM_CONFIGURATION_IDENTIFIER, config);
-    }
-
-    /**
-     * Build KCVSConfiguration concerning User Configuration
-     */
-    public KCVSConfiguration buildUserConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, Configuration config) {
-        return buildConfiguration(txProvider, store, USER_CONFIGURATION_IDENTIFIER, config);
     }
 
     private KCVSConfiguration buildConfiguration(BackendOperation.TransactionalProvider txProvider, KeyColumnValueStore store, String identifier, Configuration config) {
