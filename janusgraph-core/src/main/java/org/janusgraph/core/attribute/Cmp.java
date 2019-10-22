@@ -100,7 +100,7 @@ public enum Cmp implements JanusGraphPredicate {
 
         @Override
         public boolean isValidCondition(Object condition) {
-            return condition!=null && condition instanceof Comparable;
+            return condition instanceof Comparable;
         }
 
         @Override
@@ -130,7 +130,7 @@ public enum Cmp implements JanusGraphPredicate {
 
         @Override
         public boolean isValidCondition(Object condition) {
-            return condition!=null && condition instanceof Comparable;
+            return condition instanceof Comparable;
         }
 
         @Override
@@ -160,7 +160,7 @@ public enum Cmp implements JanusGraphPredicate {
 
         @Override
         public boolean isValidCondition(Object condition) {
-            return condition!=null && condition instanceof Comparable;
+            return condition instanceof Comparable;
         }
 
         @Override
@@ -190,7 +190,7 @@ public enum Cmp implements JanusGraphPredicate {
 
         @Override
         public boolean isValidCondition(Object condition) {
-            return condition!=null && condition instanceof Comparable;
+            return condition instanceof Comparable;
         }
 
         @Override

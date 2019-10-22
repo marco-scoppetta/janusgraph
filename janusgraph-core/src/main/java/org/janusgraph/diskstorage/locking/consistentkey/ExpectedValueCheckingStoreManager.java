@@ -39,7 +39,7 @@ public class ExpectedValueCheckingStoreManager extends KCVSManagerProxy {
     private final Duration maxReadTime;
     private final StoreFeatures storeFeatures;
 
-    private final Map<String,ExpectedValueCheckingStore> stores;
+    private final Map<String, ExpectedValueCheckingStore> stores;
 
     private static final Logger LOG = LoggerFactory.getLogger(ExpectedValueCheckingStoreManager.class);
 
@@ -57,15 +57,15 @@ public class ExpectedValueCheckingStoreManager extends KCVSManagerProxy {
     public synchronized KeyColumnValueStore openDatabase(String name) throws BackendException {
         if (stores.containsKey(name)) return stores.get(name);
         KeyColumnValueStore store = manager.openDatabase(name);
-        final String lockerName = store.getName() + lockStoreSuffix;
+        String lockerName = store.getName() + lockStoreSuffix;
         ExpectedValueCheckingStore wrappedStore = new ExpectedValueCheckingStore(store, lockerProvider.getLocker(lockerName));
-        stores.put(name,wrappedStore);
+        stores.put(name, wrappedStore);
         return wrappedStore;
     }
 
     @Override
     public void mutateMany(Map<String, Map<StaticBuffer, KCVMutation>> mutations, StoreTransaction txh) throws BackendException {
-        ExpectedValueCheckingTransaction etx = (ExpectedValueCheckingTransaction)txh;
+        ExpectedValueCheckingTransaction etx = (ExpectedValueCheckingTransaction) txh;
         boolean hasAtLeastOneLock = etx.prepareForMutations();
         if (hasAtLeastOneLock) {
             // Force all mutations on this transaction to use strong consistency

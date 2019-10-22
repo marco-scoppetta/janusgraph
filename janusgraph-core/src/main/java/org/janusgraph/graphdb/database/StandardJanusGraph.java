@@ -86,7 +86,6 @@ import org.janusgraph.graphdb.relations.EdgeDirection;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphFeatures;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistry;
 import org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistryV1d0;
-import org.janusgraph.graphdb.tinkerpop.JanusGraphVariables;
 import org.janusgraph.graphdb.tinkerpop.optimize.AdjacentVertexFilterOptimizerStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphIoRegistrationStrategy;
 import org.janusgraph.graphdb.tinkerpop.optimize.JanusGraphLocalQueryOptimizerStrategy;
@@ -199,7 +198,7 @@ public class StandardJanusGraph implements JanusGraph {
         this.schemaCache = configuration.getTypeCache(typeCacheRetrieval);
 
 
-        // Transaction(?) Log Manager
+        // Log Manager
         Log managementLog = backend.getSystemMgmtLog();
         this.managementLogger = new ManagementLogger(this, managementLog, schemaCache, this.timestampProvider);
         managementLog.registerReader(ReadMarker.fromNow(), this.managementLogger);
@@ -249,10 +248,6 @@ public class StandardJanusGraph implements JanusGraph {
         return StringFactory.graphString(this, getConfiguration().getBackendDescription());
     }
 
-    public Variables variables() {
-        return new JanusGraphVariables(getBackend().getUserConfiguration());
-    }
-
     @Override
     public org.apache.commons.configuration.Configuration configuration() {
         return getConfiguration().getConfigurationAtOpen();
@@ -267,6 +262,11 @@ public class StandardJanusGraph implements JanusGraph {
         } else {
             return (I) builder.graph(this).onMapper(mapper -> mapper.addRegistry(JanusGraphIoRegistry.getInstance())).create();
         }
+    }
+
+    @Override
+    public Variables variables() {
+        return null;
     }
 
     @Override

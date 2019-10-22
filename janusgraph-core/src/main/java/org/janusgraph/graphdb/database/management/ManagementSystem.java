@@ -905,7 +905,7 @@ public class ManagementSystem implements JanusGraphManagement {
     }
 
     private static class GraphCacheEvictionCompleteTrigger implements Callable<Boolean> {
-        private static final Logger log = LoggerFactory.getLogger(GraphCacheEvictionCompleteTrigger.class);
+        private static final Logger LOG = LoggerFactory.getLogger(GraphCacheEvictionCompleteTrigger.class);
         private final String graphName;
 
         private GraphCacheEvictionCompleteTrigger(String graphName) {
@@ -914,7 +914,7 @@ public class ManagementSystem implements JanusGraphManagement {
 
         @Override
         public Boolean call() {
-            log.info("Graph {} has been removed from the graph cache on every JanusGraph node in the cluster.", graphName);
+            LOG.info("Graph {} has been removed from the graph cache on every JanusGraph node in the cluster.", graphName);
             return true;
         }
     }
@@ -1106,7 +1106,7 @@ public class ManagementSystem implements JanusGraphManagement {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            else if (other == null || !getClass().isInstance(other)) return false;
+            else if (!getClass().isInstance(other)) return false;
             IndexIdentifier oth = (IndexIdentifier) other;
             return indexName.equals(oth.indexName) && (relationTypeName == oth.relationTypeName || (relationTypeName != null && relationTypeName.equals(oth.relationTypeName)));
         }
@@ -1384,7 +1384,7 @@ public class ManagementSystem implements JanusGraphManagement {
     @Override
     public <T extends RelationType> Iterable<T> getRelationTypes(Class<T> clazz) {
         Preconditions.checkNotNull(clazz);
-        final Iterable<? extends JanusGraphVertex> types;
+        Iterable<? extends JanusGraphVertex> types;
         if (PropertyKey.class.equals(clazz)) {
             types = QueryUtil.getVertices(transaction, BaseKey.SchemaCategory, JanusGraphSchemaCategory.PROPERTYKEY);
         } else if (EdgeLabel.class.equals(clazz)) {

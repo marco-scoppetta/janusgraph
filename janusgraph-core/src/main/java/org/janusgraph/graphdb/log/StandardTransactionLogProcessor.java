@@ -17,20 +17,29 @@ package org.janusgraph.graphdb.log;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.cache.*;
-import com.google.common.collect.*;
-import org.janusgraph.core.JanusGraphTransaction;
-import org.janusgraph.core.RelationType;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalCause;
+import com.google.common.cache.RemovalListener;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.SetMultimap;
 import org.janusgraph.core.JanusGraphElement;
 import org.janusgraph.core.JanusGraphException;
+import org.janusgraph.core.JanusGraphTransaction;
+import org.janusgraph.core.RelationType;
 import org.janusgraph.core.log.TransactionRecovery;
-import org.janusgraph.diskstorage.*;
+import org.janusgraph.diskstorage.BackendTransaction;
+import org.janusgraph.diskstorage.ReadBuffer;
+import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.indexing.IndexEntry;
 import org.janusgraph.diskstorage.indexing.IndexTransaction;
-import org.janusgraph.diskstorage.log.*;
+import org.janusgraph.diskstorage.log.Log;
+import org.janusgraph.diskstorage.log.Message;
+import org.janusgraph.diskstorage.log.MessageReader;
+import org.janusgraph.diskstorage.log.ReadMarker;
 import org.janusgraph.diskstorage.util.BackendOperation;
-
-
 import org.janusgraph.diskstorage.util.time.TimestampProvider;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.database.StandardJanusGraph;
@@ -40,7 +49,6 @@ import org.janusgraph.graphdb.database.log.TransactionLogHeader;
 import org.janusgraph.graphdb.database.serialize.Serializer;
 import org.janusgraph.graphdb.internal.ElementCategory;
 import org.janusgraph.graphdb.internal.InternalRelationType;
-import org.janusgraph.graphdb.relations.RelationIdentifier;
 import org.janusgraph.graphdb.transaction.StandardJanusGraphTx;
 import org.janusgraph.graphdb.types.IndexType;
 import org.janusgraph.graphdb.types.MixedIndexType;
@@ -67,7 +75,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class StandardTransactionLogProcessor implements TransactionRecovery {
 
     private static final Logger LOG = LoggerFactory.getLogger(StandardTransactionLogProcessor.class);
-
     private static final Duration CLEAN_SLEEP_TIME = Duration.ofSeconds(5);
     private static final Duration MIN_TX_LENGTH = Duration.ofSeconds(5);
 
@@ -86,8 +93,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
     private final Cache<StandardTransactionId, TxEntry> txCache;
 
 
-    public StandardTransactionLogProcessor(StandardJanusGraph graph,
-                                           Instant startTime) {
+    public StandardTransactionLogProcessor(StandardJanusGraph graph, Instant startTime) {
         Preconditions.checkArgument(graph != null && graph.isOpen());
         Preconditions.checkArgument(startTime != null);
         Preconditions.checkArgument(graph.getConfiguration().hasLogTransactions(), "Transaction logging must be enabled for recovery to work");
@@ -99,25 +105,23 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
         this.times = graph.getConfiguration().getTimestampProvider();
         final Log txLog = graph.getBackend().getSystemTxLog();
         this.persistenceTime = graph.getConfiguration().getMaxWriteTime();
-        this.verboseLogging = graph.getConfiguration().getConfiguration()
-                .get(GraphDatabaseConfiguration.VERBOSE_TX_RECOVERY);
+        this.verboseLogging = graph.getConfiguration().getConfiguration().get(GraphDatabaseConfiguration.VERBOSE_TX_RECOVERY);
         this.txCache = CacheBuilder.newBuilder()
                 .concurrencyLevel(2)
                 .initialCapacity(100)
                 .expireAfterWrite(maxTxLength.toNanos(), TimeUnit.NANOSECONDS)
                 .removalListener((RemovalListener<StandardTransactionId, TxEntry>) notification -> {
-                    final RemovalCause cause = notification.getCause();
+                    RemovalCause cause = notification.getCause();
                     Preconditions.checkArgument(cause == RemovalCause.EXPIRED,
                             "Unexpected removal cause [%s] for transaction [%s]", cause, notification.getKey());
-                    final TxEntry entry = notification.getValue();
+                    TxEntry entry = notification.getValue();
                     if (entry.status == LogTxStatus.SECONDARY_FAILURE || entry.status == LogTxStatus.PRIMARY_SUCCESS) {
                         failureTxCounter.incrementAndGet();
                         fixSecondaryFailure(notification.getKey(), entry);
                     } else {
                         successTxCounter.incrementAndGet();
                     }
-                })
-                .build();
+                }).build();
 
         ReadMarker start = ReadMarker.fromTime(startTime);
         txLog.registerReader(start, new TxLogMessageReader());
@@ -278,7 +282,7 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            else if (other == null || !getClass().isInstance(other)) return false;
+            else if (!getClass().isInstance(other)) return false;
             IndexRestore r = (IndexRestore) other;
             return r.elementId.equals(elementId) && indexId == r.indexId;
         }
@@ -294,10 +298,8 @@ public class StandardTransactionLogProcessor implements TransactionRecovery {
         if (!type.isPropertyKey()) {
             return Collections.emptyList();
         }
-        return Iterables.filter(Iterables.filter(((InternalRelationType) type).getKeyIndexes(), MIXED_INDEX_FILTER), MixedIndexType.class);
+        return Iterables.filter(Iterables.filter(((InternalRelationType) type).getKeyIndexes(), IndexType::isMixedIndex), MixedIndexType.class);
     }
-
-    private static final Predicate<IndexType> MIXED_INDEX_FILTER = IndexType::isMixedIndex;
 
     private class TxLogMessageReader implements MessageReader {
 

@@ -49,7 +49,6 @@ public class BackendOperation {
     }
 
     public static <V> V executeDirect(Callable<V> exe, Duration totalWaitTime) throws BackendException {
-        Preconditions.checkArgument(!totalWaitTime.isZero(), "Need to specify a positive waitTime: %s", totalWaitTime);
         long maxTime = System.currentTimeMillis() + totalWaitTime.toMillis();
         Duration waitTime = pertubTime(BASE_REATTEMPT_TIME);
         BackendException lastException;
@@ -112,8 +111,6 @@ public class BackendOperation {
      * @param provider Transactions provider, will provide transaction on which execute the above operation
      * @param times Provider of timestamp, it is used to get the Time (Timestamp) to set on the transaction which will execute the operation
      * @param maxTime maxTime for which an operation will be retried, this is because sometimes the Database might need some time to startup or reply to havy workload
-     * @param <R>
-     * @return
      * @throws JanusGraphException if the operation fails
      */
     public static <R> R execute( Transactional<R> exe, TransactionalProvider provider, TimestampProvider times, Duration maxTime) throws JanusGraphException {

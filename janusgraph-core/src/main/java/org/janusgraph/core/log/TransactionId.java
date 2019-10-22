@@ -30,20 +30,16 @@ public interface TransactionId {
     /**
      * Returns the unique id of the JanusGraph graph instance which executed the transaction.
      *
-     * @return
      */
     String getInstanceId();
 
     /**
      * Returns the unique transaction id within a particular JanusGraph instance.
-     * @return
      */
     long getTransactionId();
 
     /**
      * Returns the time of the transaction
-     *
-     * @return
      */
     Instant getTransactionTime();
 

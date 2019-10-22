@@ -31,9 +31,6 @@ public abstract class BackgroundThread extends Thread {
      *
      * NEVER set daemon=true and override the cleanup() method. If this is a daemon thread there is no guarantee that
      * cleanup is called.
-     *
-     * @param name
-     * @param daemon
      */
     public BackgroundThread(String name, boolean daemon) {
         this.setName(name + ":" + getId());
@@ -98,8 +95,6 @@ public abstract class BackgroundThread extends Thread {
      * its execution. This might be elapsing time or availability of resources.
      *
      * Since there is a wait involved, this method should throw an InterruptedException
-     *
-     * @throws InterruptedException
      */
     protected abstract void waitCondition() throws InterruptedException;
 

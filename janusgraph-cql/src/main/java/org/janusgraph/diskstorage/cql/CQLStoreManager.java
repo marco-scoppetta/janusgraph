@@ -27,6 +27,8 @@ import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
@@ -39,6 +41,7 @@ import io.vavr.collection.HashMap;
 import io.vavr.collection.Iterator;
 import io.vavr.collection.Seq;
 import io.vavr.concurrent.Future;
+import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.PermanentBackendException;
@@ -64,8 +67,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -128,11 +133,10 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     private CqlSession session;
     private final StoreFeatures storeFeatures;
     private final Map<String, CQLKeyColumnValueStore> openStores;
+    private final Semaphore semaphore;
 
     /**
      * Constructor for the {@link CQLStoreManager} given a JanusGraph {@link Configuration}.
-     *
-     * @param configuration
      */
     public CQLStoreManager(Configuration configuration) throws PermanentBackendException {
         super(configuration);
@@ -140,6 +144,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
         this.batchSize = configuration.get(BATCH_STATEMENT_SIZE);
         this.atomicBatch = configuration.get(ATOMIC_BATCH_MUTATE);
         this.times = configuration.get(TIMESTAMP_PROVIDER);
+        this.semaphore = new Semaphore(configuration.get(MAX_REQUESTS_PER_CONNECTION));
 
         this.session = initialiseSession();
         initialiseKeyspace();
@@ -274,6 +279,32 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
         return this.session;
     }
 
+    ResultSet executeOnSession(Statement statement) {
+        try {
+            this.semaphore.acquire();
+            return this.session.execute(statement);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new JanusGraphException("Interrupted while acquiring resource to execute query on Session.");
+        } finally {
+            this.semaphore.release();
+        }
+    }
+
+    private CompletionStage<AsyncResultSet> executeAsyncOnSession(Statement statement){
+        try {
+            this.semaphore.acquire();
+            CompletionStage<AsyncResultSet> async = this.session.executeAsync(statement);
+//            async.thenApply((asyncResultSet) -> { this.semaphore.release(); return asyncResultSet;});
+            async.thenRun(this.semaphore::release);
+            return async;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            this.semaphore.release();
+            throw new JanusGraphException("Interrupted while acquiring resource to execute query on Session.");
+        }
+    }
+
     String getKeyspaceName() {
         return this.keyspace;
     }
@@ -381,7 +412,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
                 return Iterator.concat(deletions, additions);
             });
         }));
-        CompletableFuture<AsyncResultSet> result = this.session.executeAsync(builder.build()).toCompletableFuture();
+        CompletableFuture<AsyncResultSet> result = executeAsyncOnSession(builder.build()).toCompletableFuture();
 
         try {
             result.get();
@@ -420,7 +451,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
                         keyMutations.getAdditions().stream().map(addition -> columnValueStore.insertColumn(key, addition, additionTime))
                 ).collect(Collectors.toList());
 
-                CompletableFuture<AsyncResultSet> future = this.session.executeAsync(
+                CompletableFuture<AsyncResultSet> future = executeAsyncOnSession(
                         BatchStatement.newInstance(DefaultBatchType.UNLOGGED)
                                 .addAll(modifications)
                                 .setConsistencyLevel(consistencyLevel)

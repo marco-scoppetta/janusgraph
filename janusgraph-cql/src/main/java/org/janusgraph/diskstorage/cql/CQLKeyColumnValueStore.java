@@ -232,7 +232,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
         createTable = compressionOptions(createTable, configuration);
 
-        this.session.execute(createTable.build());
+        this.storeManager.executeOnSession(createTable.build());
     }
 
     private static CreateTableWithOptions compressionOptions(CreateTableWithOptions createTable, Configuration configuration) {
@@ -280,7 +280,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     @Override
     public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) {
-        ResultSet result = this.session.execute(this.getSlice.bind()
+        ResultSet result = this.storeManager.executeOnSession(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                 .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
@@ -363,7 +363,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         return Try.of(() -> new CQLResultSetKeyIterator(
                 query,
                 this.getter,
-                this.session.execute(this.getKeysRanged.bind()
+                this.storeManager.executeOnSession(this.getKeysRanged.bind()
                         .setToken(KEY_START_BINDING, tokenMap.newToken(query.getKeyStart().asByteBuffer()))
                         .setToken(KEY_END_BINDING, tokenMap.newToken(query.getKeyEnd().asByteBuffer()))
                         .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
@@ -382,7 +382,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
         return Try.of(() -> new CQLResultSetKeyIterator(
                 query,
                 this.getter,
-                this.session.execute(this.getKeysAll.bind()
+                this.storeManager.executeOnSession(this.getKeysAll.bind()
                         .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())
                         .setByteBuffer(SLICE_END_BINDING, query.getSliceEnd().asByteBuffer())
                         .setPageSize(this.pageSize)

@@ -23,7 +23,6 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.lang3.ClassUtils;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
 import org.janusgraph.diskstorage.StandardIndexProvider;
-import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.ConfigNamespace;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
@@ -50,7 +49,6 @@ import org.janusgraph.graphdb.types.typemaker.DisableDefaultSchemaMaker;
 import org.janusgraph.util.stats.MetricManager;
 import org.janusgraph.util.stats.NumberUtil;
 import org.janusgraph.util.system.ConfigurationUtil;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
@@ -73,11 +71,8 @@ import java.util.UUID;
  * <p>
  * After a graph database has been initialized with respect to a configuration, some parameters of graph database
  * configuration may no longer be modifiable.
- *
  */
 public class GraphDatabaseConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(GraphDatabaseConfiguration.class);
 
     public static final ConfigNamespace ROOT_NS = new ConfigNamespace(null, "root", "Root Configuration Namespace for the JanusGraph Graph Database");
 
@@ -397,7 +392,7 @@ public class GraphDatabaseConfiguration {
     public static final ConfigOption<String> STORAGE_BACKEND = new ConfigOption<>(STORAGE_NS, "backend",
             "The primary persistence provider used by JanusGraph.  This is required.  It should be set one of " +
                     "JanusGraph's built-in shorthand names for its standard storage backends " +
-                    "(shorthands: " + Joiner.on(", ").join(StandardStoreManager.getAllShorthands()) + ") " +
+                    "(shorthands: inmemory, cql, foundationdb) " +
                     "or to the full package and classname of a custom/third-party StoreManager implementation.",
             ConfigOption.Type.LOCAL, String.class);
 
@@ -470,14 +465,6 @@ public class GraphDatabaseConfiguration {
             "Whether JanusGraph should attempt to parallelize storage operations",
             ConfigOption.Type.MASKABLE, true);
 
-    /**
-     * A unique identifier for the machine running the JanusGraph instance.
-     * It must be ensured that no other machine accessing the storage backend can have the same identifier.
-     */
-//    public static final ConfigOption<String> INSTANCE_RID_RAW = new ConfigOption<>(STORAGE_NS,"machine-id",
-//            "A unique identifier for the machine running the JanusGraph instance",
-//            ConfigOption.Type.LOCAL, String.class);
-
     public static final ConfigOption<String[]> STORAGE_HOSTS = new ConfigOption<>(STORAGE_NS, "hostname",
             "The hostname or comma-separated list of hostnames of storage backend servers.  " +
                     "This is only applicable to some storage backends, such as cassandra and hbase.",
@@ -539,8 +526,7 @@ public class GraphDatabaseConfiguration {
                     "always dropped when clearing storage.",
             ConfigOption.Type.MASKABLE, true);
 
-    public static final ConfigNamespace LOCK_NS =
-            new ConfigNamespace(STORAGE_NS, "lock", "Options for locking on eventually-consistent stores");
+    public static final ConfigNamespace LOCK_NS = new ConfigNamespace(STORAGE_NS, "lock", "Options for locking on eventually-consistent stores");
 
     /**
      * Number of times the system attempts to acquire a lock before giving up and throwing an exception.
@@ -578,19 +564,10 @@ public class GraphDatabaseConfiguration {
      * will attempt to delete expired locks in a background daemon thread. False
      * will never attempt to delete expired locks. This option is only
      * meaningful for the default lock backend.
-     *
-     * @see #LOCK_BACKEND
      */
     public static final ConfigOption<Boolean> LOCK_CLEAN_EXPIRED = new ConfigOption<>(LOCK_NS, "clean-expired",
             "Whether to delete expired locks from the storage backend",
             ConfigOption.Type.MASKABLE, false);
-
-    /**
-     * Locker type to use.  The supported types are in {@link org.janusgraph.diskstorage.Backend}.
-     */
-    public static final ConfigOption<String> LOCK_BACKEND = new ConfigOption<>(LOCK_NS, "backend",
-            "Locker type to use",
-            ConfigOption.Type.GLOBAL_OFFLINE, "consistentkey");
 
     /**
      * Configuration setting key for the local lock mediator prefix
@@ -1346,8 +1323,7 @@ public class GraphDatabaseConfiguration {
         if (configuration.has(TX_DIRTY_SIZE)) {
             txDirtyVertexSize = configuration.get(TX_DIRTY_SIZE);
         } else {
-            txDirtyVertexSize = batchLoading ?
-                    TX_DIRTY_SIZE_DEFAULT_WITH_BATCH :
+            txDirtyVertexSize = batchLoading ? TX_DIRTY_SIZE_DEFAULT_WITH_BATCH :
                     TX_DIRTY_SIZE_DEFAULT_WITHOUT_BATCH;
         }
 
@@ -1409,23 +1385,23 @@ public class GraphDatabaseConfiguration {
 
     private void configureMetricsGangliaReporter() {
         if (configuration.has(GANGLIA_HOST_OR_GROUP)) {
-            final String host = configuration.get(GANGLIA_HOST_OR_GROUP);
-            final Duration intervalDuration = configuration.get(GANGLIA_INTERVAL);
-            final Integer port = configuration.get(GANGLIA_PORT);
+            String host = configuration.get(GANGLIA_HOST_OR_GROUP);
+            Duration intervalDuration = configuration.get(GANGLIA_INTERVAL);
+            Integer port = configuration.get(GANGLIA_PORT);
 
-            final UDPAddressingMode addressingMode;
-            final String addressingModeString = configuration.get(GANGLIA_ADDRESSING_MODE);
+            UDPAddressingMode addressingMode;
+            String addressingModeString = configuration.get(GANGLIA_ADDRESSING_MODE);
             if (addressingModeString.equalsIgnoreCase("multicast")) {
                 addressingMode = UDPAddressingMode.MULTICAST;
             } else if (addressingModeString.equalsIgnoreCase("unicast")) {
                 addressingMode = UDPAddressingMode.UNICAST;
             } else throw new AssertionError();
 
-            final Boolean proto31 = configuration.get(GANGLIA_USE_PROTOCOL_31);
+            Boolean proto31 = configuration.get(GANGLIA_USE_PROTOCOL_31);
 
-            final int ttl = configuration.get(GANGLIA_TTL);
+            int ttl = configuration.get(GANGLIA_TTL);
 
-            final UUID uuid = configuration.has(GANGLIA_UUID) ? UUID.fromString(configuration.get(GANGLIA_UUID)) : null;
+            UUID uuid = configuration.has(GANGLIA_UUID) ? UUID.fromString(configuration.get(GANGLIA_UUID)) : null;
 
             String spoof = null;
             if (configuration.has(GANGLIA_SPOOF)) spoof = configuration.get(GANGLIA_SPOOF);

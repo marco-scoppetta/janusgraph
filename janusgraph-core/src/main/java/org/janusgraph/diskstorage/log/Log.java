@@ -22,19 +22,14 @@ import java.util.concurrent.Future;
 /**
  * Represents a LOG that allows content to be added to it in the form of messages and to
  * read messages and their content from the LOG via registered {@link MessageReader}s.
- *
  */
 public interface Log {
-
 
     /**
      * Attempts to add the given content to the LOG and returns a {@link Future} for this action.
      * <p>
      * If the LOG is configured for immediate sending, then any exception encountered during this process is thrown
      * by this method. Otherwise, encountered exceptions are attached to the returned future.
-
-     * @param content
-     * @return
      */
     Future<Message> add(StaticBuffer content);
 
@@ -44,16 +39,12 @@ public interface Log {
      * <p>
      * If the LOG is configured for immediate sending, then any exception encountered during this process is thrown
      * by this method. Otherwise, encountered exceptions are attached to the returned future.
-     *
-     * @param content
-     * @return
      */
     Future<Message> add(StaticBuffer content, StaticBuffer key);
 
     /**
-     *
      * @param readMarker Indicates where to start reading from the LOG once message readers are registered
-     * @param reader The readers to register (all at once)
+     * @param reader     The readers to register (all at once)
      * @see #registerReaders(ReadMarker, Iterable)
      */
     void registerReader(ReadMarker readMarker, MessageReader... reader);
@@ -67,7 +58,7 @@ public interface Log {
      * previous {@link ReadMarker} or an exception will be thrown.
      *
      * @param readMarker Indicates where to start reading from the LOG once message readers are registered
-     * @param readers The readers to register (all at once)
+     * @param readers    The readers to register (all at once)
      */
     void registerReaders(ReadMarker readMarker, Iterable<MessageReader> readers);
 
@@ -76,21 +67,17 @@ public interface Log {
      * first place.
      * Note, that removing the last reader does not stop the reading process. Use {@link #close()} instead.
      *
-     * @param reader
      * @return true if this MessageReader was registered before and was successfully unregistered, else false
      */
     boolean unregisterReader(MessageReader reader);
 
     /**
      * Returns the name of this LOG
-     * @return
      */
     String getName();
 
     /**
      * Closes this LOG and stops the reading process.
-     *
-     * @throws org.janusgraph.diskstorage.BackendException
      */
     void close() throws BackendException;
 

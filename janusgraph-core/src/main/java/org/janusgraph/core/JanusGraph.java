@@ -155,8 +155,6 @@ public interface JanusGraph extends Graph {
 
     /**
      * The version of this JanusGraph graph database
-     *
-     * @return
      */
     static String version() {
         return JanusGraphConstants.VERSION;

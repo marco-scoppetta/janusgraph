@@ -25,7 +25,6 @@ import org.janusgraph.TestCategory;
 import org.janusgraph.core.Cardinality;
 import org.janusgraph.core.EdgeLabel;
 import org.janusgraph.core.JanusGraphEdge;
-import org.janusgraph.core.JanusGraphException;
 import org.janusgraph.core.JanusGraphRelation;
 import org.janusgraph.core.JanusGraphTransaction;
 import org.janusgraph.core.JanusGraphVertex;
@@ -35,7 +34,6 @@ import org.janusgraph.core.PropertyKey;
 import org.janusgraph.core.attribute.Cmp;
 import org.janusgraph.core.schema.ConsistencyModifier;
 import org.janusgraph.core.schema.JanusGraphIndex;
-import org.janusgraph.diskstorage.util.TestLockerManager;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -54,8 +52,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 
 
 @Tag(TestCategory.SERIAL_TESTS)
@@ -248,9 +244,7 @@ public abstract class JanusGraphEventualGraphTest extends JanusGraphBaseTest {
         mgmt.setConsistency(knows, ConsistencyModifier.LOCK);
         finishSchema();
 
-        TestLockerManager.ERROR_ON_LOCKING = true;
-        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH), true,
-                option(GraphDatabaseConfiguration.LOCK_BACKEND), "test");
+        clopen(option(GraphDatabaseConfiguration.STORAGE_BATCH), true);
 
 
         int numV = 10000;

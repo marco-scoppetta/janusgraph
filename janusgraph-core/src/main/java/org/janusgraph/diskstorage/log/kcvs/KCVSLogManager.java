@@ -55,8 +55,7 @@ public class KCVSLogManager implements LogManager {
             ConfigOption.Type.GLOBAL_OFFLINE, false);
 
     public static final ConfigOption<Integer> LOG_MAX_PARTITIONS = new ConfigOption<Integer>(LOG_NS, "max-partitions",
-            "The maximum number of partitions to use for logging. Setting up this many actual or virtual partitions. Must be bigger than 0" +
-                    "and a power of 2.",
+            "The maximum number of partitions to use for logging. Setting up this many actual or virtual partitions. Must be bigger than 0 and a power of 2.",
             ConfigOption.Type.FIXED, Integer.class, integer -> integer != null && integer > 0 && NumberUtil.isPowerOf2(integer));
 
     /**
@@ -65,7 +64,6 @@ public class KCVSLogManager implements LogManager {
      * the number by this constant.
      */
     private static final int CLUSTER_SIZE_DIVIDER = 8;
-
 
     /**
      * Configuration of this LOG manager
@@ -160,7 +158,7 @@ public class KCVSLogManager implements LogManager {
             for (int i = 0; i < numPartitions; i++) writePartitions[i] = i;
             if (storeManager.getFeatures().hasLocalKeyPartition()) {
                 //Write only to local partitions
-                final List<Integer> localPartitions = new ArrayList<>();
+                List<Integer> localPartitions = new ArrayList<>();
                 try {
                     List<PartitionIDRange> partitionRanges = PartitionIDRange.getIDRanges(partitionBitWidth,
                             storeManager.getLocalKeyPartition());

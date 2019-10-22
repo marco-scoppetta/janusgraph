@@ -298,8 +298,7 @@ public abstract class JanusGraphBaseTest {
             Preconditions.checkNotNull(logStoreManager);
             if (!logManagers.containsKey(logManagerName)) {
                 //Open LOG manager - only supports KCVSLog
-                final Configuration logConfig = configuration.restrictTo(logManagerName);
-                Preconditions.checkState(logConfig.get(LOG_BACKEND).equals(LOG_BACKEND.getDefaultValue()));
+                Configuration logConfig = configuration.restrictTo(logManagerName);
                 logManagers.put(logManagerName, new KCVSLogManager(logStoreManager, logConfig));
             }
             Preconditions.checkState(logManagers.containsKey(logManagerName));

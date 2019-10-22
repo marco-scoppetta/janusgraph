@@ -28,8 +28,6 @@ public interface TransactionRecovery {
 
     /**
      * Shuts down the transaction recovery process
-     *
-     * @throws JanusGraphException
      */
     void shutdown() throws JanusGraphException;
 

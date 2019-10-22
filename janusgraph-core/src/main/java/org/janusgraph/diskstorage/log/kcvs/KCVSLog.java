@@ -110,7 +110,7 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.TI
 @PreInitializeConfigOptions
 public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(KCVSLog.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KCVSLog.class);
 
     //########## Configuration Options #############
 
@@ -139,7 +139,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
      * This setting is not configurable. If too many messages end up under one key, please
      * configure either 1) the number of buckets or 2) introduce partitioning.
      */
-    public static final long TIMESLICE_INTERVAL = 100L * 1000 * 1000; //100 seconds
+    private static final long TIMESLICE_INTERVAL = 100L * 1000 * 1000; //100 seconds
 
     /**
      * For batch sending to make sense against a KCVS, the maximum send/delivery delay must be at least
@@ -312,7 +312,6 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
     /**
      * Closes the LOG by terminating all threads and waiting for their termination.
      *
-     * @throws org.janusgraph.diskstorage.BackendException
      */
     @Override
     public synchronized void close() throws BackendException {
@@ -324,11 +323,11 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
             try {
                 readExecutor.awaitTermination(1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                log.error("Could not terminate reader thread pool for KCVSLog " + name + " due to interruption");
+                LOG.error("Could not terminate reader thread pool for KCVSLog " + name + " due to interruption");
             }
             if (!readExecutor.isTerminated()) {
                 readExecutor.shutdownNow();
-                log.error("Reader thread pool for KCVSLog " + name + " did not shut down in time - could not clean up or set read markers");
+                LOG.error("Reader thread pool for KCVSLog " + name + " did not shut down in time - could not clean up or set read markers");
             } else {
                 for (MessagePuller puller : msgPullers) {
                     puller.close();
@@ -458,7 +457,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         } else {
             try {
                 outgoingMsg.put(envelope); //Produces back pressure when full
-                log.debug("Enqueued {} for partition {}", envelope, partitionId);
+                LOG.debug("Enqueued {} for partition {}", envelope, partitionId);
             } catch (InterruptedException e) {
                 throw new JanusGraphException("Got interrupted waiting to send message", e);
             }
@@ -500,16 +499,16 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                     for (MessageEnvelope env : msgEnvelopes) {
                         mutations.put(env.key, env.entry);
                         long ts = env.entry.getColumn().getLong(0);
-                        log.debug("Preparing to write {} to storage with column/timestamp {}", env, times.getTime(ts));
+                        LOG.debug("Preparing to write {} to storage with column/timestamp {}", env, times.getTime(ts));
                     }
 
                     final Map<StaticBuffer, KCVMutation> muts = new HashMap<>(mutations.keySet().size());
                     for (StaticBuffer key : mutations.keySet()) {
                         muts.put(key, new KCVMutation(mutations.get(key), KeyColumnValueStore.NO_DELETIONS));
-                        log.debug("Built mutation on key {} with {} additions", key, mutations.get(key).size());
+                        LOG.debug("Built mutation on key {} with {} additions", key, mutations.get(key).size());
                     }
                     manager.storeManager.mutateMany(ImmutableMap.of(store.getName(), muts), txh);
-                    log.debug("Wrote {} total envelopes with operation timestamp {}", msgEnvelopes.size(), txh.getConfiguration().getCommitTime());
+                    LOG.debug("Wrote {} total envelopes with operation timestamp {}", msgEnvelopes.size(), txh.getConfiguration().getCommitTime());
                     return Boolean.TRUE;
                 }
 
@@ -519,7 +518,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 }
             }, this, times, maxWriteTime);
             Preconditions.checkState(success);
-            log.debug("Wrote {} messages to backend", msgEnvelopes.size());
+            LOG.debug("Wrote {} messages to backend", msgEnvelopes.size());
             for (MessageEnvelope msgEnvelope : msgEnvelopes)
                 msgEnvelope.message.delivered();
         } catch (JanusGraphException e) {
@@ -646,7 +645,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 for (int bucketId = 0; bucketId < numBuckets; bucketId++) {
                     msgPullers[pos] = new MessagePuller(partitionId, bucketId);
 
-                    log.debug("Creating LOG read executor: initialDelay={} delay={} unit={}", INITIAL_READER_DELAY.toNanos(), readPollingInterval.toNanos(), TimeUnit.NANOSECONDS);
+                    LOG.debug("Creating LOG read executor: initialDelay={} delay={} unit={}", INITIAL_READER_DELAY.toNanos(), readPollingInterval.toNanos(), TimeUnit.NANOSECONDS);
                     readExecutor.scheduleWithFixedDelay(
                             msgPullers[pos],
                             INITIAL_READER_DELAY.toNanos(),
@@ -717,7 +716,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
                 if (0 > messageTimeStart.compareTo(messageTimeEnd)) {
                     // nextTimepoint is strictly earlier than timeWindowEnd
-                    log.trace("MessagePuller time window: [{}, {})", messageTimeStart, messageTimeEnd);
+                    LOG.trace("MessagePuller time window: [{}, {})", messageTimeStart, messageTimeEnd);
                 } else {
                     /*
                      * nextTimepoint is equal to or later than timeWindowEnd. We
@@ -732,9 +731,9 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                     Duration delta = Duration.between(messageTimeEnd, messageTimeStart);
 
                     if (delta.toNanos() / 3 > readLagTime.toNanos()) {
-                        log.warn("MessagePuller configured with ReadMarker timestamp in the improbably distant future: {} (current time is {})", messageTimeStart, currentTime);
+                        LOG.warn("MessagePuller configured with ReadMarker timestamp in the improbably distant future: {} (current time is {})", messageTimeStart, currentTime);
                     } else {
-                        log.debug("MessagePuller configured with ReadMarker timestamp slightly ahead of read lag time; waiting for the clock to catch up");
+                        LOG.debug("MessagePuller configured with ReadMarker timestamp slightly ahead of read lag time; waiting for the clock to catch up");
                     }
 
                     return;
@@ -745,7 +744,7 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                 StaticBuffer logKey = getLogKey(partitionId, bucketId, timeslice);
                 KeySliceQuery query = new KeySliceQuery(logKey, BufferUtil.getLongBuffer(times.getTime(messageTimeStart)), BufferUtil.getLongBuffer(times.getTime(messageTimeEnd)));
                 query.setLimit(maxReadMsg);
-                log.trace("Converted MessagePuller time window to {}", query);
+                LOG.trace("Converted MessagePuller time window to {}", query);
 
                 List<Entry> entries = BackendOperation.execute(getOperation(query), KCVSLog.this, times, maxReadTime);
                 prepareMessageProcessing(entries);
@@ -756,16 +755,16 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
                     Entry lastEntry = entries.get(entries.size() - 1);
                     //Adding 2 microseconds (=> very few extra messages), not adding one to avoid that the slice is possibly empty
                     messageTimeEnd = messageTimeEnd.plus(TWO_MICROSECONDS);
-                    log.debug("Extended time window to {}", messageTimeEnd);
+                    LOG.debug("Extended time window to {}", messageTimeEnd);
                     //Retrieve all messages up to this adjusted timepoint (no limit this time => get all entries to that point)
                     query = new KeySliceQuery(logKey, BufferUtil.nextBiggerBuffer(lastEntry.getColumn()), BufferUtil.getLongBuffer(times.getTime(messageTimeEnd)));
-                    log.debug("Converted extended MessagePuller time window to {}", query);
+                    LOG.debug("Converted extended MessagePuller time window to {}", query);
                     List<Entry> extraEntries = BackendOperation.execute(getOperation(query), KCVSLog.this, times, maxReadTime);
                     prepareMessageProcessing(extraEntries);
                 }
                 messageTimeStart = messageTimeEnd;
             } catch (Throwable e) {
-                log.warn("Could not read messages for timestamp [" + messageTimeStart + "] (this read will be retried)", e);
+                LOG.warn("Could not read messages for timestamp [" + messageTimeStart + "] (this read will be retried)", e);
             }
         }
 
@@ -774,18 +773,18 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
 
             if (!readMarker.hasIdentifier()) {
                 this.messageTimeStart = readMarker.getStartTime(times);
-                log.debug("Loaded unidentified ReadMarker start time {} into {}", messageTimeStart, this);
+                LOG.debug("Loaded unidentified ReadMarker start time {} into {}", messageTimeStart, this);
             } else {
                 long savedTimestamp = readSetting(readMarker.getIdentifier(), getMarkerColumn(partitionId, bucketId), times.getTime(readMarker.getStartTime(times)));
                 this.messageTimeStart = times.getTime(savedTimestamp);
-                log.debug("Loaded identified ReadMarker start time {} into {}", messageTimeStart, this);
+                LOG.debug("Loaded identified ReadMarker start time {} into {}", messageTimeStart, this);
             }
         }
 
         private void prepareMessageProcessing(List<Entry> entries) {
             for (Entry entry : entries) {
                 KCVSMessage message = parseMessage(entry);
-                log.debug("Parsed message {}, about to submit this message to the reader executor", message);
+                LOG.debug("Parsed message {}, about to submit this message to the reader executor", message);
                 for (MessageReader reader : readers) {
                     readExecutor.submit(new ProcessMessageJob(message, reader));
                 }
@@ -795,12 +794,12 @@ public class KCVSLog implements Log, BackendOperation.TransactionalProvider {
         private void setReadMarker() {
             if (readMarker.hasIdentifier()) {
                 try {
-                    log.debug("Attempting to persist read marker with identifier {}", readMarker.getIdentifier());
+                    LOG.debug("Attempting to persist read marker with identifier {}", readMarker.getIdentifier());
                     writeSetting(readMarker.getIdentifier(), getMarkerColumn(partitionId, bucketId), times.getTime(messageTimeStart));
-                    log.debug("Persisted read marker: identifier={} partitionId={} buckedId={} nextTimepoint={}",
+                    LOG.debug("Persisted read marker: identifier={} partitionId={} buckedId={} nextTimepoint={}",
                             readMarker.getIdentifier(), partitionId, bucketId, messageTimeStart);
                 } catch (Throwable e) {
-                    log.error("Could not persist read marker [" + readMarker.getIdentifier() + "] on bucket [" + bucketId + "] + partition [" + partitionId + "]", e);
+                    LOG.error("Could not persist read marker [" + readMarker.getIdentifier() + "] on bucket [" + bucketId + "] + partition [" + partitionId + "]", e);
                 }
             }
         }

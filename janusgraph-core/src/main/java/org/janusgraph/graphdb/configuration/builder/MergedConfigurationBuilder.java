@@ -54,7 +54,6 @@ public class MergedConfigurationBuilder {
      *
      * We create an 'overwrite' config in order to set and force parameters that were not explicitly set by the user in local config.
      * @param localBasicConfiguration local configurations provided by user
-     * @param storeManager
      * @return Configuration that contains both local and global bits, to bed fed to the new Graph
      */
     public static MergedConfiguration build(BasicConfiguration localBasicConfiguration, BasicConfiguration globalBasicConfig, KeyColumnValueStoreManager storeManager) {
