@@ -75,7 +75,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
     @Override
     public <O> O get(String key, Class<O> dataType) {
         StaticBuffer column = string2StaticBuffer(key);
-        final KeySliceQuery query = new KeySliceQuery(rowKey, column, BufferUtil.nextBiggerBuffer(column));
+        KeySliceQuery query = new KeySliceQuery(rowKey, column, BufferUtil.nextBiggerBuffer(column));
         StaticBuffer result = BackendOperation.execute(new BackendOperation.Transactional<StaticBuffer>() {
             @Override
             public StaticBuffer call(StoreTransaction txh) throws BackendException {
@@ -109,9 +109,9 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
     }
 
     public <O> void set(String key, O value, O expectedValue, boolean checkExpectedValue) {
-        final StaticBuffer column = string2StaticBuffer(key);
-        final List<Entry> additions;
-        final List<StaticBuffer> deletions;
+        StaticBuffer column = string2StaticBuffer(key);
+        List<Entry> additions;
+        List<StaticBuffer> deletions;
         if (value != null) { //Addition
             additions = new ArrayList<>(1);
             deletions = KeyColumnValueStore.NO_DELETIONS;
@@ -121,7 +121,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
             additions = KeyColumnValueStore.NO_ADDITIONS;
             deletions = Lists.newArrayList(column);
         }
-        final StaticBuffer expectedValueBuffer;
+        StaticBuffer expectedValueBuffer;
         if (checkExpectedValue && expectedValue != null) {
             expectedValueBuffer = object2StaticBuffer(expectedValue);
         } else {
@@ -155,7 +155,7 @@ public class KCVSConfiguration implements ConcurrentWriteConfiguration {
     }
 
     public ReadConfiguration asReadConfiguration() {
-        final Map<String, Object> entries = toMap();
+        Map<String, Object> entries = toMap();
         return new ReadConfiguration() {
             @Override
             public <O> O get(String key, Class<O> dataType) {

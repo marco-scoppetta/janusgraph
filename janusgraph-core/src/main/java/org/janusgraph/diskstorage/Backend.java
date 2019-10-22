@@ -206,7 +206,9 @@ public class Backend implements LockerProvider, AutoCloseable {
     public Locker getLocker(String lockerName) {
         Locker l = lockers.get(lockerName);
         if (null == l) {
-            return lockers.put(lockerName, createLocker(lockerName));
+            Locker locker = createLocker(lockerName);
+            lockers.put(lockerName, locker);
+            return locker;
         }
         return l;
     }
