@@ -143,28 +143,4 @@ public class GraphOfTheGodsFactory {
         tx.commit();
     }
 
-    /**
-     * Calls {@link JanusGraphFactory#open(String)}, passing the JanusGraph configuration file path
-     * which must be the sole element in the {@code args} array, then calls
-     * {@link #load(org.janusgraph.core.JanusGraph)} on the opened graph,
-     * then calls {@link org.janusgraph.core.JanusGraph#close()}
-     * and returns.
-     * <p>
-     * This method may call {@link System#exit(int)} if it encounters an error, such as
-     * failure to parse its arguments.  Only use this method when executing main from
-     * a command line.  Use one of the other method {@link #load(org.janusgraph.core.JanusGraph)}) when calling from
-     * an enclosing application.
-     *
-     * @param args a singleton array containing a path to a JanusGraph config properties file
-     */
-    public static void main(String args[]) {
-        if (null == args || 1 != args.length) {
-            System.err.println("Usage: GraphOfTheGodsFactory <janusgraph-config-file>");
-            System.exit(1);
-        }
-
-        JanusGraph g = JanusGraphFactory.open(args[0]);
-        load(g);
-        g.close();
-    }
 }

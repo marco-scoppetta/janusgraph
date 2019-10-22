@@ -83,40 +83,10 @@ public class JanusGraphFactory {
     /**
      * Opens a {@link JanusGraph} database.
      * <p>
-     * If the argument points to a configuration file, the configuration file is loaded to configure the JanusGraph graph
-     * If the string argument is a configuration short-cut, then the short-cut is parsed and used to configure the returned JanusGraph graph.
-     * <p>
-     * A configuration short-cut is of the form:
-     * [STORAGE_BACKEND_NAME]:[DIRECTORY_OR_HOST]
-     *
-     * @param shortcutOrFile Configuration file name or configuration short-cut
-     * @return JanusGraph graph database configured according to the provided configuration
-     * @see <a href="https://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
-     * @see <a href="https://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
+     * The string argument is a configuration short-cut, it is parsed and used to configure the returned JanusGraph graph.
      */
     public static StandardJanusGraph open(String shortcutOrFile) {
         return open(getLocalConfiguration(shortcutOrFile));
-    }
-
-    /**
-     * Opens a {@link JanusGraph} database.
-     * <p>
-     * If the argument points to a configuration file, the configuration file is loaded to configure the JanusGraph graph
-     * If the string argument is a configuration short-cut, then the short-cut is parsed and used to configure the returned JanusGraph graph.
-     * This method shouldn't be called by end users; it is used by internal server processes to
-     * open graphs defined at server start that do not include the graphname property.
-     * <p>
-     * A configuration short-cut is of the form:
-     * [STORAGE_BACKEND_NAME]:[DIRECTORY_OR_HOST]
-     *
-     * @param shortcutOrFile Configuration file name or configuration short-cut
-     * @param backupName     Backup name for graph
-     * @return JanusGraph graph database configured according to the provided configuration
-     * @see <a href="https://docs.janusgraph.org/latest/configuration.html">"Configuration" manual chapter</a>
-     * @see <a href="https://docs.janusgraph.org/latest/config-ref.html">Configuration Reference</a>
-     */
-    public static StandardJanusGraph open(String shortcutOrFile, String backupName) {
-        return open(getLocalConfiguration(shortcutOrFile), backupName);
     }
 
     /**
@@ -263,7 +233,6 @@ public class JanusGraphFactory {
      * <p>
      * In the builder, the configuration options for the graph can be set individually. Once all options are configured,
      * the graph can be opened with {@link org.janusgraph.core.JanusGraphFactory.Builder#open()}.
-     *
      */
     public static Builder build() {
         return new Builder();
@@ -295,8 +264,6 @@ public class JanusGraphFactory {
                     writeConfiguration.copy(), BasicConfiguration.Restriction.NONE);
             return JanusGraphFactory.open(mc);
         }
-
-
     }
 
     /**
@@ -343,107 +310,35 @@ public class JanusGraphFactory {
     }
 
     private static ReadConfiguration getLocalConfiguration(String shortcutOrFile) {
-        File file = new File(shortcutOrFile);
-        if (file.exists()) return getLocalConfiguration(file);
-        else {
-            int pos = shortcutOrFile.indexOf(':');
-            if (pos < 0) pos = shortcutOrFile.length();
-            String backend = shortcutOrFile.substring(0, pos);
-            Preconditions.checkArgument(StandardStoreManager.getAllManagerClasses().containsKey(backend.toLowerCase()), "Backend shorthand unknown: %s", backend);
-            String secondArg = null;
-            if (pos + 1 < shortcutOrFile.length()) secondArg = shortcutOrFile.substring(pos + 1).trim();
-            BaseConfiguration config = new BaseConfiguration();
-            ModifiableConfiguration writeConfig = new ModifiableConfiguration(ROOT_NS, new CommonsConfiguration(config), BasicConfiguration.Restriction.NONE);
-            writeConfig.set(STORAGE_BACKEND, backend);
-            ConfigOption option = Backend.getOptionForShorthand(backend);
-            if (option == null) {
-                Preconditions.checkArgument(secondArg == null);
-            } else if (option == STORAGE_DIRECTORY || option == STORAGE_CONF_FILE) {
-                Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
-                writeConfig.set(option, getAbsolutePath(secondArg));
-            } else if (option == STORAGE_HOSTS) {
-                Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
-                writeConfig.set(option, new String[]{secondArg});
-            } else throw new IllegalArgumentException("Invalid configuration option for backend " + option);
-            return new CommonsConfiguration(config);
-        }
+        int pos = shortcutOrFile.indexOf(':');
+        if (pos < 0) pos = shortcutOrFile.length();
+        String backend = shortcutOrFile.substring(0, pos);
+        Preconditions.checkArgument(StandardStoreManager.getAllManagerClasses().containsKey(backend.toLowerCase()), "Backend shorthand unknown: %s", backend);
+        String secondArg = null;
+        if (pos + 1 < shortcutOrFile.length()) secondArg = shortcutOrFile.substring(pos + 1).trim();
+        BaseConfiguration config = new BaseConfiguration();
+        ModifiableConfiguration writeConfig = new ModifiableConfiguration(ROOT_NS, new CommonsConfiguration(config), BasicConfiguration.Restriction.NONE);
+        writeConfig.set(STORAGE_BACKEND, backend);
+        ConfigOption option = Backend.getOptionForShorthand(backend);
+        if (option == null) {
+            Preconditions.checkArgument(secondArg == null);
+        } else if (option == STORAGE_DIRECTORY || option == STORAGE_CONF_FILE) {
+            Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
+            writeConfig.set(option, getAbsolutePath(secondArg));
+        } else if (option == STORAGE_HOSTS) {
+            Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
+            writeConfig.set(option, new String[]{secondArg});
+        } else throw new IllegalArgumentException("Invalid configuration option for backend " + option);
+        return new CommonsConfiguration(config);
     }
 
-    /**
-     * Load a properties file containing a JanusGraph graph configuration.
-     * <p>
-     * <ol>
-     * <li>Load the file contents into a {@link org.apache.commons.configuration.PropertiesConfiguration}</li>
-     * <li>For each key that points to a configuration object that is either a directory
-     * or local file, check
-     * whether the associated value is a non-null, non-absolute path. If so,
-     * then prepend the absolute path of the parent directory of the provided configuration {@code file}.
-     * This has the effect of making non-absolute backend
-     * paths relative to the config file's directory rather than the JVM's
-     * working directory.
-     * <li>Return the {@link ReadConfiguration} for the prepared configuration file</li>
-     * </ol>
-     * <p>
-     *
-     * @param file A properties file to load
-     * @return A configuration derived from {@code file}
-     */
-    private static ReadConfiguration getLocalConfiguration(File file) {
-        Preconditions.checkArgument(file != null && file.exists() && file.isFile() && file.canRead(),
-                "Need to specify a readable configuration file, but was given: %s", file.toString());
-
-        try {
-            PropertiesConfiguration configuration = new PropertiesConfiguration(file);
-
-            final File tmpParent = file.getParentFile();
-            final File configParent;
-
-            if (null == tmpParent) {
-                /*
-                 * null usually means we were given a JanusGraph config file path
-                 * string like "foo.properties" that refers to the current
-                 * working directory of the process.
-                 */
-                configParent = new File(System.getProperty("user.dir"));
-            } else {
-                configParent = tmpParent;
-            }
-
-            Preconditions.checkNotNull(configParent);
-            Preconditions.checkArgument(configParent.isDirectory());
-
-            // TODO this mangling logic is a relic from the hardcoded string days; it should be deleted and rewritten as a setting on ConfigOption
-            final Pattern p = Pattern.compile("(" +
-                    Pattern.quote(STORAGE_NS.getName()) + "\\..*" +
-                    "(" + Pattern.quote(STORAGE_DIRECTORY.getName()) + "|" +
-                    Pattern.quote(STORAGE_CONF_FILE.getName()) + ")"
-                    + "|" +
-                    Pattern.quote(INDEX_NS.getName()) + "\\..*" +
-                    "(" + Pattern.quote(INDEX_DIRECTORY.getName()) + "|" +
-                    Pattern.quote(INDEX_CONF_FILE.getName()) + ")"
-                    + ")");
-
-            final Iterator<String> keysToMangle = Iterators.filter(configuration.getKeys(), key -> null != key && p.matcher(key).matches());
-
-            while (keysToMangle.hasNext()) {
-                String k = keysToMangle.next();
-                Preconditions.checkNotNull(k);
-                final String s = configuration.getString(k);
-                Preconditions.checkArgument(StringUtils.isNotBlank(s), "Invalid Configuration: key %s has null empty value", k);
-                configuration.setProperty(k, getAbsolutePath(configParent, s));
-            }
-            return new CommonsConfiguration(configuration);
-        } catch (ConfigurationException e) {
-            throw new IllegalArgumentException("Could not load configuration at: " + file, e);
-        }
-    }
 
     private static String getAbsolutePath(String file) {
         return getAbsolutePath(new File(System.getProperty("user.dir")), file);
     }
 
     private static String getAbsolutePath(File configParent, String file) {
-        final File storeDirectory = new File(file);
+        File storeDirectory = new File(file);
         if (!storeDirectory.isAbsolute()) {
             String newFile = configParent.getAbsolutePath() + File.separator + file;
             LOG.debug("Overwrote relative path: was {}, now {}", sanitizeAndLaunder(file), sanitizeAndLaunder(newFile));
