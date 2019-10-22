@@ -184,7 +184,7 @@ public interface CQLConfigOptions {
             "max-requests-per-connection",
             "The maximum number of requests that can be executed concurrently on a connection.",
             ConfigOption.Type.FIXED,
-            1024);
+            2048);
 
 
     // SSL

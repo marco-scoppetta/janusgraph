@@ -175,7 +175,7 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
         // We need a good amount of parallelism to have a good chance to spot possible issues. Don't use smaller values.
         int numberOfConcurrentTransactions = 8;
         int commitSize = 3000;
-        int txs = 5;
+        int txs = 20;
         ExecutorService executorService = Executors.newFixedThreadPool(numberOfConcurrentTransactions);
 
         long start = System.currentTimeMillis();
