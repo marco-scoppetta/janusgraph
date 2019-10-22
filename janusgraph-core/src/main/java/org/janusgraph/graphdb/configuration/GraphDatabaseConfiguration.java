@@ -23,7 +23,6 @@ import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.lang3.ClassUtils;
 import org.janusgraph.core.schema.DefaultSchemaMaker;
 import org.janusgraph.diskstorage.StandardIndexProvider;
-import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
 import org.janusgraph.diskstorage.configuration.ConfigNamespace;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
@@ -393,7 +392,7 @@ public class GraphDatabaseConfiguration {
     public static final ConfigOption<String> STORAGE_BACKEND = new ConfigOption<>(STORAGE_NS, "backend",
             "The primary persistence provider used by JanusGraph.  This is required.  It should be set one of " +
                     "JanusGraph's built-in shorthand names for its standard storage backends " +
-                    "(shorthands: " + Joiner.on(", ").join(StandardStoreManager.getAllShorthands()) + ") " +
+                    "(shorthands: inmemory, cql, foundationdb) " +
                     "or to the full package and classname of a custom/third-party StoreManager implementation.",
             ConfigOption.Type.LOCAL, String.class);
 

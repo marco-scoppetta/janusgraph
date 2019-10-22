@@ -16,20 +16,14 @@ package org.janusgraph.core;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.janusgraph.core.log.LogProcessorFramework;
 import org.janusgraph.core.log.TransactionRecovery;
 import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.StandardStoreManager;
 import org.janusgraph.diskstorage.configuration.BasicConfiguration;
-import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.diskstorage.configuration.MergedConfiguration;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.ReadConfiguration;
@@ -51,24 +45,13 @@ import org.janusgraph.util.system.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.time.Instant;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.GRAPH_NAME;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_CONF_FILE;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_DIRECTORY;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.INDEX_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ROOT_NS;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_CONF_FILE;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_DIRECTORY;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_HOSTS;
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_NS;
 import static org.janusgraph.graphdb.management.JanusGraphManager.JANUS_GRAPH_MANAGER_EXPECTED_STATE_MSG;
-import static org.janusgraph.util.system.LoggerUtil.sanitizeAndLaunder;
 
 /**
  * JanusGraphFactory is used to open or instantiate a JanusGraph graph database.
@@ -83,10 +66,10 @@ public class JanusGraphFactory {
     /**
      * Opens a {@link JanusGraph} database.
      * <p>
-     * The string argument is a configuration short-cut, it is parsed and used to configure the returned JanusGraph graph.
+     * The string argument is a shortcut to identify which type of Backend system should be used.
      */
-    public static StandardJanusGraph open(String shortcutOrFile) {
-        return open(getLocalConfiguration(shortcutOrFile));
+    public static StandardJanusGraph open(String backendShortcut) {
+        return open(getLocalConfiguration(backendShortcut));
     }
 
     /**
@@ -174,8 +157,6 @@ public class JanusGraphFactory {
 
     /**
      * Return a Set of graph names stored in the {@link JanusGraphManager}
-     *
-     * @return Set&lt;String&gt;
      */
     public static Set<String> getGraphNames() {
         final JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
@@ -186,8 +167,6 @@ public class JanusGraphFactory {
     /**
      * Removes {@link Graph} from {@link JanusGraphManager} graph reference tracker, if exists
      * there.
-     *
-     * @param graph Graph
      */
     public static void close(Graph graph) throws Exception {
         JanusGraphManager jgm = JanusGraphManagerUtility.getInstance();
@@ -309,44 +288,11 @@ public class JanusGraphFactory {
         return ConfigurationUtil.instantiate(className, new Object[]{configuration}, new Class[]{org.janusgraph.diskstorage.configuration.Configuration.class});
     }
 
-    private static ReadConfiguration getLocalConfiguration(String shortcutOrFile) {
-        int pos = shortcutOrFile.indexOf(':');
-        if (pos < 0) pos = shortcutOrFile.length();
-        String backend = shortcutOrFile.substring(0, pos);
-        Preconditions.checkArgument(StandardStoreManager.getAllManagerClasses().containsKey(backend.toLowerCase()), "Backend shorthand unknown: %s", backend);
-        String secondArg = null;
-        if (pos + 1 < shortcutOrFile.length()) secondArg = shortcutOrFile.substring(pos + 1).trim();
+    private static ReadConfiguration getLocalConfiguration(String backendShortcut) {
         BaseConfiguration config = new BaseConfiguration();
         ModifiableConfiguration writeConfig = new ModifiableConfiguration(ROOT_NS, new CommonsConfiguration(config), BasicConfiguration.Restriction.NONE);
-        writeConfig.set(STORAGE_BACKEND, backend);
-        ConfigOption option = Backend.getOptionForShorthand(backend);
-        if (option == null) {
-            Preconditions.checkArgument(secondArg == null);
-        } else if (option == STORAGE_DIRECTORY || option == STORAGE_CONF_FILE) {
-            Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
-            writeConfig.set(option, getAbsolutePath(secondArg));
-        } else if (option == STORAGE_HOSTS) {
-            Preconditions.checkArgument(StringUtils.isNotBlank(secondArg), "Need to provide additional argument to initialize storage backend");
-            writeConfig.set(option, new String[]{secondArg});
-        } else throw new IllegalArgumentException("Invalid configuration option for backend " + option);
+        writeConfig.set(STORAGE_BACKEND, backendShortcut);
         return new CommonsConfiguration(config);
-    }
-
-
-    private static String getAbsolutePath(String file) {
-        return getAbsolutePath(new File(System.getProperty("user.dir")), file);
-    }
-
-    private static String getAbsolutePath(File configParent, String file) {
-        File storeDirectory = new File(file);
-        if (!storeDirectory.isAbsolute()) {
-            String newFile = configParent.getAbsolutePath() + File.separator + file;
-            LOG.debug("Overwrote relative path: was {}, now {}", sanitizeAndLaunder(file), sanitizeAndLaunder(newFile));
-            return newFile;
-        } else {
-            LOG.debug("Loaded absolute path for key: {}", sanitizeAndLaunder(file));
-            return file;
-        }
     }
 
 }

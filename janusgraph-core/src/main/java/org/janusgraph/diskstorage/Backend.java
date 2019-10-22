@@ -146,7 +146,6 @@ public class Backend implements LockerProvider, AutoCloseable {
     private final KCVSLogManager txLogManager;
     private final LogManager userLogManager;
 
-
     private final Map<String, IndexProvider> indexes;
 
     private final int bufferSize;
@@ -200,7 +199,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         initialize();
     }
 
-
     //Method invoked by ExpectedValueCheckingStoreManager, which is only used when Backend does not support native locking.
     @Override
     public Locker getLocker(String lockerName) {
@@ -212,7 +210,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         }
         return l;
     }
-
 
     /**
      * Initializes this backend with the given configuration.
@@ -407,8 +404,7 @@ public class Backend implements LockerProvider, AutoCloseable {
             indexTx.put(entry.getKey(), new IndexTransaction(entry.getValue(), indexKeyRetriever.get(entry.getKey()), configuration, maxWriteTime));
         }
 
-        return new BackendTransaction(cacheTx, configuration, storeFeatures, edgeStore, indexStore, txLogStore,
-                maxReadTime, indexTx, threadPool);
+        return new BackendTransaction(cacheTx, configuration, storeFeatures, edgeStore, indexStore, txLogStore, maxReadTime, indexTx, threadPool);
     }
 
     public synchronized void close() throws BackendException {
@@ -468,30 +464,6 @@ public class Backend implements LockerProvider, AutoCloseable {
         return new ModifiableConfiguration(JOB_NS, new CommonsConfiguration(new BaseConfiguration()),
                 BasicConfiguration.Restriction.NONE);
     }
-
-    //############ Registered Storage Managers ##############
-
-    private static final ImmutableMap<StandardStoreManager, ConfigOption<?>> STORE_SHORTHAND_OPTIONS;
-
-    static {
-        Map<StandardStoreManager, ConfigOption<?>> m = new HashMap<>();
-        STORE_SHORTHAND_OPTIONS = ImmutableMap.copyOf(m);
-    }
-
-    public static ConfigOption<?> getOptionForShorthand(String shorthand) {
-        if (null == shorthand)
-            return null;
-
-        shorthand = shorthand.toLowerCase();
-
-        for (StandardStoreManager m : STORE_SHORTHAND_OPTIONS.keySet()) {
-            if (m.getShorthands().contains(shorthand))
-                return STORE_SHORTHAND_OPTIONS.get(m);
-        }
-
-        return null;
-    }
-
 
     private Locker createLocker(String lockerName) {
         KeyColumnValueStore lockerStore;
