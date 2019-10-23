@@ -98,7 +98,7 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
         Thread[] writeThreads = new Thread[4];
         long start = System.currentTimeMillis();
         TestTimeAccumulator.reset();
-        System.out.println("statrting writes");
+        System.out.println("starting writes");
         for (int t = 0; t < writeThreads.length; t++) {
             writeThreads[t] = new Thread(() -> {
                 for (int r = 0; r < rounds; r++) {

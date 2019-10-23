@@ -257,10 +257,10 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
             return;
         }
 
-        final Configuration configuration = getStorageConfig();
+        Configuration configuration = getStorageConfig();
 
         // Setting replication strategy based on value reading from the configuration: either "SimpleStrategy" or "NetworkTopologyStrategy"
-        final Map<String, Object> replication = Match(configuration.get(REPLICATION_STRATEGY)).of(
+        Map<String, Object> replication = Match(configuration.get(REPLICATION_STRATEGY)).of(
                 Case($("SimpleStrategy"), strategy -> HashMap.<String, Object>of("class", strategy, "replication_factor", configuration.get(REPLICATION_FACTOR))),
                 Case($("NetworkTopologyStrategy"),
                         strategy -> HashMap.<String, Object>of("class", strategy)
