@@ -195,7 +195,6 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     private CqlSession initialiseSession() throws PermanentBackendException {
         Configuration configuration = getStorageConfig();
         List<InetSocketAddress> contactPoints;
-        //TODO the following 2 variables are duplicated in DistributedStoreManager
         String[] hostnames = configuration.get(STORAGE_HOSTS);
         int port = configuration.has(STORAGE_PORT) ? configuration.get(STORAGE_PORT) : DEFAULT_PORT;
         try {
@@ -283,13 +282,12 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
     ResultSet executeOnSession(Statement statement) {
         try {
             this.semaphore.acquire();
-            ResultSet resultSet = this.session.execute(statement);
-            this.semaphore.release();
-            return resultSet;
+            return this.session.execute(statement);
         } catch (InterruptedException e) {
-            this.semaphore.release();
             Thread.currentThread().interrupt();
             throw new JanusGraphException("Interrupted while acquiring resource to execute query on Session.");
+        } finally {
+            this.semaphore.release();
         }
     }
 
