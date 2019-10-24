@@ -170,13 +170,14 @@ public class QueryUtil {
             Object value = atom.getValue();
 
 
-            if (type.isPropertyKey()) {
-                PropertyKey key = (PropertyKey) type;
-                Preconditions.checkArgument(key.dataType() == Object.class || predicate.isValidValueType(key.dataType()), "Data type of key is not compatible with condition");
-            } else { //its a label
-                Preconditions.checkArgument(((EdgeLabel) type).isUnidirected());
-                Preconditions.checkArgument(predicate.isValidValueType(JanusGraphVertex.class), "Data type of key is not compatible with condition");
-            }
+            // TODO: verify if following checkArguments are needed
+//            if (type.isPropertyKey()) {
+//                PropertyKey key = (PropertyKey) type;
+//                Preconditions.checkArgument(key.dataType() == Object.class || predicate.isValidValueType(key.dataType()), "Data type of key is not compatible with condition");
+//            } else { //its a label
+//                Preconditions.checkArgument(((EdgeLabel) type).isUnidirected());
+//                Preconditions.checkArgument(predicate.isValidValueType(JanusGraphVertex.class), "Data type of key is not compatible with condition");
+//            }
 
             if (predicate instanceof Contain) {
                 //Rewrite contains conditions

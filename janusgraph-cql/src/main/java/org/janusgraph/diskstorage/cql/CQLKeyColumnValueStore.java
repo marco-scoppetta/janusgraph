@@ -291,7 +291,6 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     @Override
     public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) {
-//        int limit = Math.min(query.getLimit(), 5);
         ResultSet result = this.storeManager.executeOnSession(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())

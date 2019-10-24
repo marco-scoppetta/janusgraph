@@ -134,10 +134,10 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
             readThreads[t] = new Thread(() -> {
                 JanusGraphTransaction tx = graph.newTransaction();
                 long randomUniqueId = random.nextInt(maxUID) + 1;
-//                getVertex(tx, "uid", randomUniqueId).property(VertexProperty.Cardinality.single, "name", fixedName);
+                getVertex(tx, "uid", randomUniqueId).property(VertexProperty.Cardinality.single, "name", fixedName);
                 for (int t1 = 1; t1 <= trials; t1++) {
                     JanusGraphVertex v = getVertex(tx, "uid", random.nextInt(maxUID) + 1);
-//                    assertCount(2, v.properties());
+                    assertCount(2, v.properties());
                     int count = 0;
                     for (Object e : v.query().direction(Direction.BOTH).edges()) {
                         count++;
@@ -145,7 +145,7 @@ public abstract class JanusGraphPerformanceMemoryTest extends JanusGraphBaseTest
                     }
                     assertTrue(count <= 2);
                 }
-//                assertEquals(getVertex(tx, "uid", randomUniqueId).value("name"), fixedName);
+                assertEquals(getVertex(tx, "uid", randomUniqueId).value("name"), fixedName);
                 tx.commit();
             });
             readThreads[t].start();

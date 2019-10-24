@@ -239,15 +239,20 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
         // Keep to 0 for the time being: https://groups.google.com/a/lists.datastax.com/forum/#!topic/java-driver-user/Bc0gQuOVVL0
         // Ideally we want to batch all tables initialisations to happen together when opening a new keyspace
         configLoaderBuilder.withInt(DefaultDriverOption.METADATA_SCHEMA_WINDOW, 0);
-        //The following sets the size of Netty ThreadPool executor used by Cassandra driver:
-        //https://docs.datastax.com/en/developer/java-driver/4.0/manual/core/async/#threading-model
+
+        // The following sets the size of Netty ThreadPool executor used by Cassandra driver:
+        // https://docs.datastax.com/en/developer/java-driver/4.0/manual/core/async/#threading-model
         configLoaderBuilder.withInt(DefaultDriverOption.NETTY_IO_SIZE, 0); // size of threadpool scales with number of available CPUs when set to 0
         configLoaderBuilder.withInt(DefaultDriverOption.NETTY_ADMIN_SIZE, 0); // size of threadpool scales with number of available CPUs when set to 0
 
-        configLoaderBuilder.withBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES, false);
-        configLoaderBuilder.withInt(DefaultDriverOption.NETTY_TIMER_TICK_DURATION, 300);
+
+        // Keep the following values to 0 so that when we close the session we don't have to wait for the
+        // so called "quiet period", setting this to a different value will slow down Graph.close()
+        configLoaderBuilder.withInt(DefaultDriverOption.NETTY_ADMIN_SHUTDOWN_QUIET_PERIOD, 0);
+        configLoaderBuilder.withInt(DefaultDriverOption.NETTY_IO_SHUTDOWN_QUIET_PERIOD, 0);
 
         builder.withConfigLoader(configLoaderBuilder.build());
+
         return builder.build();
     }
 
@@ -338,7 +343,7 @@ public class CQLStoreManager extends AbstractStoreManager implements KeyColumnVa
 
     @Override
     public void close() {
-        this.session.closeAsync();
+        this.session.close();
     }
 
     @Override
