@@ -84,21 +84,21 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
             Preconditions.checkArgument(iterator != null);
 
             if (newElements.hasNext()) {
-                final List<R> allNew = Lists.newArrayList(newElements);
+                List<R> allNew = Lists.newArrayList(newElements);
                 allNew.sort(query.getSortOrder());
                 iterator = new ResultMergeSortIterator<>(allNew.iterator(), iterator, query.getSortOrder(), query.hasDuplicateResults());
             }
         } else {
-            final Set<R> allNew;
+            Set<R> allNew;
             if (newElements.hasNext()) {
                 allNew = Sets.newHashSet(newElements);
             } else {
                 allNew = ImmutableSet.of();
             }
 
-            final List<Iterator<R>> iterators = new ArrayList<>(query.numSubQueries());
+            List<Iterator<R>> iterators = new ArrayList<>(query.numSubQueries());
             for (int i = 0; i < query.numSubQueries(); i++) {
-                final BackendQueryHolder<B> subquery = query.getSubQuery(i);
+                BackendQueryHolder<B> subquery = query.getSubQuery(i);
                 Iterator<R> subIterator = new LimitAdjustingIterator(subquery);
                 subIterator = getFilterIterator(subIterator, hasDeletions, !subquery.isFitted());
                 if (!allNew.isEmpty()) {
@@ -109,7 +109,7 @@ public class QueryProcessor<Q extends ElementQuery<R, B>, R extends JanusGraphEl
             if (iterators.size() > 1) {
                 iterator = Iterators.concat(iterators.iterator());
                 if (query.hasDuplicateResults()) { //Cache results and filter out duplicates
-                    final Set<R> seenResults = new HashSet<>();
+                    Set<R> seenResults = new HashSet<>();
                     iterator = Iterators.filter(iterator, r -> {
                         if (seenResults.contains(r)) return false;
                         else {

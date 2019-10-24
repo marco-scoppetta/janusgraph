@@ -193,7 +193,7 @@ public class QueryUtil {
                     if (values.size() == 1) {
                         addConstraint(type, Cmp.EQUAL, values.iterator().next(), conditions, tx);
                     } else {
-                        final Or<E> nested = new Or<>(values.size());
+                        Or<E> nested = new Or<>(values.size());
                         for (Object invalue : values)
                             addConstraint(type, Cmp.EQUAL, invalue, nested, tx);
                         conditions.add(nested);

@@ -228,14 +228,15 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
                 .ifNotExists()
                 .withPartitionKey(KEY_COLUMN_NAME, DataTypes.BLOB)
                 .withClusteringColumn(COLUMN_COLUMN_NAME, DataTypes.BLOB)
-                .withColumn(VALUE_COLUMN_NAME, DataTypes.BLOB);
+                .withColumn(VALUE_COLUMN_NAME, DataTypes.BLOB)
+                .withSpeculativeRetry("NONE");
 
 
-        if(tableName.startsWith(EDGESTORE_NAME)){
-            createTable = createTable.withCaching(true, SchemaBuilder.RowsPerPartition.rows(100));
+        if (tableName.startsWith(EDGESTORE_NAME)) {
+            createTable = createTable.withCaching(true, SchemaBuilder.RowsPerPartition.NONE);
         }
-        if(tableName.startsWith(INDEXSTORE_NAME)){
-            createTable = createTable.withCaching(false, SchemaBuilder.RowsPerPartition.ALL);
+        if (tableName.startsWith(INDEXSTORE_NAME)) {
+            createTable = createTable.withCaching(false, SchemaBuilder.RowsPerPartition.rows(100));
         }
 
         createTable = compactionOptions(createTable, configuration);
@@ -290,6 +291,7 @@ public class CQLKeyColumnValueStore implements KeyColumnValueStore {
 
     @Override
     public EntryList getSlice(KeySliceQuery query, StoreTransaction txh) {
+//        int limit = Math.min(query.getLimit(), 5);
         ResultSet result = this.storeManager.executeOnSession(this.getSlice.bind()
                 .setByteBuffer(KEY_BINDING, query.getKey().asByteBuffer())
                 .setByteBuffer(SLICE_START_BINDING, query.getSliceStart().asByteBuffer())

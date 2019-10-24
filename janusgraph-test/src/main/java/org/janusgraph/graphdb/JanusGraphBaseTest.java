@@ -418,7 +418,7 @@ public abstract class JanusGraphBaseTest {
 
     public static <E> E getOnlyElement(Iterator<E> traversal, E defaultElement) {
         if (!traversal.hasNext()) return defaultElement;
-        final E result = traversal.next();
+        E result = traversal.next();
         if (traversal.hasNext())
             throw new IllegalArgumentException("Traversal contains more than 1 element: " + result + ", " + traversal.next());
         return result;
